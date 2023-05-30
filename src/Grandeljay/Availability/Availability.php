@@ -12,7 +12,7 @@ use Grandeljay\Availability\Commands\Command;
 
 class Availability
 {
-    private const PATH_AVAILABILITIES = 'availabilities';
+    private const PATH_AVAILABILITIES = __DIR__ . '/availabilities';
 
     protected Discord $discord;
     protected Config $config;
