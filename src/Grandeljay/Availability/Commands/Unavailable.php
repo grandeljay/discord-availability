@@ -44,7 +44,7 @@ class Unavailable extends Availability
                     return;
                 }
 
-                $this->setUserAvailability($interaction->user->id, false, $timeUnavailable);
+                $this->setUserAvailability($interaction->user, false, $timeUnavailable);
 
                 $interaction
                 ->respondWithMessage(

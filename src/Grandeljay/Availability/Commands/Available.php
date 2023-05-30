@@ -44,7 +44,7 @@ class Available extends Availability
                     return;
                 }
 
-                $this->setUserAvailability($interaction->user->id, true, $timeAvailable);
+                $this->setUserAvailability($interaction->user, true, $timeAvailable);
 
                 $interaction
                 ->respondWithMessage(
