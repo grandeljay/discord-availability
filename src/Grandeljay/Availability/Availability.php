@@ -12,20 +12,27 @@ use Grandeljay\Availability\Commands\Command;
 
 class Availability
 {
-    private const PATH_AVAILABILITIES = __DIR__ . '/availabilities';
+    public const TIME_DEFAULT = 'monday at 19:00';
 
+    private string $rootDirectory;
     protected Discord $discord;
     protected Config $config;
     protected Action $action;
 
-    public function __construct()
+    /**
+     * Construct
+     *
+     * @param string $rootDirectory The project's root directory.
+     */
+    public function __construct(string $rootDirectory)
     {
-        $this->config  = new Config();
-        $this->discord = new Discord(
+        $this->config        = new Config();
+        $this->discord       = new Discord(
             array(
                 'token' => $this->config->get('token'),
             )
         );
+        $this->rootDirectory = $rootDirectory;
     }
 
     /**
@@ -98,12 +105,14 @@ class Availability
      */
     public function setUserAvailability(int $userId, bool $userIsAvailable, int $userAvailabilityTime): void
     {
-        if (!file_exists(self::PATH_AVAILABILITIES) || !is_dir(self::PATH_AVAILABILITIES)) {
-            mkdir(self::PATH_AVAILABILITIES);
+        $directoryAvailabilities = $this->rootDirectory . '/availabilities';
+
+        if (!file_exists($directoryAvailabilities) || !is_dir($directoryAvailabilities)) {
+            mkdir($directoryAvailabilities);
         }
 
         $filename = $userId . '.json';
-        $filepath = self::PATH_AVAILABILITIES . '/' . $filename;
+        $filepath = $directoryAvailabilities . '/' . $filename;
 
         $availability = array(
             'userId'               => $userId,
