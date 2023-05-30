@@ -4,22 +4,42 @@ Discord Availability is a discord bot used to track who will be available for do
 
 ## Requirements
 
-1. PHP >= 8.1
+1. PHP v8.1 or higher
+1. Composer
 
 ## Getting started
 
-1. Install dependencies:
+1. Install dependencies
 
     ```sh
     composer install
     ```
 
-2. Run the script:
+1. Run the script
+
     ```sh
     php availability.php
     ```
 
+    Do not attempt to run this via a web server (i. e. from the browser), it will only work from the command line.
+
+1. Add it to your server
+
+    Use the following link to authorize the bot for your server. It only asked for the permissions it needs (as little as possible).
+
+    https://discord.com/api/oauth2/authorize?client_id=1100405938801872956&permissions=0&scope=bot%20applications.commands
+
 Once started, the script will run in loop, indefinitly until stopped. A schedule/cron is not necessary.
+
+## Bot commands
+
+The bot currently offers three different slash commands:
+
+1. `/available <date>` where `date` is a [`strtotime`](https://www.php.net/manual/en/function.strtotime.php) compatible phrase or. According to PHP that is: _about any English textual datetime description_.
+2. `/unavailable <date>` where `date` is a [`strtotime`](https://www.php.net/manual/en/function.strtotime.php) compatible phrase or. According to PHP that is: _about any English textual datetime description_.
+3. `/availability` which lists the availability of everybody. _Everybody_ in this case means users who have used the `/available` or `/unavailable` command at least once.
+
+Once a user is in the system, the bot will automatically assume the user is available unless he specifies otherwise.
 
 ## Notes
 
