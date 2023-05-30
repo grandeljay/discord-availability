@@ -33,8 +33,6 @@ class Availability extends \Grandeljay\Availability\Availability
                         $availability['userIsAvailable']      = true;
                     }
 
-                    $userLocale        = $user->locale ?? \Locale::getDefault();
-                    $dateFormatter     = new \IntlDateFormatter($userLocale, \IntlDateFormatter::MEDIUM, \IntlDateFormatter::NONE);
                     $availabilityText  = $availability['userIsAvailable'] ? 'available' : 'unavailable';
                     $availabilityEmoji = $availability['userIsAvailable'] ? ':star_struck:' : ':angry:';
 
@@ -43,7 +41,7 @@ class Availability extends \Grandeljay\Availability\Availability
                         $availabilityEmoji,
                         $user->username,
                         $availabilityText,
-                        $dateFormatter->format($availability['userAvailabilityTime']),
+                        date('d.m.Y', $availability['userAvailabilityTime']),
                         date('H:i', $availability['userAvailabilityTime'])
                     );
                 }
