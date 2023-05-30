@@ -28,8 +28,23 @@ class Availability
         );
     }
 
-    public function initialise(): void
+    /**
+     * Removes orphaned commands and adds the active ones.
+     *
+     * @return void
+     */
+    public function install(): void
     {
+        /** Remove orphaned commands */
+        $this->discord->application->commands->freshen()->then(
+            function ($commands) {
+                foreach ($commands as $command) {
+                    $this->discord->application->commands->delete($command);
+                }
+            }
+        );
+
+        /** Commands */
         $this->discord->on(
             'ready',
             function (Discord $discord) {
@@ -47,6 +62,11 @@ class Availability
                 );
             }
         );
+    }
+
+    public function initialise(): void
+    {
+        $this->install();
 
         $this->discord->on(
             Event::MESSAGE_CREATE,
