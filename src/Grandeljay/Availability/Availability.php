@@ -35,7 +35,6 @@ class Availability
      */
     public function install(): void
     {
-        /** Commands */
         $this->discord->on(
             'ready',
             function (Discord $discord) {
@@ -48,6 +47,7 @@ class Availability
                     }
                 );
 
+                /** Commands */
                 $command = new Command(
                     Command::AVAILABILITY,
                     'Shows everybody\'s availability.'
