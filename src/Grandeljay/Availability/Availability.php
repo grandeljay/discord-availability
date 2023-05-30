@@ -14,25 +14,33 @@ class Availability
 {
     public const TIME_DEFAULT = 'monday at 19:00';
 
-    private string $rootDirectory;
     protected Discord $discord;
     protected Config $config;
     protected Action $action;
 
     /**
-     * Construct
+     * Returns the project's root directory.
      *
-     * @param string $rootDirectory The project's root directory.
+     * @return string The project's root directory.
      */
-    public function __construct(string $rootDirectory)
+    public static function getRoot(): string
     {
-        $this->config        = new Config();
-        $this->discord       = new Discord(
+        $rootDirectory = dirname(dirname(dirname(__DIR__)));
+
+        return $rootDirectory;
+    }
+
+    /**
+     * Construct
+     */
+    public function __construct()
+    {
+        $this->config  = new Config();
+        $this->discord = new Discord(
             array(
                 'token' => $this->config->get('token'),
             )
         );
-        $this->rootDirectory = $rootDirectory;
     }
 
     /**
@@ -105,7 +113,7 @@ class Availability
      */
     public function setUserAvailability(int $userId, bool $userIsAvailable, int $userAvailabilityTime): void
     {
-        $directoryAvailabilities = $this->rootDirectory . '/availabilities';
+        $directoryAvailabilities = self::getRoot() . '/availabilities';
 
         if (!file_exists($directoryAvailabilities) || !is_dir($directoryAvailabilities)) {
             mkdir($directoryAvailabilities);
