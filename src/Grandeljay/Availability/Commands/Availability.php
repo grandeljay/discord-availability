@@ -5,7 +5,6 @@ namespace Grandeljay\Availability\Commands;
 use Discord\Builders\MessageBuilder;
 use Discord\Parts\Interactions\Interaction;
 use Discord\Parts\User\User;
-use Grandeljay\Availability\Config;
 
 class Availability extends \Grandeljay\Availability\Availability
 {
@@ -30,7 +29,7 @@ class Availability extends \Grandeljay\Availability\Availability
                     }
 
                     if ($availability['userAvailabilityTime'] <= time()) {
-                        $availability['userAvailabilityTime'] = strtotime('monday');
+                        $availability['userAvailabilityTime'] = Availability::getTimeFromString(Availability::DATE_DEFAULT);
                         $availability['userIsAvailable']      = true;
                     }
 
@@ -40,11 +39,12 @@ class Availability extends \Grandeljay\Availability\Availability
                     $availabilityEmoji = $availability['userIsAvailable'] ? ':star_struck:' : ':angry:';
 
                     $messageRows[] = sprintf(
-                        '- %s %s is %s on `%s`',
+                        '- %s %s is %s on `%s` at `%s`',
                         $availabilityEmoji,
                         $user->username,
                         $availabilityText,
-                        $dateFormatter->format($availability['userAvailabilityTime'])
+                        $dateFormatter->format($availability['userAvailabilityTime']),
+                        date('H:i', $availability['userAvailabilityTime'])
                     );
                 }
 
@@ -53,7 +53,7 @@ class Availability extends \Grandeljay\Availability\Availability
                         MessageBuilder::new()
                         ->setContent(
                             'Woah! I can\'t find shit.' . PHP_EOL . PHP_EOL .
-                            'Please use the `/subscribe` command to add yourself.'
+                            'Please use the `/available` or `/unavailable` command to add yourself.'
                         )
                     );
                 } else {

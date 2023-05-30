@@ -18,7 +18,7 @@ class Available extends Availability
         $this->discord->listenCommand(
             strtolower(Command::AVAILABLE),
             function (Interaction $interaction) {
-                $timeAvailable = strtotime($interaction->data->options['date']->value);
+                $timeAvailable = Availability::getTimeFromString($interaction->data->options['date']->value);
 
                 if (false === $timeAvailable) {
                     $interaction
@@ -34,8 +34,9 @@ class Available extends Availability
                     ->respondWithMessage(
                         MessageBuilder::new()->setContent(
                             sprintf(
-                                'You\'re available on `%s`? That\'s in the past, silly! Please specify a time in the future.',
-                                date('d.m.Y', $timeAvailable)
+                                'You\'re available on `%s` at `%s`? That doesn\'t sound right. Please specify a time in the future.',
+                                date('d.m.Y', $timeAvailable),
+                                date('H:i', $timeAvailable),
                             )
                         )
                     );
@@ -49,8 +50,9 @@ class Available extends Availability
                 ->respondWithMessage(
                     MessageBuilder::new()->setContent(
                         sprintf(
-                            'Gotcha! You are **available** for Dota on `%s`.',
-                            date('d.m.Y', $timeAvailable)
+                            'Gotcha! You are **available** for Dota on `%s` at `%s`.',
+                            date('d.m.Y', $timeAvailable),
+                            date('H:i', $timeAvailable)
                         )
                     )
                 );

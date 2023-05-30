@@ -12,7 +12,8 @@ use Grandeljay\Availability\Commands\Command;
 
 class Availability
 {
-    public const TIME_DEFAULT = 'monday at 19:00';
+    public const TIME_DEFAULT = '19:00';
+    public const DATE_DEFAULT = 'monday ' . self::TIME_DEFAULT;
 
     protected Discord $discord;
     protected Config $config;
@@ -28,6 +29,30 @@ class Availability
         $rootDirectory = dirname(dirname(dirname(__DIR__)));
 
         return $rootDirectory;
+    }
+
+    /**
+     * Returns the unix timestamp from a user specified date/time.
+     *
+     * @param string $message The user's date/time input.
+     *
+     * @return int|false The unix timestamp on success or `false`.
+     */
+    public static function getTimeFromString(string $message): int|false
+    {
+        $message = str_replace(
+            array('next week', 'next time', 'next ', 'on ', 'at '),
+            array(self::DATE_DEFAULT, self::DATE_DEFAULT, '', '', ''),
+            $message
+        );
+
+        $time = strtotime($message);
+
+        if ('00:00' === date('H:i', $time)) {
+            $time += 19 * 3600;
+        }
+
+        return $time;
     }
 
     /**
@@ -156,6 +181,7 @@ class Availability
             $unavailableKeywordsSingles = array(
                 'not available',
                 'not coming',
+                'unavailable',
             );
 
             foreach ($unavailableKeywordsSingles as $keywords) {
@@ -172,16 +198,16 @@ class Availability
                     'can\'t',
                     'cannot',
                     'cant',
+                    'not going to',
                     'unable to',
                     'will not',
                     'won\'t',
                     'wont',
-                    'not going to',
                 ),
                 array(
+                    'be there',
                     'come',
                     'make it',
-                    'be there',
                 ),
             );
 
@@ -203,13 +229,7 @@ class Availability
         }
 
         /** Validate unavailability time */
-        $userUnavailableTime = strtotime(
-            str_replace(
-                array('next week', 'next time', 'next ', 'on '),
-                array('monday', 'monday', '', ''),
-                $matches[1]
-            )
-        );
+        $userUnavailableTime = Availability::getTimeFromString($matches[1]);
 
         if (false === $userUnavailableTime || time() >= $userUnavailableTime) {
             return;
@@ -228,8 +248,9 @@ class Availability
                         MessageBuilder::new()
                         ->setContent(
                             sprintf(
-                                'Alrighty! You are now officially **unavailable** on `%s`.',
-                                date('d.m.Y', $userUnavailableTime)
+                                'Alrighty! You are now officially **unavailable** on `%s` at `%s`.',
+                                date('d.m.Y', $userUnavailableTime),
+                                date('H:i', $userUnavailableTime)
                             )
                         )
                     );
@@ -255,8 +276,9 @@ class Availability
         $messageReply = MessageBuilder::new()
         ->setContent(
             sprintf(
-                'You won\'t be available for dota on `%s`, did I get that right?',
-                date('d.m.Y', $userUnavailableTime)
+                'You won\'t be available for dota on `%s` at `%s`, did I get that right?',
+                date('d.m.Y', $userUnavailableTime),
+                date('H:i', $userUnavailableTime),
             )
         )
         ->addComponent($actionRow);

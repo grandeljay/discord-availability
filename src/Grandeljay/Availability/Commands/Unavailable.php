@@ -18,7 +18,7 @@ class Unavailable extends Availability
         $this->discord->listenCommand(
             strtolower(Command::UNAVAILABLE),
             function (Interaction $interaction) {
-                $timeUnavailable = strtotime($interaction->data->options['date']->value);
+                $timeUnavailable = Availability::getTimeFromString($interaction->data->options['date']->value);
 
                 if (false === $timeUnavailable) {
                     $interaction
@@ -34,8 +34,9 @@ class Unavailable extends Availability
                     ->respondWithMessage(
                         MessageBuilder::new()->setContent(
                             sprintf(
-                                'You\'re unavailable on `%s`? That\'s in the past, silly! Please specify a time in the future.',
-                                date('d.m.Y', $timeUnavailable)
+                                'You\'re unavailable on `%s` at `%s`? That doesn\'t sound right. Please specify a time in the future.',
+                                date('d.m.Y', $timeUnavailable),
+                                date('H:i', $timeUnavailable),
                             )
                         )
                     );
@@ -49,8 +50,9 @@ class Unavailable extends Availability
                 ->respondWithMessage(
                     MessageBuilder::new()->setContent(
                         sprintf(
-                            'Gotcha! You are **unavailable** for Dota on `%s`.',
-                            date('d.m.Y', $timeUnavailable)
+                            'Gotcha! You are **unavailable** for Dota on `%s` at `%s`.',
+                            date('d.m.Y', $timeUnavailable),
+                            date('H:i', $timeUnavailable),
                         )
                     )
                 );
