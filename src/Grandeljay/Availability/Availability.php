@@ -35,19 +35,19 @@ class Availability
      */
     public function install(): void
     {
-        /** Remove orphaned commands */
-        $this->discord->application->commands->freshen()->then(
-            function ($commands) {
-                foreach ($commands as $command) {
-                    $this->discord->application->commands->delete($command);
-                }
-            }
-        );
-
         /** Commands */
         $this->discord->on(
             'ready',
             function (Discord $discord) {
+                /** Remove orphaned commands */
+                $discord->application->commands->freshen()->then(
+                    function ($commands) use ($discord) {
+                        foreach ($commands as $command) {
+                            $discord->application->commands->delete($command);
+                        }
+                    }
+                );
+
                 $command = new Command(
                     Command::AVAILABILITY,
                     'Shows everybody\'s availability.'
