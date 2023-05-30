@@ -25,7 +25,7 @@ Discord Availability is a discord bot used to track who will be available for do
 
 1. Add it to your server
 
-    Use the following link to authorize the bot for your server. It only asked for the permissions it needs (as little as possible).
+    Use the following link to authorize the bot for your server. It only asks for the permissions it needs (as little as possible).
 
     https://discord.com/api/oauth2/authorize?client_id=1100405938801872956&permissions=0&scope=bot%20applications.commands
 
