@@ -41,6 +41,8 @@ The bot currently offers three different slash commands:
 
 Once a user is in the system, the bot will automatically assume the user is available unless he specifies otherwise.
 
+Furthermore, the bot will attempt to detect the availability of users based on their messages (outside of the slash commands). This applies to all users who have used the `/available` or `/unavailable` command at least once.
+
 ## Notes
 
 If you are a bro who is hosting this for a bro, you da real MVP.
