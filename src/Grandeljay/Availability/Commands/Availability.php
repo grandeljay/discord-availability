@@ -22,12 +22,6 @@ class Availability extends \Grandeljay\Availability\Availability
                 $messageRows    = array();
 
                 foreach ($availabilities as $availability) {
-                    $user = $this->discord->users->get('id', $availability['userId']);
-
-                    if (!$user instanceof User) {
-                        continue;
-                    }
-
                     if ($availability['userAvailabilityTime'] <= time()) {
                         $availability['userAvailabilityTime'] = Availability::getTimeFromString(Availability::DATE_DEFAULT);
                         $availability['userIsAvailable']      = true;
@@ -39,7 +33,7 @@ class Availability extends \Grandeljay\Availability\Availability
                     $messageRows[] = sprintf(
                         '- %s %s is %s on `%s` at `%s`',
                         $availabilityEmoji,
-                        $user->username,
+                        $availability['userName'],
                         $availabilityText,
                         date('d.m.Y', $availability['userAvailabilityTime']),
                         date('H:i', $availability['userAvailabilityTime'])
