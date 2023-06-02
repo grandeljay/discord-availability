@@ -253,7 +253,7 @@ class Availability
             ->setLabel('Yes')
             ->setListener(
                 function (Interaction $interaction) use ($userAvailableTime, $message) {
-                    $this->setUserAvailability($interaction->user, false, $userAvailableTime);
+                    $this->setUserAvailability($interaction->user, true, $userAvailableTime);
 
                     $message->reply(
                         MessageBuilder::new()
