@@ -112,8 +112,9 @@ class Availability
         $this->discord->on(
             Event::MESSAGE_CREATE,
             function (Message $message, Discord $discord) {
-                $this->determineIfAvailable($message, $discord);
-                $this->determineIfUnavailable($message, $discord);
+                if (!$this->determineIfUnavailable($message, $discord)) {
+                    $this->determineIfAvailable($message, $discord);
+                }
             }
         );
 
