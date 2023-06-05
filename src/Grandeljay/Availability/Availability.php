@@ -64,7 +64,7 @@ class Availability
         $this->config  = new Config();
         $this->discord = new Discord(
             array(
-                'token' => $this->config->get('token'),
+                'token' => $this->config->getAPIToken(),
             )
         );
     }
