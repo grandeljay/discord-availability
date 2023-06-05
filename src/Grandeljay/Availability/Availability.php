@@ -142,7 +142,7 @@ class Availability
     /**
      * Permanently saves the user's specified availability time.
      *
-     * @param User $user                The message author.
+     * @param User $user                 The message author.
      * @param bool $userIsAvailable      Whether the user is available.
      * @param int  $userAvailabilityTime The unix timestamp of the user's
      *                                   availability.
