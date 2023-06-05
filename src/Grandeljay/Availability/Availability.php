@@ -426,7 +426,7 @@ class Availability
     protected function getAvailabilities(): array
     {
         $availabilities = array();
-        $directory      = Config::getRoot() . '/availabilities';
+        $directory      = $this->config->get('directory_availabilities');
 
         if (!is_dir($directory)) {
             return $availabilities;

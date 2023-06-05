@@ -8,18 +8,6 @@ class Config
 
     public string $filepath = '/etc/grandeljay/discord-availability/config.json';
 
-    /**
-     * Returns the project's root.
-     *
-     * @return string
-     */
-    public static function getRoot(): string
-    {
-        $root = dirname(dirname(dirname(__DIR__)));
-
-        return $root;
-    }
-
     public function __construct()
     {
         $this->loadConfig();
