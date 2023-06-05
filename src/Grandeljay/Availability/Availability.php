@@ -21,6 +21,18 @@ class Availability
     protected Action $action;
 
     /**
+     * Returns the project's root directory.
+     *
+     * @return string The project's root directory.
+     */
+    public static function getRoot(): string
+    {
+        $rootDirectory = dirname(dirname(dirname(__DIR__)));
+
+        return $rootDirectory;
+    }
+
+    /**
      * Returns the unix timestamp from a user specified date/time.
      *
      * @param string $message The user's date/time input.
@@ -118,31 +130,9 @@ class Availability
     }
 
     /**
-     * Adds the user's specified availability time to the storage.
-     *
-     * @param User $user                The message author.
-     * @param bool $userIsAvailable      Whether the user is available.
-     * @param int  $userAvailabilityTime The unix timestamp of the user's
-     *                                   availability.
-     *
-     * @return void
-     */
-    public function addUserAvailability(User $user, bool $userIsAvailable, int $userAvailabilityTime): void
-    {
-        $userAvailabilities   = $this->getUserAvailability($user);
-        $userAvailability     = array(
-            'userId'               => $user->id,
-            'userName'             => $user->username,
-            'userIsAvailable'      => $userIsAvailable,
-            'userAvailabilityTime' => $userAvailabilityTime,
-        );
-        $userAvailabilities[] = $userAvailability;
-    }
-
-    /**
      * Permanently saves the user's specified availability time.
      *
-     * @param User $user                 The message author.
+     * @param User  $user                The message author.
      * @param bool $userIsAvailable      Whether the user is available.
      * @param int  $userAvailabilityTime The unix timestamp of the user's
      *                                   availability.
@@ -151,7 +141,7 @@ class Availability
      */
     public function setUserAvailability(User $user, bool $userIsAvailable, int $userAvailabilityTime): void
     {
-        $directoryAvailabilities = $this->config->get('directory_availabilities');
+        $directoryAvailabilities = self::getRoot() . '/availabilities';
 
         if (!file_exists($directoryAvailabilities) || !is_dir($directoryAvailabilities)) {
             mkdir($directoryAvailabilities);
