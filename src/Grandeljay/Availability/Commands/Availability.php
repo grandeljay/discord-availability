@@ -5,8 +5,9 @@ namespace Grandeljay\Availability\Commands;
 use Discord\Builders\MessageBuilder;
 use Discord\Parts\Interactions\Interaction;
 use Discord\Parts\User\User;
+use Grandeljay\Availability\Bot;
 
-class Availability extends \Grandeljay\Availability\Availability
+class Availability extends Bot
 {
     public function __construct()
     {
@@ -23,20 +24,23 @@ class Availability extends \Grandeljay\Availability\Availability
 
                 foreach ($availabilities as $availability) {
                     if ($availability['userAvailabilityTime'] <= time()) {
-                        $availability['userAvailabilityTime'] = Availability::getTimeFromString(Availability::DATE_DEFAULT);
-                        $availability['userIsAvailable']      = true;
+                        $availability['userAvailabilityTime']      = Bot::getTimeFromString(Bot::DATE_DEFAULT);
+                        $availability['userIsAvailable']           = true;
+                        $availability['userIsAvailablePerDefault'] = true;
                     }
 
-                    $availabilityText  = $availability['userIsAvailable'] ? 'available' : 'unavailable';
-                    $availabilityEmoji = $availability['userIsAvailable'] ? ':star_struck:' : ':angry:';
+                    $availabilityText    = $availability['userIsAvailable'] ? 'available' : 'unavailable';
+                    $availabilityEmoji   = $availability['userIsAvailable'] ? ':star_struck:' : ':angry:';
+                    $availablePerDefault = $availability['userIsAvailablePerDefault'] ? ' (per default)' : '';
 
                     $messageRows[] = sprintf(
-                        '- %s %s is %s on `%s` at `%s`',
+                        '- %s %s is %s on `%s` at `%s`%s',
                         $availabilityEmoji,
                         $availability['userName'],
                         $availabilityText,
                         date('d.m.Y', $availability['userAvailabilityTime']),
-                        date('H:i', $availability['userAvailabilityTime'])
+                        date('H:i', $availability['userAvailabilityTime']),
+                        $availablePerDefault
                     );
                 }
 
