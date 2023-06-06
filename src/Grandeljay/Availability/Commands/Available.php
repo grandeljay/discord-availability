@@ -54,7 +54,8 @@ class Available extends Bot
                             date('d.m.Y', $timeAvailable),
                             date('H:i', $timeAvailable)
                         )
-                    )
+                    ),
+                    true
                 );
             }
         );

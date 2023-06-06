@@ -54,7 +54,8 @@ class Unavailable extends Bot
                             date('d.m.Y', $timeUnavailable),
                             date('H:i', $timeUnavailable),
                         )
-                    )
+                    ),
+                    true
                 );
             }
         );

@@ -106,14 +106,6 @@ class Bot
             }
         );
 
-        // $this->discord->on(
-        //     Event::INTERACTION_CREATE,
-        //     function (Interaction $interaction, Discord $discord) {
-        //         var_dump($interaction->message);
-        //         die();
-        //     }
-        // );
-
         $this->discord->run();
     }
 
@@ -222,6 +214,10 @@ class Bot
 
         $userAvailabilityPhrase = trim($userAvailabilityPhrase);
 
+        if ('' === $userAvailabilityPhrase) {
+            return false;
+        }
+
         $userIsAvailable = 1 === preg_match('/' . $userAvailabilityPhrase . ' (.+)/i', $message->content, $matches);
 
         if (!$userIsAvailable || !isset($matches[1])) {
@@ -244,6 +240,7 @@ class Bot
                 function (Interaction $interaction) use ($userAvailableTime, $message) {
                     $this->setUserAvailability($interaction->user, true, $userAvailableTime);
 
+                    $interaction->message->delete();
                     $message->reply(
                         MessageBuilder::new()
                         ->setContent(
@@ -253,8 +250,8 @@ class Bot
                                 date('H:i', $userAvailableTime)
                             )
                         )
+                        ->_setFlags(Message::FLAG_EPHEMERAL)
                     );
-                    $interaction->message->delete();
                 },
                 $discord
             )
@@ -263,18 +260,13 @@ class Bot
             Button::new(Button::STYLE_SECONDARY)
             ->setLabel('No')
             ->setListener(
-                function (Interaction $interaction) use ($message) {
-                    $message
-                    ->reply(
+                function (Interaction $interaction) {
+                    $interaction
+                    ->respondWithMessage(
                         MessageBuilder::new()
-                        ->setContent('Whoops, sorry!')
-                    )
-                    ->done(
-                        function (Message $message) {
-                            $message->delayedDelete(2000);
-                        }
+                        ->setContent('Whoops, sorry!'),
+                        true
                     );
-
                     $interaction->message->delete();
                 },
                 $discord
@@ -289,6 +281,7 @@ class Bot
                 date('H:i', $userAvailableTime),
             )
         )
+        ->_setFlags(Message::FLAG_EPHEMERAL)
         ->addComponent($actionRow);
 
         $message->reply($messageReply);
@@ -312,9 +305,9 @@ class Bot
                 'unavailable',
             );
 
-            foreach ($unavailableKeywordsSingles as $keywords) {
-                if (str_contains($message->content, $keywords)) {
-                    $userAvailabilityPhrase .= $keywords . ' ';
+            foreach ($unavailableKeywordsSingles as $keyword) {
+                if (str_contains($message->content, $keyword)) {
+                    $userAvailabilityPhrase .= $keyword . ' ';
                 }
             }
         }
@@ -350,6 +343,10 @@ class Bot
 
         $userAvailabilityPhrase = trim($userAvailabilityPhrase);
 
+        if ('' === $userAvailabilityPhrase) {
+            return false;
+        }
+
         $userIsUnavailable = 1 === preg_match('/' . $userAvailabilityPhrase . ' (.+)/i', $message->content, $matches);
 
         if (!$userIsUnavailable || !isset($matches[1])) {
@@ -372,6 +369,7 @@ class Bot
                 function (Interaction $interaction) use ($userUnavailableTime, $message) {
                     $this->setUserAvailability($interaction->user, false, $userUnavailableTime);
 
+                    $interaction->message->delete();
                     $message->reply(
                         MessageBuilder::new()
                         ->setContent(
@@ -381,8 +379,8 @@ class Bot
                                 date('H:i', $userUnavailableTime)
                             )
                         )
+                        ->_setFlags(Message::FLAG_EPHEMERAL)
                     );
-                    $interaction->message->delete();
                 },
                 $discord
             )
@@ -391,18 +389,13 @@ class Bot
             Button::new(Button::STYLE_SECONDARY)
             ->setLabel('No')
             ->setListener(
-                function (Interaction $interaction) use ($message) {
-                    $message
-                    ->reply(
+                function (Interaction $interaction) {
+                    $interaction
+                    ->respondWithMessage(
                         MessageBuilder::new()
-                        ->setContent('Whoops, sorry!')
-                    )
-                    ->done(
-                        function (Message $message) {
-                            $message->delayedDelete(2000);
-                        }
+                        ->setContent('Whoops, sorry!'),
+                        true
                     );
-
                     $interaction->message->delete();
                 },
                 $discord
@@ -417,6 +410,7 @@ class Bot
                 date('H:i', $userUnavailableTime),
             )
         )
+        ->_setFlags(Message::FLAG_EPHEMERAL)
         ->addComponent($actionRow);
 
         $message->reply($messageReply);
