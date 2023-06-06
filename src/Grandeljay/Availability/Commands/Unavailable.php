@@ -4,9 +4,9 @@ namespace Grandeljay\Availability\Commands;
 
 use Discord\Builders\MessageBuilder;
 use Discord\Parts\Interactions\Interaction;
-use Grandeljay\Availability\Availability;
+use Grandeljay\Availability\Bot;
 
-class Unavailable extends Availability
+class Unavailable extends Bot
 {
     public function __construct()
     {
@@ -18,7 +18,7 @@ class Unavailable extends Availability
         $this->discord->listenCommand(
             strtolower(Command::UNAVAILABLE),
             function (Interaction $interaction) {
-                $timeUnavailable = Availability::getTimeFromString($interaction->data->options['date']->value);
+                $timeUnavailable = Bot::getTimeFromString($interaction->data->options['date']->value);
 
                 if (false === $timeUnavailable) {
                     $interaction

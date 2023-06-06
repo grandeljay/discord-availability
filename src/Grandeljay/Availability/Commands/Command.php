@@ -5,9 +5,9 @@ namespace Grandeljay\Availability\Commands;
 use Discord\Builders\{CommandBuilder, MessageBuilder};
 use Discord\Discord;
 use Discord\Parts\Interactions\Command\Option;
-use Grandeljay\Availability\Availability;
+use Grandeljay\Availability\Bot;
 
-class Command extends Availability
+class Command extends Bot
 {
     public const AVAILABLE    = 'Available';
     public const AVAILABILITY = 'Availability';

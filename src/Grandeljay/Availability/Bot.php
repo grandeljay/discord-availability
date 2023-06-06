@@ -11,7 +11,7 @@ use Discord\Parts\User\User;
 use Discord\WebSockets\Event;
 use Grandeljay\Availability\Commands\Command;
 
-class Availability
+class Bot
 {
     public const TIME_DEFAULT = '19:00';
     public const DATE_DEFAULT = 'monday ' . self::TIME_DEFAULT;
@@ -139,10 +139,11 @@ class Availability
         $filepath = $directoryAvailabilities . '/' . $filename;
 
         $availability = array(
-            'userId'               => $user->id,
-            'userName'             => $user->username,
-            'userIsAvailable'      => $userIsAvailable,
-            'userAvailabilityTime' => $userAvailabilityTime,
+            'userId'                    => $user->id,
+            'userName'                  => $user->username,
+            'userIsAvailable'           => $userIsAvailable,
+            'userAvailabilityTime'      => $userAvailabilityTime,
+            'userIsAvailablePerDefault' => false,
         );
 
         file_put_contents($filepath, json_encode($availability));
@@ -188,9 +189,9 @@ class Availability
                 'coming',
             );
 
-            foreach ($availableKeywordsSingles as $keywords) {
-                if (str_contains($message->content, $keywords)) {
-                    $userAvailabilityPhrase .= $keywords . ' ';
+            foreach ($availableKeywordsSingles as $keyword) {
+                if (str_contains($message->content, $keyword)) {
+                    $userAvailabilityPhrase .= $keyword . ' ';
                 }
             }
         }
@@ -228,7 +229,7 @@ class Availability
         }
 
         /** Validate availability time */
-        $userAvailableTime = Availability::getTimeFromString($matches[1]);
+        $userAvailableTime = Bot::getTimeFromString($matches[1]);
 
         if (false === $userAvailableTime || time() >= $userAvailableTime) {
             return false;
@@ -356,7 +357,7 @@ class Availability
         }
 
         /** Validate unavailability time */
-        $userUnavailableTime = Availability::getTimeFromString($matches[1]);
+        $userUnavailableTime = Bot::getTimeFromString($matches[1]);
 
         if (false === $userUnavailableTime || time() >= $userUnavailableTime) {
             return false;
