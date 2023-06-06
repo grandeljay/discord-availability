@@ -241,10 +241,10 @@ class Bot
             Button::new(Button::STYLE_PRIMARY)
             ->setLabel('Yes')
             ->setListener(
-                function (Interaction $interaction) use ($userAvailableTime, $message) {
+                function (Interaction $interaction) use ($userAvailableTime) {
                     $this->setUserAvailability($interaction->user, true, $userAvailableTime);
 
-                    $message->reply(
+                    $interaction->respondWithMessage(
                         MessageBuilder::new()
                         ->setContent(
                             sprintf(
@@ -252,9 +252,9 @@ class Bot
                                 date('d.m.Y', $userAvailableTime),
                                 date('H:i', $userAvailableTime)
                             )
-                        )
+                        ),
+                        true
                     );
-                    $interaction->message->delete();
                 },
                 $discord
             )
@@ -264,18 +264,17 @@ class Bot
             ->setLabel('No')
             ->setListener(
                 function (Interaction $interaction) use ($message) {
-                    $message
-                    ->reply(
+                    $interaction
+                    ->respondWithMessage(
                         MessageBuilder::new()
-                        ->setContent('Whoops, sorry!')
+                        ->setContent('Whoops, sorry!'),
+                        true
                     )
                     ->done(
                         function (Message $message) {
                             $message->delayedDelete(2000);
                         }
                     );
-
-                    $interaction->message->delete();
                 },
                 $discord
             )
@@ -289,6 +288,7 @@ class Bot
                 date('H:i', $userAvailableTime),
             )
         )
+        ->_setFlags(Message::FLAG_EPHEMERAL)
         ->addComponent($actionRow);
 
         $message->reply($messageReply);
@@ -312,9 +312,9 @@ class Bot
                 'unavailable',
             );
 
-            foreach ($unavailableKeywordsSingles as $keywords) {
-                if (str_contains($message->content, $keywords)) {
-                    $userAvailabilityPhrase .= $keywords . ' ';
+            foreach ($unavailableKeywordsSingles as $keyword) {
+                if (str_contains($message->content, $keyword)) {
+                    $userAvailabilityPhrase .= $keyword . ' ';
                 }
             }
         }
@@ -381,6 +381,7 @@ class Bot
                                 date('H:i', $userUnavailableTime)
                             )
                         )
+                        ->_setFlags(Message::FLAG_EPHEMERAL)
                     );
                     $interaction->message->delete();
                 },
@@ -396,6 +397,7 @@ class Bot
                     ->reply(
                         MessageBuilder::new()
                         ->setContent('Whoops, sorry!')
+                        ->_setFlags(Message::FLAG_EPHEMERAL)
                     )
                     ->done(
                         function (Message $message) {
@@ -417,6 +419,7 @@ class Bot
                 date('H:i', $userUnavailableTime),
             )
         )
+        ->_setFlags(Message::FLAG_EPHEMERAL)
         ->addComponent($actionRow);
 
         $message->reply($messageReply);
