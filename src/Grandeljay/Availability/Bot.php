@@ -106,14 +106,6 @@ class Bot
             }
         );
 
-        // $this->discord->on(
-        //     Event::INTERACTION_CREATE,
-        //     function (Interaction $interaction, Discord $discord) {
-        //         var_dump($interaction->message);
-        //         die();
-        //     }
-        // );
-
         $this->discord->run();
     }
 
@@ -222,6 +214,10 @@ class Bot
 
         $userAvailabilityPhrase = trim($userAvailabilityPhrase);
 
+        if ('' === $userAvailabilityPhrase) {
+            return false;
+        }
+
         $userIsAvailable = 1 === preg_match('/' . $userAvailabilityPhrase . ' (.+)/i', $message->content, $matches);
 
         if (!$userIsAvailable || !isset($matches[1])) {
@@ -241,10 +237,11 @@ class Bot
             Button::new(Button::STYLE_PRIMARY)
             ->setLabel('Yes')
             ->setListener(
-                function (Interaction $interaction) use ($userAvailableTime) {
+                function (Interaction $interaction) use ($userAvailableTime, $message) {
                     $this->setUserAvailability($interaction->user, true, $userAvailableTime);
 
-                    $interaction->respondWithMessage(
+                    $interaction->message->delete();
+                    $message->reply(
                         MessageBuilder::new()
                         ->setContent(
                             sprintf(
@@ -252,8 +249,8 @@ class Bot
                                 date('d.m.Y', $userAvailableTime),
                                 date('H:i', $userAvailableTime)
                             )
-                        ),
-                        true
+                        )
+                        ->_setFlags(Message::FLAG_EPHEMERAL)
                     );
                 },
                 $discord
@@ -263,18 +260,14 @@ class Bot
             Button::new(Button::STYLE_SECONDARY)
             ->setLabel('No')
             ->setListener(
-                function (Interaction $interaction) use ($message) {
+                function (Interaction $interaction) {
                     $interaction
                     ->respondWithMessage(
                         MessageBuilder::new()
                         ->setContent('Whoops, sorry!'),
                         true
-                    )
-                    ->done(
-                        function (Message $message) {
-                            $message->delayedDelete(2000);
-                        }
                     );
+                    $interaction->message->delete();
                 },
                 $discord
             )
@@ -350,6 +343,10 @@ class Bot
 
         $userAvailabilityPhrase = trim($userAvailabilityPhrase);
 
+        if ('' === $userAvailabilityPhrase) {
+            return false;
+        }
+
         $userIsUnavailable = 1 === preg_match('/' . $userAvailabilityPhrase . ' (.+)/i', $message->content, $matches);
 
         if (!$userIsUnavailable || !isset($matches[1])) {
@@ -372,6 +369,7 @@ class Bot
                 function (Interaction $interaction) use ($userUnavailableTime, $message) {
                     $this->setUserAvailability($interaction->user, false, $userUnavailableTime);
 
+                    $interaction->message->delete();
                     $message->reply(
                         MessageBuilder::new()
                         ->setContent(
@@ -383,7 +381,6 @@ class Bot
                         )
                         ->_setFlags(Message::FLAG_EPHEMERAL)
                     );
-                    $interaction->message->delete();
                 },
                 $discord
             )
@@ -392,19 +389,13 @@ class Bot
             Button::new(Button::STYLE_SECONDARY)
             ->setLabel('No')
             ->setListener(
-                function (Interaction $interaction) use ($message) {
-                    $message
-                    ->reply(
+                function (Interaction $interaction) {
+                    $interaction
+                    ->respondWithMessage(
                         MessageBuilder::new()
-                        ->setContent('Whoops, sorry!')
-                        ->_setFlags(Message::FLAG_EPHEMERAL)
-                    )
-                    ->done(
-                        function (Message $message) {
-                            $message->delayedDelete(2000);
-                        }
+                        ->setContent('Whoops, sorry!'),
+                        true
                     );
-
                     $interaction->message->delete();
                 },
                 $discord
