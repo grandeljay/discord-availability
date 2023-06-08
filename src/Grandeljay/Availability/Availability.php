@@ -56,7 +56,7 @@ class Availability
     {
         $config = new Config();
 
-        $availabilities    = self::getAll($user);
+        $availabilities    = self::get($user);
         $availabilityToAdd = array(
             'userId'                    => $user->id,
             'userName'                  => $user->username,
@@ -79,7 +79,7 @@ class Availability
      *
      * @return array
      */
-    private static function getAll(User $user): array
+    private static function get(User $user): array
     {
         $config = new Config();
 
