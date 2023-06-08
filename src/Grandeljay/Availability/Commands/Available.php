@@ -5,6 +5,7 @@ namespace Grandeljay\Availability\Commands;
 use Discord\Builders\MessageBuilder;
 use Discord\Parts\Interactions\Interaction;
 use Grandeljay\Availability\Bot;
+use Grandeljay\Availability\Availability;
 
 class Available extends Bot
 {
@@ -44,7 +45,7 @@ class Available extends Bot
                     return;
                 }
 
-                $this->setUserAvailability($interaction->user, true, $timeAvailable);
+                Availability::add($interaction->user, true, $timeAvailable, false);
 
                 $interaction
                 ->respondWithMessage(

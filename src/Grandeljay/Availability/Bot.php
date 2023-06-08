@@ -110,38 +110,6 @@ class Bot
     }
 
     /**
-     * Permanently saves the user's specified availability time.
-     *
-     * @param User $user                 The message author.
-     * @param bool $userIsAvailable      Whether the user is available.
-     * @param int  $userAvailabilityTime The unix timestamp of the user's
-     *                                   availability.
-     *
-     * @return void
-     */
-    public function setUserAvailability(User $user, bool $userIsAvailable, int $userAvailabilityTime): void
-    {
-        $directoryAvailabilities = $this->config->get('directory_availabilities');
-
-        if (!file_exists($directoryAvailabilities) || !is_dir($directoryAvailabilities)) {
-            mkdir($directoryAvailabilities);
-        }
-
-        $filename = $user->id . '.json';
-        $filepath = $directoryAvailabilities . '/' . $filename;
-
-        $availability = array(
-            'userId'                    => $user->id,
-            'userName'                  => $user->username,
-            'userIsAvailable'           => $userIsAvailable,
-            'userAvailabilityTime'      => $userAvailabilityTime,
-            'userIsAvailablePerDefault' => false,
-        );
-
-        file_put_contents($filepath, json_encode($availability));
-    }
-
-    /**
      * Returns whether the current user is subscribed. A user is considered
      * subscribed when the has used the `/available` or `/unavailable` command
      * at least once.
@@ -238,7 +206,7 @@ class Bot
             ->setLabel('Yes')
             ->setListener(
                 function (Interaction $interaction) use ($userAvailableTime, $message) {
-                    $this->setUserAvailability($interaction->user, true, $userAvailableTime);
+                    Availability::add($interaction->user, true, $userAvailableTime, false);
 
                     $interaction->message->delete();
                     $message->reply(
@@ -367,7 +335,7 @@ class Bot
             ->setLabel('Yes')
             ->setListener(
                 function (Interaction $interaction) use ($userUnavailableTime, $message) {
-                    $this->setUserAvailability($interaction->user, false, $userUnavailableTime);
+                    Availability::add($interaction->user, false, $userUnavailableTime, false);
 
                     $interaction->message->delete();
                     $message->reply(

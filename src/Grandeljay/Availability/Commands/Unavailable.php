@@ -44,7 +44,7 @@ class Unavailable extends Bot
                     return;
                 }
 
-                $this->setUserAvailability($interaction->user, false, $timeUnavailable);
+                Availability::add($interaction->user, false, $userUnavailableTime, false);
 
                 $interaction
                 ->respondWithMessage(
