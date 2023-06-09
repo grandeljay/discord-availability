@@ -93,11 +93,33 @@ class Availability
         $contents       = file_get_contents($filepath);
         $availabilities = json_decode($contents, true);
 
-        /**
-         * Temporarily needed for backwards compatibility.
-         */
-        if (!is_array($availabilities)) {
-            return array();
+        return $availabilities;
+    }
+
+    /**
+     * Retrieves all subscribed user's availabilities from storage.
+     *
+     * @return array
+     */
+    public static function getAll(): array
+    {
+        $config = new Config();
+
+        $availabilities = array();
+
+        $directory = $config->get('directory_availabilities');
+        $files     = array_filter(
+            scandir($directory),
+            function ($file) use ($directory) {
+                return is_file($directory . '/' . $file);
+            }
+        );
+
+        foreach ($files as $file) {
+            $contents            = file_get_contents($directory . '/' . $file);
+            $availabilitiesStack = json_decode($contents, true);
+
+            $availabilities[] = $availabilitiesStack;
         }
 
         return $availabilities;
@@ -108,22 +130,12 @@ class Availability
      *
      * @param array $availability The user's raw availability data from storage.
      */
-    public function __construct(array $availability = array())
+    public function __construct(array $availabilityData = array())
     {
-        if (
-            isset(
-                $availability['userId'],
-                $availability['userName'],
-                $availability['userIsAvailable'],
-                $availability['userAvailabilityTime'],
-                $availability['userIsAvailablePerDefault'],
-            )
-        ) {
-            $this->userId                    = $availability['userId'];
-            $this->userName                  = $availability['userName'];
-            $this->userIsAvailable           = $availability['userIsAvailable'];
-            $this->userAvailabilityTime      = $availability['userAvailabilityTime'];
-            $this->userIsAvailablePerDefault = $availability['userIsAvailablePerDefault'];
+        foreach ($availabilityData as $property => $value) {
+            if (property_exists($this::class, $property)) {
+                $this->$property = $value;
+            }
         }
     }
 
@@ -143,5 +155,100 @@ class Availability
         );
 
         return $array;
+    }
+
+    /**
+     * Returns whether this instance's availability time is in the past.
+     *
+     * @return boolean
+     */
+    public function isInPast(): bool
+    {
+        $isInPast = $this->userAvailabilityTime < time();
+
+        return $isInPast;
+    }
+
+    /**
+     * Set this instance's availability.
+     *
+     * @param boolean $userIsAvailable           Whether the user is available.
+     * @param boolean $userIsAvailablePerDefault Whether the user is available
+     *                                           without the user explicitly
+     *                                           specifying whether he is.
+     *
+     * @return void
+     */
+    public function setAvailability(bool $userIsAvailable, bool $userIsAvailablePerDefault): void
+    {
+        $this->userIsAvailable           = $userIsAvailable;
+        $this->userIsAvailablePerDefault = $userIsAvailablePerDefault;
+    }
+
+    /**
+     * Set this instance's availability time using a unix timestamp.
+     *
+     * @param integer $userAvailabilityTime The user's availability time as a
+     *                                      unix timestamp.
+     *
+     * @return void
+     */
+    public function setTime(int $userAvailabilityTime): void
+    {
+        $this->userAvailabilityTime = $userAvailabilityTime;
+    }
+
+    /**
+     * Returns whether this instance's availability is assumed as `true`,
+     * without the user explicitly specifying whether he is.
+     *
+     * @return boolean
+     */
+    public function isAvailablePerDefault(): bool
+    {
+        $isAvailablePerDefault = $this->userIsAvailablePerDefault;
+
+        return $isAvailablePerDefault;
+    }
+
+    /**
+     * Returns this instance's availability as a pretty (your mileage may vary),
+     * human readable string.
+     *
+     * @return string
+     */
+    public function toString(): string
+    {
+        $userName   = $this->userName;
+        $text       = $this->userIsAvailable           ? 'available'      : 'unavailable';
+        $emoji      = $this->userIsAvailable           ? ':star_struck:'  : ':angry:';
+        $perDefault = $this->userIsAvailablePerDefault ? ' (per default)' : '';
+        $date       = date('d.m.Y', $this->userAvailabilityTime);
+        $time       = date('H:i', $this->userAvailabilityTime);
+
+        $string = sprintf(
+            '- %s %s is %s on `%s` at `%s`%s',
+            $emoji,
+            $userName,
+            $text,
+            $date,
+            $time,
+            $perDefault
+        );
+
+        return $string;
+    }
+
+    /**
+     * Sets this instance's availability user.
+     *
+     * @param User $user The Discord user.
+     *
+     * @return void
+     */
+    public function setUser(User $user): void
+    {
+        $this->userId   = $user->id;
+        $this->userName = $user->username;
     }
 }
