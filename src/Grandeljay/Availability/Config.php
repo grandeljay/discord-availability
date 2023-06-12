@@ -6,7 +6,11 @@ class Config
 {
     private array $config;
 
-    public string $filepath = '/etc/grandeljay/discord-availability/config.json';
+    // Ordered list of possible config file locations.
+    private $filepaths = array(
+        '$HOME/.config/discord-availability/config.json',
+        '/etc/discord-availability/config.json',
+    );
 
     public function __construct()
     {
@@ -15,12 +19,17 @@ class Config
 
     private function loadConfig(): void
     {
-        if (file_exists($this->filepath)) {
-            $contents     = file_get_contents($this->filepath);
-            $this->config = json_decode($contents, true);
-        } else {
-            die(sprintf('Missing config.json at "%s". Please refer to README.md.', $this->filepath));
+        foreach ($this->filepaths as $path) {
+            $path = str_replace('$HOME', getenv('HOME'), $path);
+
+            if (file_exists($path)) {
+                $contents     = file_get_contents($path);
+                $this->config = json_decode($contents, true);
+                return;
+            }
         }
+
+        die("Missing config.json. Please refer to README.md.\n");
     }
 
     /**
