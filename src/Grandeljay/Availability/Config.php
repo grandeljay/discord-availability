@@ -70,26 +70,12 @@ class Config
     }
 
     /**
-     * Returns the Discord API token, depending on what `use_live_token` is set
-     * to.
+     * Returns the Discord API token.
      *
      * @return string
      */
     public function getAPIToken(): string
     {
-
-        $token = '';
-
-        $use_live_token = $this->get('use_live_token');
-        $token_live     = $this->get('token_live');
-        $token_test     = $this->get('token_test');
-
-        if (true === $use_live_token) {
-            $token = $token_live;
-        } else {
-            $token = $token_test;
-        }
-
-        return $token;
+        return $this->get('token');
     }
 }
