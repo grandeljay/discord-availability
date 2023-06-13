@@ -31,7 +31,7 @@ Discord Availability is a discord bot used to track who will be available for do
 
     Use the following link to authorize the bot for your server. It only asks for the permissions it needs (as little as possible).
 
-    https://discord.com/api/oauth2/authorize?client_id=1100405938801872956&permissions=0&scope=bot%20applications.commands
+    https://discord.com/api/oauth2/authorize?client_id=1100405938801872956&permissions=0&redirect_uri=https%3A%2F%2Fgithub.com%2Fgrandeljay%2Fdiscord-availability&response_type=code&scope=identify%20applications.commands%20bot
 
 Once started, the script will run in loop, indefinitly until stopped. A schedule/cron is not necessary.
 

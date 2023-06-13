@@ -7,8 +7,7 @@ use Discord\Builders\MessageBuilder;
 use Discord\Discord;
 use Discord\Parts\Channel\Message;
 use Discord\Parts\Interactions\Interaction;
-use Discord\Parts\User\User;
-use Discord\WebSockets\Event;
+use Discord\WebSockets\{Event, Intents};
 use Grandeljay\Availability\Commands\Command;
 
 class Bot
@@ -52,7 +51,9 @@ class Bot
         $this->config  = new Config();
         $this->discord = new Discord(
             array(
-                'token' => $this->config->getAPIToken(),
+                'token'          => $this->config->getAPIToken(),
+                'loadAllMembers' => true,
+                'intents'        => Intents::getDefaultIntents() | Intents::GUILD_MEMBERS,
             )
         );
     }
