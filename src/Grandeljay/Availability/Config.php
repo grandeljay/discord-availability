@@ -6,8 +6,6 @@ class Config
 {
     private array $config;
 
-    private $defaultAvailabilitiesDir = '$HOME/.local/share/discord-availability/availabilities';
-
     public function __construct()
     {
         $this->loadConfig();
@@ -35,14 +33,7 @@ class Config
         }
 
         foreach ($filepaths as $filepath) {
-            preg_match('/\$([A-Z]+)/', $filepath, $environmentMatches);
-
-            if (isset($environmentMatches[0], $environmentMatches[1])) {
-                $matchFull                = $environmentMatches[0];
-                $matchEnvironmentVariable = $environmentMatches[1];
-
-                $filepath = str_replace($matchFull, getenv($matchEnvironmentVariable), $filepath);
-            }
+            $filepath = $this->getPathWithEnvironmentVariable($filepath);
 
             if (file_exists($filepath)) {
                 $raw_data    = file_get_contents($filepath);
@@ -55,6 +46,7 @@ class Config
                 }
 
                 $this->config = $parsed_data;
+
                 return;
             }
         }
@@ -83,17 +75,19 @@ class Config
     /**
      * Returns a value from the config.
      *
-     * @param string $key The value's key.
+     * @param string $key     The value's key.
+     * @param mixed  $default The default value to return when the key is not
+     *                        found.
      *
      * @return mixed
      */
-    private function get(string $key): mixed
+    private function get(string $key, mixed $default = null): mixed
     {
         if (isset($this->config[$key])) {
             return $this->config[$key];
         }
 
-        return null;
+        return $default;
     }
 
     /**
@@ -113,11 +107,12 @@ class Config
      */
     public function getAvailabilitiesDir(): string
     {
-        if ($this->get('directory_availabilities')) {
-            return $this->normalizePath($this->get('directory_availabilities'));
-        }
+        $availabilitiesDirDefault = '$HOME/.local/share/discord-availability/availabilities';
+        $availabilitiesDir        = $this->get('directory_availabilities', $availabilitiesDirDefault);
+        $availabilitiesDir        = $this->getPathWithEnvironmentVariable($availabilitiesDir);
+        $availabilitiesDir        = $this->normalizePath($availabilitiesDir);
 
-        return $this->expandHome($this->defaultAvailabilitiesDir);
+        return $availabilitiesDir;
     }
 
     private function normalizePath(string $path): string
@@ -133,5 +128,21 @@ class Config
         }
 
         return $cwd . '/' . $path;
+    }
+
+    private function getPathWithEnvironmentVariable(string $path): string
+    {
+        preg_match_all('/\$([A-Z]+)/', $path, $environmentMatches, PREG_SET_ORDER);
+
+        foreach ($environmentMatches as $match) {
+            if (isset($match[0], $match[1])) {
+                $matchFull                = $match[0];
+                $matchEnvironmentVariable = $match[1];
+
+                $path = str_replace($matchFull, getenv($matchEnvironmentVariable), $path);
+            }
+        }
+
+        return $path;
     }
 }
