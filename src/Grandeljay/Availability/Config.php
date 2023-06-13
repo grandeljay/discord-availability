@@ -46,11 +46,7 @@ class Config
 
             if (file_exists($filepath)) {
                 $raw_data    = file_get_contents($filepath);
-                $parsed_data = json_decode($raw_data, true, 2);
-
-                if ($parsed_data == null) {
-                    die(sprintf("Bad config.json at `%s`: Invalid JSON.\n", $filepath));
-                }
+                $parsed_data = json_decode($raw_data, true, 2, JSON_THROW_ON_ERROR);
 
                 $error = $this->validateConfig($parsed_data);
 
