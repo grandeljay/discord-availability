@@ -6,8 +6,6 @@ class Config
 {
     private array $config;
 
-    public string $filepath = '/etc/grandeljay/discord-availability/config.json';
-
     public function __construct()
     {
         $this->loadConfig();
@@ -15,12 +13,44 @@ class Config
 
     private function loadConfig(): void
     {
-        if (file_exists($this->filepath)) {
-            $contents     = file_get_contents($this->filepath);
-            $this->config = json_decode($contents, true);
-        } else {
-            die(sprintf('Missing config.json at "%s". Please refer to README.md.', $this->filepath));
+        $filepathRelative = 'discord-availability/config.json';
+        $filepaths        = array();
+
+        switch (PHP_OS) {
+            case 'WINNT':
+                $filepaths = array(
+                    '$USERPROFILE/.config/' . $filepathRelative,
+                    '$APPDATA/' . $filepathRelative,
+                );
+                break;
+
+            default:
+                $filepaths = array(
+                    '$HOME/.config/' . $filepathRelative,
+                    '/etc/' . $filepathRelative,
+                );
+                break;
         }
+
+        foreach ($filepaths as $filepath) {
+            preg_match('/\$([A-Z]+)/', $filepath, $environmentMatches);
+
+            if (isset($environmentMatches[0], $environmentMatches[1])) {
+                $matchFull                = $environmentMatches[0];
+                $matchEnvironmentVariable = $environmentMatches[1];
+
+                $filepath = str_replace($matchFull, getenv($matchEnvironmentVariable), $filepath);
+            }
+
+            if (file_exists($filepath)) {
+                $contents     = file_get_contents($filepath);
+                $this->config = json_decode($contents, true);
+
+                return;
+            }
+        }
+
+        die('Missing config.json. Please refer to README.md.\n');
     }
 
     /**
