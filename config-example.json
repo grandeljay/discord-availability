@@ -1,6 +1,4 @@
 {
-    "use_live_token": true,
-    "token_live": "MTEwMDQwNTkzODgwMTg3Mjk1Ng.G6aphe.QQpTiwQ5rHJaPjsCqy1crI8WmENr8zd__-XdXA",
-    "token_test": "MTExNTE5ODk0MTY1OTY2NDM5Nw.Gi_A99.dXh_5Q1hbZz3hyfD-_FmgqEGIscC2fb7oSEMMM",
-    "directory_availabilities": "availabilities"
+    "token": "super-secret-thing",
+    "directory_availabilities": "/var/lib/discord-availability"
 }

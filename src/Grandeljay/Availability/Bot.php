@@ -389,7 +389,7 @@ class Bot
     protected function getAvailabilities(): array
     {
         $availabilities = array();
-        $directory      = $this->config->get('directory_availabilities');
+        $directory      = $this->config->getAvailabilitiesDir();
 
         if (!is_dir($directory)) {
             return $availabilities;
