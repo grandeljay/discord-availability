@@ -3,6 +3,7 @@
 namespace Grandeljay\Availability\Commands;
 
 use Discord\Builders\MessageBuilder;
+use Discord\Parts\Channel\Message;
 use Discord\Parts\Interactions\Interaction;
 use Grandeljay\Availability\Bot;
 use Grandeljay\Availability\Availability;
@@ -33,13 +34,15 @@ class Available extends Bot
                 if (time() >= $timeAvailable) {
                     $interaction
                     ->respondWithMessage(
-                        MessageBuilder::new()->setContent(
+                        MessageBuilder::new()
+                        ->setContent(
                             sprintf(
                                 'You\'re available on `%s` at `%s`? That doesn\'t sound right. Please specify a time in the future.',
                                 date('d.m.Y', $timeAvailable),
                                 date('H:i', $timeAvailable),
                             )
                         )
+                        ->_setFlags(Message::FLAG_EPHEMERAL)
                     );
 
                     return;
