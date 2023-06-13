@@ -51,7 +51,7 @@ class Config
                 $error = $this->validateConfig($parsed_data);
 
                 if ($error) {
-                    die(sprintf("Bad config.json at `%s`: %s\n", $filepath, $error));
+                    die(sprintf('Bad config.json at `%s`: %s\n', $filepath, $error));
                 }
 
                 $this->config = $parsed_data;
