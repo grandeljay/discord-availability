@@ -18,6 +18,7 @@ class Bot
     protected Discord $discord;
     protected Config $config;
     protected Action $action;
+    protected Availability $availabilitiy;
 
     /**
      * Returns the unix timestamp from a user specified date/time.

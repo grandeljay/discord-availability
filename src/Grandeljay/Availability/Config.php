@@ -117,14 +117,10 @@ class Config
 
     private function normalizePath(string $path): string
     {
-        if (str_starts_with($path, '/')) {
-            return $path;
-        }
-
         $cwd = getcwd();
 
-        if (!$cwd) {
-            die('Could not determine current working directory.');
+        if (str_starts_with($path, $cwd)) {
+            return $path;
         }
 
         return $cwd . '/' . $path;

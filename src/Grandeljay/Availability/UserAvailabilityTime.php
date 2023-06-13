@@ -4,33 +4,19 @@ namespace Grandeljay\Availability;
 
 use Discord\Parts\User\User;
 
-class Availability
+class UserAvailabilityTime
 {
-    /**
-     * The user's discord id.
-     *
-     * @var integer
-     */
-    private int $userId;
-
-    /**
-     * The user's discord user name without the discriminator.
-     *
-     * @var string
-     */
-    private string $userName;
-
     /**
      * Whether the user is available or not.
      *
-     * @var boolean
+     * @var bool
      */
     private bool $userIsAvailable;
 
     /**
      * The user's specified availability time as a unix timestamp.
      *
-     * @var integer
+     * @var int
      */
     private int $userAvailabilityTime;
 
@@ -38,31 +24,32 @@ class Availability
      * Whether the user is assumed to be available by the bot. Usually this
      * means that the user did not explicitly specify an availability.
      *
-     * @var boolean
+     * @var bool
      */
     private bool $userIsAvailablePerDefault;
 
     /**
-     * Adds the user's specified availability time to storage.
+     * Adds the user's specified availability to storage.
      *
-     * @param User $user                 The message author.
-     * @param bool $userIsAvailable      Whether the user is available.
-     * @param int  $userAvailabilityTime The unix timestamp of the user's
-     *                                   availability.
+     * @param self $availability An `Availability` instance.
      *
      * @return void
      */
-    public static function add(User $user, bool $userIsAvailable, int $userAvailabilityTime, bool $userIsAvailablePerDefault): void
+    public static function add(self $availability): void
     {
         $config = new Config();
 
-        $availabilities    = self::get($user);
+        $availabilities = self::get($availability->user);
+        $availabilities = new Availabilities();
+
         $availabilityToAdd = array(
-            'userId'                    => $user->id,
-            'userName'                  => $user->username,
-            'userIsAvailable'           => $userIsAvailable,
-            'userAvailabilityTime'      => $userAvailabilityTime,
-            'userIsAvailablePerDefault' => $userIsAvailablePerDefault,
+            'userId'             => $availability->user->id,
+            'userName'           => $availability->user->username,
+            'userAvailabilities' => array(
+                'isAvailable'           => $availability->isAvailable(),
+                'isAvailablePerDefault' => $availability->isAvailablePerDefault(),
+                'time'                  => $availability->getTime(),
+            ),
         );
         $availabilities[]  = $availabilityToAdd;
 
@@ -130,9 +117,9 @@ class Availability
      *
      * @param array $availability The user's raw availability data from storage.
      */
-    public function __construct(array $availabilityData = array())
+    public function __construct(array $availabilityTimeData = array())
     {
-        foreach ($availabilityData as $property => $value) {
+        foreach ($availabilityTimeData as $property => $value) {
             if (property_exists($this::class, $property)) {
                 $this->$property = $value;
             }
@@ -149,6 +136,7 @@ class Availability
         $array = array(
             'userId'                    => $this->userId,
             'userName'                  => $this->userName,
+            'userAvailabilities'        => $this->userAvailabilities,
             'userIsAvailable'           => $this->userIsAvailable,
             'userAvailabilityTime'      => $this->userAvailabilityTime,
             'userIsAvailablePerDefault' => $this->userIsAvailablePerDefault,
@@ -170,6 +158,18 @@ class Availability
     }
 
     /**
+     * Returns whether this instance's availability is `true`.
+     *
+     * @return boolean
+     */
+    public function isAvailable(): bool
+    {
+        $isAvailable = $this->userIsAvailable;
+
+        return $isAvailable;
+    }
+
+    /**
      * Set this instance's availability.
      *
      * @param boolean $userIsAvailable           Whether the user is available.
@@ -183,6 +183,18 @@ class Availability
     {
         $this->userIsAvailable           = $userIsAvailable;
         $this->userIsAvailablePerDefault = $userIsAvailablePerDefault;
+    }
+
+    /**
+     * Returns this instance's available time as a unix timestamp.
+     *
+     * @return integer
+     */
+    public function getTime(): int
+    {
+        $time = $this->userAvailabilityTime;
+
+        return $time;
     }
 
     /**
@@ -250,5 +262,20 @@ class Availability
     {
         $this->userId   = $user->id;
         $this->userName = $user->username;
+    }
+
+    public function getUserIsAvailable(): bool
+    {
+        return $this->userIsAvailable;
+    }
+
+    public function getUserAvailabilityTime(): int
+    {
+        return $this->userAvailabilityTime;
+    }
+
+    public function getUserIsAvailablePerDefault(): bool
+    {
+        return $this->userIsAvailablePerDefault;
     }
 }
