@@ -121,7 +121,7 @@ class Bot
      */
     public function setUserAvailability(User $user, bool $userIsAvailable, int $userAvailabilityTime): void
     {
-        $directoryAvailabilities = $this->config->get('directory_availabilities');
+        $directoryAvailabilities = $this->config->getAvailabiliesDir();
 
         if (!file_exists($directoryAvailabilities) || !is_dir($directoryAvailabilities)) {
             mkdir($directoryAvailabilities);
@@ -421,7 +421,7 @@ class Bot
     protected function getAvailabilities(): array
     {
         $availabilities = array();
-        $directory      = $this->config->get('directory_availabilities');
+        $directory      = $this->config->getAvailabilitiesDir();
 
         if (!is_dir($directory)) {
             return $availabilities;

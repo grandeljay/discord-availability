@@ -1,4 +1,4 @@
 {
     "token": "super-secret-thing",
-    "directory_availabilities": "availabilities"
+    "directory_availabilities": "/var/lib/discord-availability"
 }
