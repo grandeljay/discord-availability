@@ -11,10 +11,7 @@ Discord Availability is a discord bot used to track who will be available for do
 
 1. Setup configuration
 
-    ```
-    sudo mkdir /etc/grandeljay/discord-availability
-    sudo cp config-example.json /etc/grandeljay/discord-availability/config.json
-    ```
+    Copy `config-example.json` to either `~/.config/discord-availability/config.json` or `/etc/discord-availability/config.json`.
 
 1. Install dependencies
 
