@@ -14,7 +14,6 @@ return array(
     'RingCentral\\Psr7\\' => array($vendorDir . '/ringcentral/psr7/src'),
     'React\\Stream\\' => array($vendorDir . '/react/stream/src'),
     'React\\Socket\\' => array($vendorDir . '/react/socket/src'),
-    'React\\Promise\\Timer\\' => array($vendorDir . '/react/promise-timer/src'),
     'React\\Promise\\' => array($vendorDir . '/react/promise/src'),
     'React\\Partial\\' => array($vendorDir . '/react/partial/src'),
     'React\\Http\\' => array($vendorDir . '/react/http/src'),
