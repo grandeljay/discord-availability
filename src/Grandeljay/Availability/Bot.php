@@ -89,6 +89,10 @@ class Bot
                     Command::UNAVAILABLE,
                     'Mark yourself as unavailable.'
                 );
+                $command = new Command(
+                    Command::SHUTDOWN,
+                    'Shutdown the bot.'
+                );
             }
         );
     }

@@ -12,6 +12,7 @@ class Command extends Bot
     public const AVAILABLE    = 'Available';
     public const AVAILABILITY = 'Availability';
     public const UNAVAILABLE  = 'Unavailable';
+    public const SHUTDOWN     = 'Shutdown';
 
     /**
      * Runs a command
