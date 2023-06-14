@@ -42,6 +42,7 @@ The bot currently offers three different slash commands:
 1. `/available <date>` where `date` is a [`strtotime`](https://www.php.net/manual/en/function.strtotime.php) compatible phrase. According to PHP that is: _about any English textual datetime description_.
 2. `/unavailable <date>` where `date` is a [`strtotime`](https://www.php.net/manual/en/function.strtotime.php) compatible phrase. According to PHP that is: _about any English textual datetime description_.
 3. `/availability` which lists the availability of everybody. _Everybody_ in this case means users who have used the `/available` or `/unavailable` command at least once.
+4. `/shutdown` which shuts the bot down. You must be an administrator to do this. Using this before restarting the bot will speed up the process significantly.
 
 Once a user is in the system, the bot will automatically assume the user is available unless he specifies otherwise.
 
