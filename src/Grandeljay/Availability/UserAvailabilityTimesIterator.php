@@ -2,10 +2,11 @@
 
 namespace Grandeljay\Availability;
 
+use Countable;
 use Iterator;
 use JsonSerializable;
 
-class UserAvailabilityTimesIterator implements Iterator, JsonSerializable
+class UserAvailabilityTimesIterator implements Iterator, JsonSerializable, Countable
 {
     private int $position     = 0;
     protected array $elements = array();
@@ -41,9 +42,19 @@ class UserAvailabilityTimesIterator implements Iterator, JsonSerializable
         return $valid;
     }
 
+    public function count(): int
+    {
+        return count($this->elements);
+    }
+
     public function add(UserAvailabilityTime $userAvailabilityTime): void
     {
         $this->elements[] = $userAvailabilityTime;
+    }
+
+    public function get(int $index): UserAvailabilityTime
+    {
+        return $this->elements[$index];
     }
 
     public function jsonSerialize(): array
@@ -59,5 +70,18 @@ class UserAvailabilityTimesIterator implements Iterator, JsonSerializable
         }
 
         return $json;
+    }
+
+    public function sort(string $order)
+    {
+        switch ($order) {
+            case 'ASC':
+                sort($this->elements);
+                break;
+
+            case 'DESC':
+                rsort($this->elements);
+                break;
+        }
     }
 }

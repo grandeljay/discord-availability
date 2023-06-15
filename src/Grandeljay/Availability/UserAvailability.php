@@ -87,6 +87,8 @@ class UserAvailability extends Bot implements \JsonSerializable
      */
     public function save(): void
     {
+        $this->truncate();
+
         $filepathUserAvailability = $this->config->getAvailabilitiesDir() . '/' . $this->user->id . '.json';
         $json                     = json_encode($this->jsonSerialize());
 
@@ -112,5 +114,26 @@ class UserAvailability extends Bot implements \JsonSerializable
     public function getUserAvailabilityTimes(): UserAvailabilityTimes
     {
         return $this->userAvailabilityTimes;
+    }
+
+    public function truncate(): void
+    {
+        $maxValuesAllowed = 100;
+
+        if (count($this->userAvailabilityTimes) <= $maxValuesAllowed) {
+            return;
+        }
+
+        $this->userAvailabilityTimes->sort('DESC');
+
+        $truncated = new UserAvailabilityTimes();
+
+        for ($i = 0; $i < $maxValuesAllowed; $i++) {
+            $userAvailabilityTime = $this->userAvailabilityTimes->get($i);
+
+            $truncated->add($userAvailabilityTime);
+        }
+
+        $this->userAvailabilityTimes = $truncated;
     }
 }
