@@ -4,8 +4,9 @@ namespace Grandeljay\Availability\Commands;
 
 use Discord\Builders\MessageBuilder;
 use Discord\Parts\Interactions\Interaction;
-use Discord\Parts\User\User;
 use Grandeljay\Availability\Bot;
+use Grandeljay\Availability\UserAvailabilities;
+use Grandeljay\Availability\UserAvailabilityTime;
 
 class Availability extends Bot
 {
@@ -16,46 +17,37 @@ class Availability extends Bot
 
     public function run(): void
     {
+        $this->userAvailabilities = UserAvailabilities::getAll($this->config);
+
         $this->discord->listenCommand(
             strtolower(Command::AVAILABILITY),
             function (Interaction $interaction) {
                 $messageRows = array();
 
-                $availabilities = \Grandeljay\Availability\Availability::getAll();
+                foreach ($this->userAvailabilities as $userAvailability) {
+                    $userAvailabilityTimes = array_filter(
+                        $userAvailability->getUserAvailabilityTimes()->jsonSerialize(),
+                        function ($userAvailabilityTimeData) {
+                            $userAvailabilityTime = new UserAvailabilityTime($userAvailabilityTimeData);
 
-                foreach ($availabilities as $availabilitiesStack) {
-                    $availabilitiesStack = array_filter(
-                        $availabilitiesStack,
-                        function (array $availabilityData) {
-                            $availability = new \Grandeljay\Availability\Availability($availabilityData);
-
-                            return !$availability->isInPast();
+                            return !$userAvailabilityTime->isInPast();
                         }
                     );
 
-                    if (empty($availabilitiesStack)) {
-                        $timeDefault = Bot::getTimeFromString(Bot::DATE_DEFAULT);
-
-                        $availability = new \Grandeljay\Availability\Availability();
-                        $availability->setUser($interaction->user);
-                        $availability->setAvailability(true, true);
-                        $availability->setTime($timeDefault);
-
-                        $availabilitiesStack[] = $availability->toArray();
-                    }
-                }
-
-                foreach ($availabilities as $availabilitiesStack) {
                     usort(
-                        $availabilitiesStack,
-                        function ($availabilityA, $availabilityB) {
-                            return $availabilityA['userAvailabilityTime'] <=> $availabilityB['userAvailabilityTime'];
+                        $userAvailabilityTimes,
+                        function ($availabilityDataA, $availabilityDataB) {
+                            $availabilityA = new UserAvailabilityTime($availabilityDataA);
+                            $availabilityB = new UserAvailabilityTime($availabilityDataB);
+
+                            return $availabilityA->getUserAvailabilityTime() <=> $availabilityB->getUserAvailabilityTime();
                         }
                     );
 
-                    $availabilityClosest = new \Grandeljay\Availability\Availability(reset($availabilitiesStack));
+                    $userAvailabilityTimeDataClosest = reset($userAvailabilityTimes);
+                    $userAvailabilityTimeClosest     = new UserAvailabilityTime($userAvailabilityTimeDataClosest);
 
-                    $messageRows[] = $availabilityClosest->toString();
+                    $messageRows[] = $userAvailabilityTimeClosest->toString($interaction->user);
                 }
 
                 if (empty($messageRows)) {

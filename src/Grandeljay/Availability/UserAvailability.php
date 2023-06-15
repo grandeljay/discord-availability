@@ -16,9 +16,9 @@ class UserAvailability extends Bot implements \JsonSerializable
     /**
      * The discord user's availabilities.
      *
-     * @var Availabilities
+     * @var UserAvailabilityTimes
      */
-    private Availabilities $availabilities;
+    private UserAvailabilityTimes $userAvailabilityTimes;
 
     /**
      * Returns the specified user's availability.
@@ -49,7 +49,7 @@ class UserAvailability extends Bot implements \JsonSerializable
     {
         parent::__construct();
 
-        $this->availabilities = new Availabilities();
+        $this->userAvailabilityTimes = new UserAvailabilityTimes();
 
         if (isset($availabilityData['userId'])) {
             $userId = $availabilityData['userId'];
@@ -67,17 +67,17 @@ class UserAvailability extends Bot implements \JsonSerializable
         }
 
         if (isset($availabilityData['availabilities'])) {
-            foreach ($availabilityData['availabilities'] as $availabilityTimeData) {
-                $userAvailabilityTime = new UserAvailabilityTime($availabilityTimeData);
+            foreach ($availabilityData['availabilities'] as $userAvailabilityTimeData) {
+                $userAvailability = new UserAvailabilityTime($userAvailabilityTimeData);
 
-                $this->availabilities->add($userAvailabilityTime);
+                $this->userAvailabilityTimes->add($userAvailability);
             }
         }
     }
 
-    public function addAvailability(UserAvailabilityTime $availabilityTime): void
+    public function addAvailability(UserAvailabilityTime $userAvailabilityTime): void
     {
-        $this->availabilities->add($availabilityTime);
+        $this->userAvailabilityTimes->add($userAvailabilityTime);
     }
 
     /**
@@ -107,5 +107,10 @@ class UserAvailability extends Bot implements \JsonSerializable
     public function setUser(User $user): void
     {
         $this->user = $user;
+    }
+
+    public function getUserAvailabilityTimes(): UserAvailabilityTimes
+    {
+        return $this->userAvailabilityTimes;
     }
 }

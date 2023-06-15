@@ -5,10 +5,10 @@ namespace Grandeljay\Availability;
 use Iterator;
 use JsonSerializable;
 
-class AvailabilitiesIterator implements Iterator, JsonSerializable
+class UserAvailabilityTimesIterator implements Iterator, JsonSerializable
 {
-    private int $position   = 0;
-    private array $elements = array();
+    private int $position     = 0;
+    protected array $elements = array();
 
     public function current(): mixed
     {
