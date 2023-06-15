@@ -26,14 +26,7 @@ class Availability extends Bot
                 $messageRows = array();
 
                 foreach ($this->userAvailabilities as $userAvailability) {
-                    $userAvailabilityTimes = array_filter(
-                        $userAvailability->getUserAvailabilityTimes()->jsonSerialize(),
-                        function ($userAvailabilityTimeData) {
-                            $userAvailabilityTime = new UserAvailabilityTime($userAvailabilityTimeData);
-
-                            return !$userAvailabilityTime->isInPast();
-                        }
-                    );
+                    $userAvailabilityTimes = $userAvailability->getUserAvailabilityTimes()->jsonSerialize();
 
                     usort(
                         $userAvailabilityTimes,
