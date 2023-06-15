@@ -53,6 +53,27 @@ class Command extends Bot
                 ->setDescription($description);
 
                 switch ($command) {
+                    case Command::AVAILABILITY:
+                        $option = new Option($discord);
+                        $option
+                        ->setType(Option::STRING)
+                        ->setName('date')
+                        ->setDescription('Check user availability for date/time. Leave empty to check for now.');
+
+                        $commandObject->addOption($option);
+                        break;
+
+                    case Command::AVAILABLE:
+                        $option = new Option($discord);
+                        $option
+                        ->setType(Option::STRING)
+                        ->setName('date')
+                        ->setDescription('When will you be available?')
+                        ->setRequired(true);
+
+                        $commandObject->addOption($option);
+                        break;
+
                     case Command::AVAILABLE:
                         $option = new Option($discord);
                         $option
@@ -73,10 +94,6 @@ class Command extends Bot
                         ->setRequired(true);
 
                         $commandObject->addOption($option);
-                        break;
-
-                    default:
-                        # code...
                         break;
                 }
 

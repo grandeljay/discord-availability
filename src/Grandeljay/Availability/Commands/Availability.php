@@ -6,6 +6,7 @@ use Discord\Builders\MessageBuilder;
 use Discord\Parts\Interactions\Interaction;
 use Grandeljay\Availability\Bot;
 use Grandeljay\Availability\UserAvailabilities;
+use Grandeljay\Availability\UserAvailability;
 use Grandeljay\Availability\UserAvailabilityTime;
 
 class Availability extends Bot
@@ -44,8 +45,10 @@ class Availability extends Bot
                         }
                     );
 
-                    $userAvailabilityTimeDataClosest = reset($userAvailabilityTimes);
-                    $userAvailabilityTimeClosest     = new UserAvailabilityTime($userAvailabilityTimeDataClosest);
+                    $userAvailabilityTimeClosest = $this->getClosestAvailability(
+                        $userAvailabilityTimes,
+                        $interaction->data->options['date']->value ?? 'now'
+                    );
 
                     $messageRows[] = $userAvailabilityTimeClosest->toString($interaction->user);
                 }
@@ -68,5 +71,27 @@ class Availability extends Bot
                 }
             }
         );
+    }
+
+    private function getClosestAvailability(array $userAvailabilityTimes, string $userAvailabilityTimeText): UserAvailabilityTime
+    {
+        $closestuserAvailabilityTime           = null;
+        $closestuserAvailabilityTimeDifference = null;
+
+        $userAvailabilityTimeTarget = Bot::getTimeFromString($userAvailabilityTimeText);
+
+        foreach ($userAvailabilityTimes as $userAvailabilityTimeData) {
+            $userAvailabilityTime = new UserAvailabilityTime($userAvailabilityTimeData);
+
+            $time       = $userAvailabilityTime->getTime();
+            $difference = abs($userAvailabilityTimeTarget - $time);
+
+            if (null === $closestuserAvailabilityTimeDifference || $difference < $closestuserAvailabilityTimeDifference) {
+                $closestuserAvailabilityTimeDifference = $difference;
+                $closestuserAvailabilityTime           = $userAvailabilityTime;
+            }
+        }
+
+        return $closestuserAvailabilityTime;
     }
 }
