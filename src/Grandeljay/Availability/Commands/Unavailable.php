@@ -5,7 +5,7 @@ namespace Grandeljay\Availability\Commands;
 use Discord\Builders\MessageBuilder;
 use Discord\Parts\Channel\Message;
 use Discord\Parts\Interactions\Interaction;
-use Grandeljay\Availability\{Bot, UserAvailabilities};
+use Grandeljay\Availability\{Bot, UserAvailabilities, UserAvailability, UserAvailabilityTime};
 
 class Unavailable extends Bot
 {
@@ -49,7 +49,13 @@ class Unavailable extends Bot
                     return;
                 }
 
-                Availability::add($interaction->user, false, $userUnavailableTime, false);
+                $userUnavailabilityTime = new UserAvailabilityTime();
+                $userUnavailabilityTime->setAvailability(false, false);
+                $userUnavailabilityTime->setTime($timeUnavailable);
+
+                $userUnavailability = UserAvailability::get($interaction->user);
+                $userUnavailability->addAvailability($userUnavailabilityTime);
+                $userUnavailability->save();
 
                 $interaction
                 ->respondWithMessage(
@@ -57,7 +63,7 @@ class Unavailable extends Bot
                         sprintf(
                             'Gotcha! You are **unavailable** for Dota on `%s` at `%s`.',
                             date('d.m.Y', $timeUnavailable),
-                            date('H:i', $timeUnavailable),
+                            date('H:i', $timeUnavailable)
                         )
                     ),
                     true

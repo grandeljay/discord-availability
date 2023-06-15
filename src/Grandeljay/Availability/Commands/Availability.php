@@ -4,10 +4,7 @@ namespace Grandeljay\Availability\Commands;
 
 use Discord\Builders\MessageBuilder;
 use Discord\Parts\Interactions\Interaction;
-use Grandeljay\Availability\Bot;
-use Grandeljay\Availability\UserAvailabilities;
-use Grandeljay\Availability\UserAvailability;
-use Grandeljay\Availability\UserAvailabilityTime;
+use Grandeljay\Availability\{Bot, UserAvailabilities, UserAvailabilityTimes, UserAvailabilityTime};
 
 class Availability extends Bot
 {
@@ -26,17 +23,7 @@ class Availability extends Bot
                 $messageRows = array();
 
                 foreach ($this->userAvailabilities as $userAvailability) {
-                    $userAvailabilityTimes = $userAvailability->getUserAvailabilityTimes()->jsonSerialize();
-
-                    usort(
-                        $userAvailabilityTimes,
-                        function ($availabilityDataA, $availabilityDataB) {
-                            $availabilityA = new UserAvailabilityTime($availabilityDataA);
-                            $availabilityB = new UserAvailabilityTime($availabilityDataB);
-
-                            return $availabilityA->getUserAvailabilityTime() <=> $availabilityB->getUserAvailabilityTime();
-                        }
-                    );
+                    $userAvailabilityTimes = $userAvailability->getUserAvailabilityTimes();
 
                     $userAvailabilityTimeClosest = $this->getClosestAvailability(
                         $userAvailabilityTimes,
@@ -66,16 +53,14 @@ class Availability extends Bot
         );
     }
 
-    private function getClosestAvailability(array $userAvailabilityTimes, string $userAvailabilityTimeText): UserAvailabilityTime
+    private function getClosestAvailability(UserAvailabilityTimes $userAvailabilityTimes, string $userAvailabilityTimeText): UserAvailabilityTime
     {
         $closestuserAvailabilityTime           = null;
         $closestuserAvailabilityTimeDifference = null;
 
         $userAvailabilityTimeTarget = Bot::getTimeFromString($userAvailabilityTimeText);
 
-        foreach ($userAvailabilityTimes as $userAvailabilityTimeData) {
-            $userAvailabilityTime = new UserAvailabilityTime($userAvailabilityTimeData);
-
+        foreach ($userAvailabilityTimes as $userAvailabilityTime) {
             $time       = $userAvailabilityTime->getTime();
             $difference = abs($userAvailabilityTimeTarget - $time);
 
