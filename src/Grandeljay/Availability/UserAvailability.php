@@ -98,7 +98,7 @@ class UserAvailability extends Bot implements \JsonSerializable
         $json = array(
             'userId'         => $this->user->id,
             'userName'       => $this->user->username,
-            'availabilities' => $this->availabilities->jsonSerialize(),
+            'availabilities' => $this->userAvailabilityTimes->jsonSerialize(),
         );
 
         return $json;

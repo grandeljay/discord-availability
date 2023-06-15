@@ -18,7 +18,7 @@ class Availability extends Bot
 
     public function run(): void
     {
-        $this->userAvailabilities = UserAvailabilities::getAll($this->config);
+        $this->userAvailabilities = UserAvailabilities::getAll();
 
         $this->discord->listenCommand(
             strtolower(Command::AVAILABILITY),

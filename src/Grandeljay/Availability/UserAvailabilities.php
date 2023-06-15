@@ -4,8 +4,9 @@ namespace Grandeljay\Availability;
 
 class UserAvailabilities extends UserAvailabilitiesIterator
 {
-    public static function getAll(Config $config): self
+    public static function getAll(): self
     {
+        $config             = new Config();
         $userAvailabilities = new self();
 
         $directory = $config->getAvailabilitiesDir();

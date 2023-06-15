@@ -5,7 +5,7 @@ namespace Grandeljay\Availability\Commands;
 use Discord\Builders\MessageBuilder;
 use Discord\Parts\Channel\Message;
 use Discord\Parts\Interactions\Interaction;
-use Grandeljay\Availability\Bot;
+use Grandeljay\Availability\{Bot, UserAvailabilities};
 
 class Unavailable extends Bot
 {
@@ -16,6 +16,8 @@ class Unavailable extends Bot
 
     public function run(): void
     {
+        $this->userAvailabilities = UserAvailabilities::getAll();
+
         $this->discord->listenCommand(
             strtolower(Command::UNAVAILABLE),
             function (Interaction $interaction) {
