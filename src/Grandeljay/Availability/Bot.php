@@ -102,14 +102,14 @@ class Bot
     {
         $this->install();
 
-        $this->discord->on(
-            Event::MESSAGE_CREATE,
-            function (Message $message, Discord $discord) {
-                if (!$this->determineIfUnavailable($message, $discord)) {
-                    $this->determineIfAvailable($message, $discord);
-                }
-            }
-        );
+        // $this->discord->on(
+        //     Event::MESSAGE_CREATE,
+        //     function (Message $message, Discord $discord) {
+        //         if (!$this->determineIfUnavailable($message, $discord)) {
+        //             $this->determineIfAvailable($message, $discord);
+        //         }
+        //     }
+        // );
 
         $this->discord->run();
     }
