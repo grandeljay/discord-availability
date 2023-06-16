@@ -61,7 +61,8 @@ class Unavailable extends Bot
                 ->respondWithMessage(
                     MessageBuilder::new()->setContent(
                         sprintf(
-                            'Gotcha! You are **unavailable** for Dota on `%s` at `%s`.',
+                            'Gotcha! You are **unavailable** for %s on `%s` at `%s`.',
+                            $this->config->getEventName(),
                             date('d.m.Y', $timeUnavailable),
                             date('H:i', $timeUnavailable)
                         )

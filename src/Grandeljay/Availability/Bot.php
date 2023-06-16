@@ -249,7 +249,8 @@ class Bot
         $messageReply = MessageBuilder::new()
         ->setContent(
             sprintf(
-                'You will be **available** for dota on `%s` at `%s`, did I get that right?',
+                'You will be **available** for %s on `%s` at `%s`, did I get that right?',
+                $this->config->getEventName(),
                 date('d.m.Y', $userAvailableTime),
                 date('H:i', $userAvailableTime),
             )
@@ -378,7 +379,8 @@ class Bot
         $messageReply = MessageBuilder::new()
         ->setContent(
             sprintf(
-                'You will be **unavailable** for dota on `%s` at `%s`, did I get that right?',
+                'You will be **unavailable** for %s on `%s` at `%s`, did I get that right?',
+                $this->config->getEventName(),
                 date('d.m.Y', $userUnavailableTime),
                 date('H:i', $userUnavailableTime),
             )

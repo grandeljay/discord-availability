@@ -3,5 +3,6 @@
     "directory_availabilities": "/var/lib/discord-availability",
     "maxAvailabilitiesPerUser": 100,
     "defaultTime": "19:00",
-    "defaultDay": "monday"
+    "defaultDay": "monday",
+    "eventName": "Dota 2"
 }

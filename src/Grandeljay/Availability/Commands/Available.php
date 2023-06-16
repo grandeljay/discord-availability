@@ -61,7 +61,8 @@ class Available extends Bot
                 ->respondWithMessage(
                     MessageBuilder::new()->setContent(
                         sprintf(
-                            'Gotcha! You are **available** for Dota on `%s` at `%s`.',
+                            'Gotcha! You are **available** for %s on `%s` at `%s`.',
+                            $this->config->getEventName(),
                             date('d.m.Y', $timeAvailable),
                             date('H:i', $timeAvailable)
                         )

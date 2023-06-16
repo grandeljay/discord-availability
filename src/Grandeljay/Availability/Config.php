@@ -163,4 +163,9 @@ class Config
 
         return $dateTime;
     }
+
+    public function getEventName(): string
+    {
+        return $this->get('eventName', 'Dota 2');
+    }
 }
