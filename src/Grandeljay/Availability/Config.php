@@ -141,4 +141,9 @@ class Config
 
         return $path;
     }
+
+    public function getMaxAvailabilitiesPerUser(): int
+    {
+        return $this->get('maxAvailabilitiesPerUser', 100);
+    }
 }

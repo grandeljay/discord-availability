@@ -1,4 +1,5 @@
 {
     "token": "super-secret-thing",
-    "directory_availabilities": "/var/lib/discord-availability"
+    "directory_availabilities": "/var/lib/discord-availability",
+    "maxAvailabilitiesPerUser": 100
 }

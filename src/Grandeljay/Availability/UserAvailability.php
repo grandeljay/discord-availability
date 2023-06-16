@@ -118,7 +118,7 @@ class UserAvailability extends Bot implements \JsonSerializable
 
     public function truncate(): void
     {
-        $maxValuesAllowed = 100;
+        $maxValuesAllowed = $this->config->getMaxAvailabilitiesPerUser();
 
         if (count($this->userAvailabilityTimes) <= $maxValuesAllowed) {
             return;
