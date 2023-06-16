@@ -157,8 +157,13 @@ class Config
             if (isset($match[0], $match[1])) {
                 $matchFull                = $match[0];
                 $matchEnvironmentVariable = $match[1];
+                $environmentVariable      = getenv($matchEnvironmentVariable);
 
-                $path = str_replace($matchFull, getenv($matchEnvironmentVariable), $path);
+                if (false === $environmentVariable) {
+                    die(sprintf('Could not get value for environment variable "%s".', $matchEnvironmentVariable));
+                }
+
+                $path = str_replace($matchFull, $environmentVariable, $path);
             }
         }
 
