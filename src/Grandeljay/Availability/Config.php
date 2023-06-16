@@ -13,36 +13,36 @@ class Config
 
     private function loadConfig(): void
     {
-        $filepathRelative = 'discord-availability/config.json';
-        $filepaths        = array();
+        $filepathRelative     = 'discord-availability/config.json';
+        $potentialConfigPaths = array();
 
         switch (PHP_OS) {
             case 'WINNT':
-                $filepaths = array(
+                $potentialConfigPaths = array(
                     '$USERPROFILE/.config/' . $filepathRelative,
                     '$APPDATA/' . $filepathRelative,
                 );
                 break;
 
             default:
-                $filepaths = array(
+                $potentialConfigPaths = array(
                     '$HOME/.config/' . $filepathRelative,
                     '/etc/' . $filepathRelative,
                 );
                 break;
         }
 
-        foreach ($filepaths as $filepath) {
-            $filepath = $this->getPathWithEnvironmentVariable($filepath);
+        foreach ($potentialConfigPaths as $potentialConfigPath) {
+            $potentialConfigPath = $this->getPathWithEnvironmentVariable($potentialConfigPath);
 
-            if (file_exists($filepath)) {
-                $raw_data    = file_get_contents($filepath);
+            if (file_exists($potentialConfigPath)) {
+                $raw_data    = file_get_contents($potentialConfigPath);
                 $parsed_data = json_decode($raw_data, true, 2, JSON_THROW_ON_ERROR);
 
                 $error = $this->validateConfig($parsed_data);
 
                 if ($error) {
-                    die(sprintf('Bad config.json at `%s`: %s\n', $filepath, $error));
+                    die(sprintf('Bad config.json at `%s`: %s\n', $potentialConfigPath, $error));
                 }
 
                 $this->config = $parsed_data;
