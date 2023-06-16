@@ -151,7 +151,7 @@ class Config
 
     private function getPathWithEnvironmentVariable(string $path): string
     {
-        preg_match_all('/\$([A-Z]+)/', $path, $environmentMatches, PREG_SET_ORDER);
+        preg_match_all('/\$([A-Z_]+)/', $path, $environmentMatches, PREG_SET_ORDER);
 
         foreach ($environmentMatches as $match) {
             if (isset($match[0], $match[1])) {
