@@ -12,8 +12,9 @@ use Grandeljay\Availability\Commands\Command;
 
 class Bot
 {
-    public const TIME_DEFAULT = '19:00';
-    public const DATE_DEFAULT = 'monday ' . self::TIME_DEFAULT;
+    public const DEFAULT_TIME     = '19:00';
+    public const DEFAULT_DAY      = 'monday';
+    public const DEFAULT_DATETIME = self::DEFAULT_DAY . ' ' . self::DEFAULT_TIME;
 
     protected Discord $discord;
     protected Config $config;
@@ -30,7 +31,7 @@ class Bot
     {
         $message = str_replace(
             array('next week', 'next time', 'next ', 'on ', 'at '),
-            array(self::DATE_DEFAULT, self::DATE_DEFAULT, '', '', ''),
+            array(self::DEFAULT_DATETIME, self::DEFAULT_DATETIME, '', '', ''),
             $message
         );
 

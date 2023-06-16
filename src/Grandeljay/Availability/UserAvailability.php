@@ -113,7 +113,28 @@ class UserAvailability extends Bot implements \JsonSerializable
 
     public function getUserAvailabilityTimes(): UserAvailabilityTimes
     {
-        return $this->userAvailabilityTimes;
+        $userAvailabilityTimes        = $this->userAvailabilityTimes;
+        $userHasAvailabilityForMonday = false;
+
+        foreach ($userAvailabilityTimes as $userAvailabilityTime) {
+            if (Bot::DEFAULT_DAY === strtolower(date('l', $userAvailabilityTime->getTime()))) {
+                $userHasAvailabilityForMonday = true;
+
+                break;
+            }
+        }
+
+        if (false === $userHasAvailabilityForMonday) {
+            $time = Bot::getTimeFromString(Bot::DEFAULT_DATETIME);
+
+            $userAvailabilityDefault = new UserAvailabilityTime();
+            $userAvailabilityDefault->setAvailability(true, true);
+            $userAvailabilityDefault->setTime($time);
+
+            $userAvailabilityTimes->add($userAvailabilityDefault);
+        }
+
+        return $userAvailabilityTimes;
     }
 
     public function truncate(): void
