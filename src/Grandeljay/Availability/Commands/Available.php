@@ -16,11 +16,11 @@ class Available extends Bot
 
     public function run(): void
     {
-        $this->userAvailabilities = UserAvailabilities::getAll();
-
         $this->discord->listenCommand(
             strtolower(Command::AVAILABLE),
             function (Interaction $interaction) {
+                $this->userAvailabilities = UserAvailabilities::getAll();
+
                 $timeAvailable = Bot::getTimeFromString($interaction->data->options['date']->value);
 
                 if (false === $timeAvailable) {

@@ -136,9 +136,6 @@ class UserAvailabilityTime
         $this->userAvailabilities = UserAvailabilities::getAll();
 
         $array = array(
-            'userId'                    => $this->userId,
-            'userName'                  => $this->userName,
-            'userAvailabilities'        => $this->userAvailabilities,
             'userIsAvailable'           => $this->userIsAvailable,
             'userAvailabilityTime'      => $this->userAvailabilityTime,
             'userIsAvailablePerDefault' => $this->userIsAvailablePerDefault,

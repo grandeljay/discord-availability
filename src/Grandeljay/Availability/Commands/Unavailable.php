@@ -16,11 +16,11 @@ class Unavailable extends Bot
 
     public function run(): void
     {
-        $this->userAvailabilities = UserAvailabilities::getAll();
-
         $this->discord->listenCommand(
             strtolower(Command::UNAVAILABLE),
             function (Interaction $interaction) {
+                $this->userAvailabilities = UserAvailabilities::getAll();
+
                 $timeUnavailable = Bot::getTimeFromString($interaction->data->options['date']->value);
 
                 if (false === $timeUnavailable) {

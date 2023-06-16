@@ -15,12 +15,12 @@ class Availability extends Bot
 
     public function run(): void
     {
-        $this->userAvailabilities = UserAvailabilities::getAll();
-
         $this->discord->listenCommand(
             strtolower(Command::AVAILABILITY),
             function (Interaction $interaction) {
                 $messageRows = array();
+
+                $this->userAvailabilities = UserAvailabilities::getAll();
 
                 foreach ($this->userAvailabilities as $userAvailability) {
                     $userAvailabilityTimes = $userAvailability->getUserAvailabilityTimes();
