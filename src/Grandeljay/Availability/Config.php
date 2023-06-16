@@ -115,12 +115,35 @@ class Config
         return $availabilitiesDir;
     }
 
+    /**
+     * Returns an absolute path.
+     *
+     * @param string $path
+     *
+     * @return string
+     */
     private function normalizePath(string $path): string
     {
+        /**
+         * Determine if `$path` is absolute.
+         *
+         * Regex matches forward slash or A-Z or backwards slash.
+         *
+         * `/ | [A-Z] | \`
+         *
+         * Examples:
+         * - `/var/www/linux`
+         * - `C:\Windows`
+         * - `\\WindowsNetworkLocation`
+         */
+        if (1 === preg_match('/\/|[A-Z]|\\\\/', $path)) {
+            return $path;
+        }
+
         $cwd = getcwd();
 
-        if (str_starts_with($path, $cwd)) {
-            return $path;
+        if (!$cwd) {
+            die('Could not determine current working directory.');
         }
 
         return $cwd . '/' . $path;
