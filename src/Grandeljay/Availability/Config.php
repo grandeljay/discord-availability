@@ -146,4 +146,21 @@ class Config
     {
         return $this->get('maxAvailabilitiesPerUser', 100);
     }
+
+    public function getDefaultTime(): string
+    {
+        return $this->get('defaultTime', '19:00');
+    }
+
+    public function getDefaultDay(): string
+    {
+        return $this->get('defaultDay', 'monday');
+    }
+
+    public function getDefaultDateTime(): string
+    {
+        $dateTime = $this->getDefaultDay() . ' ' . $this->getDefaultTime();
+
+        return $dateTime;
+    }
 }

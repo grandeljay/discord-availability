@@ -117,7 +117,10 @@ class UserAvailability extends Bot implements \JsonSerializable
         $userHasAvailabilityForMonday = false;
 
         foreach ($userAvailabilityTimes as $userAvailabilityTime) {
-            if (Bot::DEFAULT_DAY === strtolower(date('l', $userAvailabilityTime->getTime()))) {
+            $userAvailabilityTimeDay = strtolower(date('l', $userAvailabilityTime->getTime()));
+            $defaultDay              = $this->config->getDefaultDay();
+
+            if ($defaultDay === $userAvailabilityTimeDay) {
                 $userHasAvailabilityForMonday = true;
 
                 break;
@@ -125,11 +128,11 @@ class UserAvailability extends Bot implements \JsonSerializable
         }
 
         if (false === $userHasAvailabilityForMonday) {
-            $time = Bot::getTimeFromString(Bot::DEFAULT_DATETIME);
+            $defaultDateTime = $this->config->getDefaultDateTime();
 
             $userAvailabilityDefault = new UserAvailabilityTime();
             $userAvailabilityDefault->setAvailability(true, true);
-            $userAvailabilityDefault->setTime($time);
+            $userAvailabilityDefault->setTime($defaultDateTime);
 
             $userAvailabilityTimes->add($userAvailabilityDefault);
         }

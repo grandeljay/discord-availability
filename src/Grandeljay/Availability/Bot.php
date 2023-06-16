@@ -12,10 +12,6 @@ use Grandeljay\Availability\Commands\Command;
 
 class Bot
 {
-    public const DEFAULT_TIME     = '19:00';
-    public const DEFAULT_DAY      = 'monday';
-    public const DEFAULT_DATETIME = self::DEFAULT_DAY . ' ' . self::DEFAULT_TIME;
-
     protected Discord $discord;
     protected Config $config;
     protected UserAvailabilities $userAvailabilities;
@@ -29,9 +25,12 @@ class Bot
      */
     public static function getTimeFromString(string $message): int|false
     {
+        $config          = new Config();
+        $defaultDateTime = $config->getDefaultDateTime();
+
         $message = str_replace(
             array('next week', 'next time', 'next ', 'on ', 'at '),
-            array(self::DEFAULT_DATETIME, self::DEFAULT_DATETIME, '', '', ''),
+            array($defaultDateTime, $defaultDateTime, '', '', ''),
             $message
         );
 
