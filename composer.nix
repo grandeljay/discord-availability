@@ -42,10 +42,10 @@
     sha256 = "0nvfjlcxdfijwbppg926lj1ilnkc1hab9cwl9lb8yyy179qrwm3r";
     extension = "zip";
   };
-  "nesbot/carbon"."2.66.0" = fetchzip {
+  "nesbot/carbon"."2.67.0" = fetchzip {
     name = "nesbot/carbon";
-    url = "https://api.github.com/repos/briannesbitt/Carbon/zipball/496712849902241f04902033b0441b269effe001";
-    sha256 = "0gnq4px0igqy7zg7wpmg06a1n91hmsq2g44j2l09xnfw2592nk6h";
+    url = "https://api.github.com/repos/briannesbitt/Carbon/zipball/c1001b3bc75039b07f38a79db5237c4c529e04c8";
+    sha256 = "06lh9bsh4bwfz68jy0bp7iaswwr69m3g0x25gx9scfx526rhvqyh";
     extension = "zip";
   };
   "psr/http-factory"."1.0.2" = fetchzip {
@@ -102,10 +102,10 @@
     sha256 = "0ijjm48fz7dakn6ya38ckryhl5hp302jw9vj4qswqmpiap7n4313";
     extension = "zip";
   };
-  "react/dns"."v1.10.0" = fetchzip {
+  "react/dns"."v1.11.0" = fetchzip {
     name = "react/dns";
-    url = "https://api.github.com/repos/reactphp/dns/zipball/a5427e7dfa47713e438016905605819d101f238c";
-    sha256 = "17257fpzf5gnkqskq9y4pv6l4ivb3jg15xja79gxpii0s6snaqq1";
+    url = "https://api.github.com/repos/reactphp/dns/zipball/3be0fc8f1eb37d6875cd6f0c6c7d0be81435de9f";
+    sha256 = "0w0jxmm9w9x9y6plavg0qwsb07nicirl5hfvmxxcgpmsb4xzjgrc";
     extension = "zip";
   };
   "react/event-loop"."v1.4.0" = fetchzip {
@@ -132,16 +132,10 @@
     sha256 = "14ihwnw4qpcilj8yjdri98q0gpnccx935yyfl6qnk4hky4gqywxx";
     extension = "zip";
   };
-  "react/promise-timer"."v1.9.0" = fetchzip {
-    name = "react/promise-timer";
-    url = "https://api.github.com/repos/reactphp/promise-timer/zipball/aa7a73c74b8d8c0f622f5982ff7b0351bc29e495";
-    sha256 = "1659ikah1kxmsymaswvxdhl2s54ci2asjv58awv095w2y6pyiric";
-    extension = "zip";
-  };
-  "react/socket"."v1.12.0" = fetchzip {
+  "react/socket"."v1.13.0" = fetchzip {
     name = "react/socket";
-    url = "https://api.github.com/repos/reactphp/socket/zipball/81e1b4d7f5450ebd8d2e9a95bb008bb15ca95a7b";
-    sha256 = "0cv1153x8wlp4pbiy0z1zgydwc5lphkd4l1iq8v1pjflaf2fm0qv";
+    url = "https://api.github.com/repos/reactphp/socket/zipball/cff482bbad5848ecbe8b57da57e4e213b03619aa";
+    sha256 = "1gprvkmmi5wck5mb8xi6d1iimzyjggqq327xq10hll3d562n2fl5";
     extension = "zip";
   };
   "react/stream"."v1.2.0" = fetchzip {
@@ -174,16 +168,16 @@
     sha256 = "1jxn3bs98cwy84lzalka0ssqlrz57f7r4dh5yj1n11bhl0bljnca";
     extension = "zip";
   };
-  "symfony/deprecation-contracts"."v3.2.1" = fetchzip {
+  "symfony/deprecation-contracts"."v3.3.0" = fetchzip {
     name = "symfony/deprecation-contracts";
-    url = "https://api.github.com/repos/symfony/deprecation-contracts/zipball/e2d1534420bd723d0ef5aec58a22c5fe60ce6f5e";
-    sha256 = "04yakxn0pw4hkf63yy8x016ss6ri52y79v6kwfiv5bcp45jjrjnj";
+    url = "https://api.github.com/repos/symfony/deprecation-contracts/zipball/7c3aff79d10325257a001fcf92d991f24fc967cf";
+    sha256 = "1zicrv4lvhfczcxi411i5r4zmybgip1sr80wa15sad54w3qlxfpz";
     extension = "zip";
   };
-  "symfony/options-resolver"."v6.2.7" = fetchzip {
+  "symfony/options-resolver"."v6.3.0" = fetchzip {
     name = "symfony/options-resolver";
-    url = "https://api.github.com/repos/symfony/options-resolver/zipball/aa0e85b53bbb2b4951960efd61d295907eacd629";
-    sha256 = "0nw9i1l8417c3injk76y9acjgw36mkh23sb5karcarj455489nhs";
+    url = "https://api.github.com/repos/symfony/options-resolver/zipball/a10f19f5198d589d5c33333cffe98dc9820332dd";
+    sha256 = "150kis0s5614c6c59nzaljqx8vmsqnv5i03is2xm51j7mbm7bx4v";
     extension = "zip";
   };
   "symfony/polyfill-mbstring"."v1.27.0" = fetchzip {
@@ -198,16 +192,16 @@
     sha256 = "1lla5l1krhc1f5zpgy5ir7g1bhxd5jpgzz3psqxqkm1va1hhhany";
     extension = "zip";
   };
-  "symfony/translation"."v6.2.8" = fetchzip {
+  "symfony/translation"."v6.3.0" = fetchzip {
     name = "symfony/translation";
-    url = "https://api.github.com/repos/symfony/translation/zipball/817535dbb1721df8b3a8f2489dc7e50bcd6209b5";
-    sha256 = "01dsz0dc999xbah74zp2kynjmxxgvmz8grgmhay71x1p3fkgdhcz";
+    url = "https://api.github.com/repos/symfony/translation/zipball/f72b2cba8f79dd9d536f534f76874b58ad37876f";
+    sha256 = "1ql6ashrdpcj4wr4yr1wk7s3fnb5lv69ypq97jc4s4lbhv3brgqv";
     extension = "zip";
   };
-  "symfony/translation-contracts"."v3.2.1" = fetchzip {
+  "symfony/translation-contracts"."v3.3.0" = fetchzip {
     name = "symfony/translation-contracts";
-    url = "https://api.github.com/repos/symfony/translation-contracts/zipball/dfec258b9dd17a6b24420d464c43bffe347441c8";
-    sha256 = "0s8vyvz5qgka0w3nx4lzzvlmv7rw4g39mk9ahvvp1bw2dzl0i79r";
+    url = "https://api.github.com/repos/symfony/translation-contracts/zipball/02c24deb352fb0d79db5486c0c79905a85e37e86";
+    sha256 = "190gnwlhnzfkcval68pgip8hski22kqmpygl1m1w2cr6wxf30i7d";
     extension = "zip";
   };
   "team-reflex/discord-php"."v7.3.4" = fetchzip {
