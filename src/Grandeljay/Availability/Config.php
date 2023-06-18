@@ -127,16 +127,16 @@ class Config
         /**
          * Determine if `$path` is absolute.
          *
-         * Regex matches forward slash or A-Z or backwards slash.
+         * Regex matches forward slash or A-Z:\ or backwards slash.
          *
-         * `/ | [A-Z] | \`
+         * `^(\/ | [A-Z]:\\ | \\)`
          *
          * Examples:
          * - `/var/www/linux`
          * - `C:\Windows`
          * - `\\WindowsNetworkLocation`
          */
-        if (1 === preg_match('/\/|[A-Z]|\\\\/', $path)) {
+        if (1 === preg_match('@^(\/|[A-Z]:\\\\|\\\\)@', $path)) {
             return $path;
         }
 
