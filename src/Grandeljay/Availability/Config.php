@@ -42,7 +42,7 @@ class Config
                 $error = $this->validateConfig($parsed_data);
 
                 if ($error) {
-                    die(sprintf('Bad config.json at `%s`: %s\n', $potentialConfigPath, $error));
+                    die(sprintf('Bad config.json at `%s`: %s' . PHP_EOL, $potentialConfigPath, $error));
                 }
 
                 $this->config = $parsed_data;
@@ -51,7 +51,7 @@ class Config
             }
         }
 
-        die('Missing config.json. Please refer to README.md.\n');
+        die('Missing config.json. Please refer to README.md.' . PHP_EOL);
     }
 
     /**
