@@ -228,7 +228,7 @@ class UserAvailabilityTime
      *
      * @return string
      */
-    public function toString(User $user): string
+    public function toString(string $userName): string
     {
         $text       = $this->userIsAvailable           ? 'available'      : 'unavailable';
         $emoji      = $this->userIsAvailable           ? ':star_struck:'  : ':angry:';
@@ -239,7 +239,7 @@ class UserAvailabilityTime
         $string = sprintf(
             '- %s %s is %s on `%s` at `%s`%s',
             $emoji,
-            $user->username,
+            $userName,
             $text,
             $date,
             $time,

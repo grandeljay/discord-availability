@@ -30,7 +30,9 @@ class Availability extends Bot
                         $interaction->data->options['date']->value ?? 'now'
                     );
 
-                    $messageRows[] = $userAvailabilityTimeClosest->toString($interaction->user);
+                    $userName = $userAvailability->getUserName();
+
+                    $messageRows[] = $userAvailabilityTimeClosest->toString($userName);
                 }
 
                 if (empty($messageRows)) {

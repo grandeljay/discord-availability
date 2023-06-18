@@ -7,11 +7,18 @@ use Discord\Parts\User\User;
 class UserAvailability extends Bot implements \JsonSerializable
 {
     /**
-     * The discord user.
+     * The discord user id.
      *
-     * @var User
+     * @var int
      */
-    private User $user;
+    private int $userId;
+
+    /**
+     * The discord user name.
+     *
+     * @var string
+     */
+    private string $userName;
 
     /**
      * The discord user's availabilities.
@@ -40,8 +47,6 @@ class UserAvailability extends Bot implements \JsonSerializable
             $availability         = new self($availabilityData);
         }
 
-        $availability->setUser($user);
-
         return $availability;
     }
 
@@ -50,21 +55,8 @@ class UserAvailability extends Bot implements \JsonSerializable
         parent::__construct();
 
         $this->userAvailabilityTimes = new UserAvailabilityTimes();
-
-        if (isset($availabilityData['userId'])) {
-            $userId = $availabilityData['userId'];
-            $user   = $this->discord->users->get('id', $userId);
-
-            if (null === $user) {
-                $this->discord->users->fetch($userId)->done(
-                    function (User $user) {
-                        $this->user = $user;
-                    }
-                );
-            } else {
-                $this->user = $user;
-            }
-        }
+        $this->userId                = $availabilityData['userId'];
+        $this->userName              = $availabilityData['userName'];
 
         if (isset($availabilityData['availabilities'])) {
             foreach ($availabilityData['availabilities'] as $userAvailabilityTimeData) {
@@ -104,11 +96,6 @@ class UserAvailability extends Bot implements \JsonSerializable
         );
 
         return $json;
-    }
-
-    public function setUser(User $user): void
-    {
-        $this->user = $user;
     }
 
     public function getUserAvailabilityTimes(): UserAvailabilityTimes
@@ -159,5 +146,10 @@ class UserAvailability extends Bot implements \JsonSerializable
         }
 
         $this->userAvailabilityTimes = $truncated;
+    }
+
+    public function getUserName(): string
+    {
+        return $this->userName;
     }
 }
