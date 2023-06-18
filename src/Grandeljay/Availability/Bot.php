@@ -9,6 +9,8 @@ use Discord\Parts\Channel\Message;
 use Discord\Parts\Interactions\Interaction;
 use Discord\WebSockets\{Event, Intents};
 use Grandeljay\Availability\Commands\Command;
+use Monolog\Handler\StreamHandler;
+use Monolog\{Logger, Level};
 
 class Bot
 {
@@ -48,12 +50,17 @@ class Bot
      */
     public function __construct()
     {
-        $this->config  = new Config();
+        $this->config = new Config();
+        $logLevel     = Level::fromName($this->config->getLogLevel());
+        $logger       = new Logger('discord-availability');
+        $logger->pushHandler(new StreamHandler('php://stdout', $logLevel));
+
         $this->discord = new Discord(
             array(
                 'token'          => $this->config->getAPIToken(),
                 'loadAllMembers' => true,
                 'intents'        => Intents::getDefaultIntents() | Intents::GUILD_MEMBERS,
+                'logger'         => $logger,
             )
         );
     }

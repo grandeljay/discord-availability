@@ -196,4 +196,9 @@ class Config
     {
         return $this->get('eventName', 'Dota 2');
     }
+
+    public function getLogLevel(): string
+    {
+        return $this->get('logLevel', 'Info');
+    }
 }
