@@ -405,32 +405,4 @@ class Bot
 
         return true;
     }
-
-    protected function getAvailabilities(): array
-    {
-        $availabilities = array();
-        $directory      = $this->config->getAvailabilitiesDir();
-
-        if (!is_dir($directory)) {
-            return $availabilities;
-        }
-
-        $files = array_filter(
-            scandir($directory),
-            function ($filename) use ($directory) {
-                $filepath = $directory . '/'  . $filename;
-
-                return is_file($filepath);
-            }
-        );
-
-        foreach ($files as $filename) {
-            $filepath         = $directory . '/' . $filename;
-            $fileContents     = file_get_contents($filepath);
-            $availabilitiy    = json_decode($fileContents, true);
-            $availabilities[] = $availabilitiy;
-        }
-
-        return $availabilities;
-    }
 }
