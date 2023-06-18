@@ -102,14 +102,14 @@ class Bot
     {
         $this->install();
 
-        // $this->discord->on(
-        //     Event::MESSAGE_CREATE,
-        //     function (Message $message, Discord $discord) {
-        //         if (!$this->determineIfUnavailable($message, $discord)) {
-        //             $this->determineIfAvailable($message, $discord);
-        //         }
-        //     }
-        // );
+        $this->discord->on(
+            Event::MESSAGE_CREATE,
+            function (Message $message, Discord $discord) {
+                if (!$this->determineIfUnavailable($message, $discord)) {
+                    $this->determineIfAvailable($message, $discord);
+                }
+            }
+        );
 
         $this->discord->run();
     }
@@ -125,11 +125,11 @@ class Bot
      */
     private function userIsSubscribed(int $userId): bool
     {
-        $availabilities   = $this->getAvailabilities();
-        $userIsSubscribed = false;
+        $userIsSubscribed   = false;
+        $userAvailabilities = UserAvailabilities::getAll();
 
-        foreach ($availabilities as $availability) {
-            if ((int) $availability['userId'] === $userId) {
+        foreach ($userAvailabilities as $availability) {
+            if ($availability->getUserId() === $userId) {
                 $userIsSubscribed = true;
 
                 break;
@@ -211,9 +211,15 @@ class Bot
             ->setLabel('Yes')
             ->setListener(
                 function (Interaction $interaction) use ($userAvailableTime, $message) {
-                    Availability::add($interaction->user, true, $userAvailableTime, false);
+                    $userAvailabilityTime = new UserAvailabilityTime();
+                    $userAvailabilityTime->setAvailability(true, false);
+                    $userAvailabilityTime->setTime($userAvailableTime);
+
+                    $userAvailability = UserAvailability::get($interaction->user);
+                    $userAvailability->addAvailability($userAvailabilityTime);
 
                     $interaction->message->delete();
+
                     $message->reply(
                         MessageBuilder::new()
                         ->setContent(
@@ -300,6 +306,7 @@ class Bot
                     'wont',
                 ),
                 array(
+                    'be available',
                     'be there',
                     'come',
                     'make it',
@@ -341,9 +348,15 @@ class Bot
             ->setLabel('Yes')
             ->setListener(
                 function (Interaction $interaction) use ($userUnavailableTime, $message) {
-                    Availability::add($interaction->user, false, $userUnavailableTime, false);
+                    $userAvailabilityTime = new UserAvailabilityTime();
+                    $userAvailabilityTime->setAvailability(false, false);
+                    $userAvailabilityTime->setTime($userUnavailableTime);
+
+                    $userAvailability = UserAvailability::get($interaction->user);
+                    $userAvailability->addAvailability($userAvailabilityTime);
 
                     $interaction->message->delete();
+
                     $message->reply(
                         MessageBuilder::new()
                         ->setContent(

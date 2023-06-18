@@ -55,8 +55,14 @@ class UserAvailability extends Bot implements \JsonSerializable
         parent::__construct();
 
         $this->userAvailabilityTimes = new UserAvailabilityTimes();
-        $this->userId                = $availabilityData['userId'];
-        $this->userName              = $availabilityData['userName'];
+
+        if (isset($availabilityData['userId'])) {
+            $this->userId = $availabilityData['userId'];
+        }
+
+        if (isset($availabilityData['userName'])) {
+            $this->userName = $availabilityData['userName'];
+        }
 
         if (isset($availabilityData['availabilities'])) {
             foreach ($availabilityData['availabilities'] as $userAvailabilityTimeData) {
@@ -146,6 +152,11 @@ class UserAvailability extends Bot implements \JsonSerializable
         }
 
         $this->userAvailabilityTimes = $truncated;
+    }
+
+    public function getUserId(): int
+    {
+        return $this->userId;
     }
 
     public function getUserName(): string
