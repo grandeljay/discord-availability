@@ -108,7 +108,7 @@ class Config
     public function getAvailabilitiesDir(): string
     {
         $availabilitiesDirDefault = '$HOME/.local/share/discord-availability/availabilities';
-        $availabilitiesDir        = $this->get('directory_availabilities', $availabilitiesDirDefault);
+        $availabilitiesDir        = $this->get('directoryAvailabilities', $availabilitiesDirDefault);
         $availabilitiesDir        = $this->getPathWithEnvironmentVariable($availabilitiesDir);
         $availabilitiesDir        = $this->normalizePath($availabilitiesDir);
 

@@ -94,7 +94,7 @@ class UserAvailabilityTime
 
         $availabilities = array();
 
-        $directory = $config->get('directory_availabilities');
+        $directory = $config->get('directoryAvailabilities');
         $files     = array_filter(
             scandir($directory),
             function ($file) use ($directory) {
