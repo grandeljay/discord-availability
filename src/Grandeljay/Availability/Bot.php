@@ -224,6 +224,7 @@ class Bot
 
                     $userAvailability = UserAvailability::get($interaction->user);
                     $userAvailability->addAvailability($userAvailabilityTime);
+                    $userAvailability->save();
 
                     $interaction->message->delete();
 
@@ -361,6 +362,7 @@ class Bot
 
                     $userAvailability = UserAvailability::get($interaction->user);
                     $userAvailability->addAvailability($userAvailabilityTime);
+                    $userAvailability->save();
 
                     $interaction->message->delete();
 

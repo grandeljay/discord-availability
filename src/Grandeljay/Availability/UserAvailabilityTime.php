@@ -29,61 +29,6 @@ class UserAvailabilityTime
     private bool $userIsAvailablePerDefault;
 
     /**
-     * Adds the user's specified availability to storage.
-     *
-     * @param self $availability An `Availability` instance.
-     *
-     * @return void
-     */
-    public static function add(self $availability): void
-    {
-        $config = new Config();
-
-        $availabilities = self::get($availability->user);
-        $availabilities = new Availabilities();
-
-        $availabilityToAdd = array(
-            'userId'             => $availability->user->id,
-            'userName'           => $availability->user->username,
-            'userAvailabilities' => array(
-                'isAvailable'           => $availability->isAvailable(),
-                'isAvailablePerDefault' => $availability->isAvailablePerDefault(),
-                'time'                  => $availability->getTime(),
-            ),
-        );
-        $availabilities[]  = $availabilityToAdd;
-
-        $filename = $user->id . '.json';
-        $filepath = $config->get('directory_availabilities') . '/' . $filename;
-
-        file_put_contents($filepath, json_encode($availabilities));
-    }
-
-    /**
-     * Retrieves the user's availabilities from storage.
-     *
-     * @param User $user The user's availability to get.
-     *
-     * @return array
-     */
-    private static function get(User $user): array
-    {
-        $config = new Config();
-
-        $id       = $user->id;
-        $filepath = $config->get('directory_availabilities') . '/' . $id . '.json';
-
-        if (!file_exists($filepath)) {
-            return array();
-        }
-
-        $contents       = file_get_contents($filepath);
-        $availabilities = json_decode($contents, true);
-
-        return $availabilities;
-    }
-
-    /**
      * Retrieves all subscribed user's availabilities from storage.
      *
      * @return array
@@ -247,19 +192,6 @@ class UserAvailabilityTime
         );
 
         return $string;
-    }
-
-    /**
-     * Sets this instance's availability user.
-     *
-     * @param User $user The Discord user.
-     *
-     * @return void
-     */
-    public function setUser(User $user): void
-    {
-        $this->userId   = $user->id;
-        $this->userName = $user->username;
     }
 
     public function getUserIsAvailable(): bool

@@ -66,9 +66,9 @@ class UserAvailability extends Bot implements \JsonSerializable
 
         if (isset($availabilityData['availabilities'])) {
             foreach ($availabilityData['availabilities'] as $userAvailabilityTimeData) {
-                $userAvailability = new UserAvailabilityTime($userAvailabilityTimeData);
+                $userAvailabilityTime = new UserAvailabilityTime($userAvailabilityTimeData);
 
-                $this->userAvailabilityTimes->add($userAvailability);
+                $this->userAvailabilityTimes->add($userAvailabilityTime);
             }
         }
     }
@@ -87,7 +87,7 @@ class UserAvailability extends Bot implements \JsonSerializable
     {
         $this->truncate();
 
-        $filepathUserAvailability = $this->config->getAvailabilitiesDir() . '/' . $this->user->id . '.json';
+        $filepathUserAvailability = $this->config->getAvailabilitiesDir() . '/' . $this->userId . '.json';
         $json                     = json_encode($this->jsonSerialize());
 
         file_put_contents($filepathUserAvailability, $json);
@@ -96,8 +96,8 @@ class UserAvailability extends Bot implements \JsonSerializable
     public function jsonSerialize(): array
     {
         $json = array(
-            'userId'         => $this->user->id,
-            'userName'       => $this->user->username,
+            'userId'         => $this->userId,
+            'userName'       => $this->userName,
             'availabilities' => $this->userAvailabilityTimes->jsonSerialize(),
         );
 
