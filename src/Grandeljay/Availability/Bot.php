@@ -44,6 +44,7 @@ class Bot
 
         $time = strtotime($message);
 
+        // TODO: Add time based on the configuration value `defaultTime`.
         if ('00:00' === date('H:i', $time)) {
             $time += 19 * 3600;
         }
