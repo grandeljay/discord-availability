@@ -3,21 +3,16 @@
 namespace Grandeljay\Availability\Commands;
 
 use Discord\Builders\MessageBuilder;
+use Discord\Discord;
 use Discord\Parts\Interactions\Interaction;
-use Grandeljay\Availability\Bot;
 
-class Shutdown extends Bot
+class Shutdown extends Command
 {
-    public function __construct()
+    public function run(Discord $discord): void
     {
-        parent::__construct();
-    }
-
-    public function run(): void
-    {
-        $this->discord->listenCommand(
+        $discord->listenCommand(
             strtolower(Command::SHUTDOWN),
-            function (Interaction $interaction) {
+            function (Interaction $interaction) use ($discord) {
                 /**
                  * Using
                  * `isset($interaction->member->permissions->administrator)`
@@ -34,8 +29,8 @@ class Shutdown extends Bot
                         ->setContent('Alright everybody, I\'m out. Bot commands such as `/availability` will no longer work until I\'m back.')
                     )
                     ->done(
-                        function () {
-                            $this->discord->close();
+                        function () use ($discord) {
+                            $discord->close();
                         }
                     );
                 } else {
@@ -47,5 +42,9 @@ class Shutdown extends Bot
                 }
             }
         );
+    }
+
+    private function closeOnComplete()
+    {
     }
 }

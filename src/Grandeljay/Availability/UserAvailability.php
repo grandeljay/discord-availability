@@ -4,8 +4,10 @@ namespace Grandeljay\Availability;
 
 use Discord\Parts\User\User;
 
-class UserAvailability extends Bot implements \JsonSerializable
+class UserAvailability implements \JsonSerializable
 {
+    private Config $config;
+
     /**
      * The discord user id.
      *
@@ -52,8 +54,7 @@ class UserAvailability extends Bot implements \JsonSerializable
 
     public function __construct(array $availabilityData = array())
     {
-        parent::__construct();
-
+        $this->config                = new Config();
         $this->userAvailabilityTimes = new UserAvailabilityTimes();
 
         if (isset($availabilityData['userId'])) {

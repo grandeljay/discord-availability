@@ -3,20 +3,16 @@
 namespace Grandeljay\Availability\Commands;
 
 use Discord\Builders\MessageBuilder;
+use Discord\Discord;
 use Discord\Parts\Channel\Message;
 use Discord\Parts\Interactions\Interaction;
-use Grandeljay\Availability\{Bot, UserAvailabilities, UserAvailability, UserAvailabilityTime};
+use Grandeljay\Availability\{Bot, Config, UserAvailabilities, UserAvailability, UserAvailabilityTime};
 
-class Unavailable extends Bot
+class Unavailable extends Command
 {
-    public function __construct()
+    public function run(Discord $discord): void
     {
-        parent::__construct();
-    }
-
-    public function run(): void
-    {
-        $this->discord->listenCommand(
+        $discord->listenCommand(
             strtolower(Command::UNAVAILABLE),
             function (Interaction $interaction) {
                 $this->userAvailabilities = UserAvailabilities::getAll();
@@ -57,12 +53,14 @@ class Unavailable extends Bot
                 $userUnavailability->addAvailability($userUnavailabilityTime);
                 $userUnavailability->save();
 
+                $config = new Config();
+
                 $interaction
                 ->respondWithMessage(
                     MessageBuilder::new()->setContent(
                         sprintf(
                             'Gotcha! You are **unavailable** for %s on `%s` at `%s`.',
-                            $this->config->getEventName(),
+                            $config->getEventName(),
                             date('d.m.Y', $timeUnavailable),
                             date('H:i', $timeUnavailable)
                         )

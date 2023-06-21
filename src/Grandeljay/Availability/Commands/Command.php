@@ -2,31 +2,21 @@
 
 namespace Grandeljay\Availability\Commands;
 
-use Discord\Builders\{CommandBuilder, MessageBuilder};
+use Discord\Builders\CommandBuilder;
 use Discord\Discord;
 use Discord\Parts\Interactions\Command\Option;
-use Grandeljay\Availability\Bot;
 
-class Command extends Bot
+class Command
 {
+    private Discord $discord;
+    private string $description;
+
+    protected string $name;
+
     public const AVAILABLE    = 'Available';
     public const AVAILABILITY = 'Availability';
     public const UNAVAILABLE  = 'Unavailable';
     public const SHUTDOWN     = 'Shutdown';
-
-    /**
-     * Runs a command
-     *
-     * @param string $command The command to run.
-     *
-     * @return void
-     */
-    public static function run(string $command): void
-    {
-        $commandClassName = __NAMESPACE__ . '\\' . $command;
-        $commandClass     = new $commandClassName();
-        $commandClass->run();
-    }
 
     /**
      * Construct
@@ -34,75 +24,84 @@ class Command extends Bot
      * @param string $command     The command to add and listen for.
      * @param string $description Description for the command.
      */
-    public function __construct(string $command, string $description)
+    public function __construct(Discord $discord, string $command, string $description)
     {
-        parent::__construct();
+        $this->discord     = $discord;
+        $this->name        = $command;
+        $this->description = $description;
 
-        $this->discord->on(
-            'ready',
-            function (Discord $discord) use ($command, $description) {
-                /**
-                 * When the bot is ready, attempt to create a global slash
-                 * command. After the command was successfully created, please
-                 * remove this code.
-                 *
-                 * @see https://github.com/discord-php/DiscordPHP/wiki/Slash-Command
-                 */
-                $commandObject = CommandBuilder::new()
-                ->setName(strtolower($command))
-                ->setDescription($description);
+        /**
+         * When the bot is ready, attempt to create a global slash
+         * command. After the command was successfully created, please
+         * remove this code.
+         *
+         * @see https://github.com/discord-php/DiscordPHP/wiki/Slash-Command
+         */
+        $commandBuilder = CommandBuilder::new()
+        ->setName(strtolower($this->name))
+        ->setDescription($this->description);
 
-                switch ($command) {
-                    case Command::AVAILABILITY:
-                        $option = new Option($discord);
-                        $option
-                        ->setType(Option::STRING)
-                        ->setName('date')
-                        ->setDescription('Check user availability for date/time. Leave empty to check for now.');
+        switch ($this->name) {
+            case Command::AVAILABILITY:
+                $option = new Option($this->discord);
+                $option
+                ->setType(Option::STRING)
+                ->setName('date')
+                ->setDescription('Check user availability for date/time. Leave empty to check for monday.');
 
-                        $commandObject->addOption($option);
-                        break;
+                $commandBuilder->addOption($option);
+                break;
 
-                    case Command::AVAILABLE:
-                        $option = new Option($discord);
-                        $option
-                        ->setType(Option::STRING)
-                        ->setName('date')
-                        ->setDescription('When will you be available?')
-                        ->setRequired(true);
+            case Command::AVAILABLE:
+                $option = new Option($this->discord);
+                $option
+                ->setType(Option::STRING)
+                ->setName('date')
+                ->setDescription('When will you be available?')
+                ->setRequired(true);
 
-                        $commandObject->addOption($option);
-                        break;
+                $commandBuilder->addOption($option);
+                break;
 
-                    case Command::AVAILABLE:
-                        $option = new Option($discord);
-                        $option
-                        ->setType(Option::STRING)
-                        ->setName('date')
-                        ->setDescription('When will you be available?')
-                        ->setRequired(true);
+            case Command::AVAILABLE:
+                $option = new Option($this->discord);
+                $option
+                ->setType(Option::STRING)
+                ->setName('date')
+                ->setDescription('When will you be available?')
+                ->setRequired(true);
 
-                        $commandObject->addOption($option);
-                        break;
+                $commandBuilder->addOption($option);
+                break;
 
-                    case Command::UNAVAILABLE:
-                        $option = new Option($discord);
-                        $option
-                        ->setType(Option::STRING)
-                        ->setName('date')
-                        ->setDescription('When will you be unavailable?')
-                        ->setRequired(true);
+            case Command::UNAVAILABLE:
+                $option = new Option($this->discord);
+                $option
+                ->setType(Option::STRING)
+                ->setName('date')
+                ->setDescription('When will you be unavailable?')
+                ->setRequired(true);
 
-                        $commandObject->addOption($option);
-                        break;
-                }
+                $commandBuilder->addOption($option);
+                break;
+        }
 
-                $discord->application->commands->save(
-                    $discord->application->commands->create($commandObject->toArray())
-                );
-            }
-        );
+        $commandArray  = $commandBuilder->toArray();
+        $commandObject = $this->discord->application->commands->create($commandArray);
 
-        self::run($command);
+        $this->discord->application->commands->save($commandObject);
+    }
+
+    /**
+     * Returns the current command.
+     *
+     * @return void
+     */
+    public function get(): self
+    {
+        $commandClassName = __NAMESPACE__ . '\\' . $this->name;
+        $commandClass     = new $commandClassName($this->discord, $this->name, $this->description);
+
+        return $commandClass;
     }
 }

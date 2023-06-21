@@ -3,21 +3,18 @@
 namespace Grandeljay\Availability\Commands;
 
 use Discord\Builders\MessageBuilder;
+use Discord\Discord;
 use Discord\Parts\Interactions\Interaction;
-use Grandeljay\Availability\{Bot, UserAvailabilities, UserAvailabilityTimes, UserAvailabilityTime};
+use Grandeljay\Availability\{Bot, Config, UserAvailabilities, UserAvailabilityTimes, UserAvailabilityTime};
 
-class Availability extends Bot
+class Availability extends Command
 {
-    public function __construct()
+    public function run(Discord $discord): void
     {
-        parent::__construct();
-    }
-
-    public function run(): void
-    {
-        $this->discord->listenCommand(
+        $discord->listenCommand(
             strtolower(Command::AVAILABILITY),
             function (Interaction $interaction) {
+                $config      = new Config();
                 $messageRows = array();
 
                 $this->userAvailabilities = UserAvailabilities::getAll();
@@ -27,7 +24,7 @@ class Availability extends Bot
 
                     $userAvailabilityTimeClosest = $this->getClosestAvailability(
                         $userAvailabilityTimes,
-                        $interaction->data->options['date']->value ?? 'now'
+                        $interaction->data->options['date']->value ?? $config->getDefaultDateTime()
                     );
 
                     $userName = $userAvailability->getUserName();
