@@ -345,11 +345,15 @@ class Bot
                 ),
             );
 
-            foreach ($unavailableKeywordsPairs as $keywordsSet) {
+            foreach ($unavailableKeywordsPairs as $keywordSetIndex => $keywordsSet) {
                 foreach ($keywordsSet as $keyword) {
                     if (str_contains($message->content, $keyword)) {
                         $userAvailabilityPhrase .= $keyword . ' ';
                     }
+                }
+
+                if (0 === $keywordSetIndex && '' === $userAvailabilityPhrase) {
+                    break;
                 }
             }
         }
