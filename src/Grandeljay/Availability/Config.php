@@ -86,9 +86,62 @@ class Config
 
         $dir = $inputDir ?? $default;
         $dir = $this->getPathWithEnvironmentVariable($dir);
-        $dir = realpath($dir);
+        $dir = $this->normalizePath($dir);
 
         return $dir;
+    }
+
+    /**
+     * Returns an absolute path.
+     *
+     * Unlike `realpath` this function also works on paths that don't point to
+     * an existing file.
+     *
+     * Also, symlinks are not resolved.
+     *
+     * @param string $path
+     *
+     * @return string
+     */
+    private function normalizePath(string $path): string
+    {
+        if ($this->isPathAbsolute($path)) {
+            return $path;
+        }
+
+        $cwd = getcwd();
+
+        if (!$cwd) {
+            die('Could not determine current working directory.');
+        }
+
+        $segments     = array($cwd, $path);
+        $absolutePath = implode(DIRECTORY_SEPARATOR, $segments);
+
+        return $absolutePath;
+    }
+
+    /**
+     * Returns whether `$path` is an absolute path.
+     *
+     * Examples of absolute paths:
+     * - `/var/www/linux`
+     * - `C:\Windows`
+     * - `\\WindowsNetworkLocation`
+     *
+     * @param string $path
+     *
+     * @return bool `true` if the path is absolute, otherwise `false`.
+     */
+    private function isPathAbsolute(string $path): bool
+    {
+        // Note: A single backslash must be denoted as four `\` characters in a
+        // `preg_match` regex.
+        if (1 === preg_match('@^(/|[A-Z]:\\\\|\\\\\\\\)@', $path)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
