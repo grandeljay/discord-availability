@@ -36,22 +36,57 @@ class Config
             $potentialConfigPath = $this->getPathWithEnvironmentVariable($potentialConfigPath);
 
             if (file_exists($potentialConfigPath)) {
-                $raw_data    = file_get_contents($potentialConfigPath);
-                $parsed_data = json_decode($raw_data, true, 2, JSON_THROW_ON_ERROR);
-
-                $error = $this->validateConfig($parsed_data);
+                $rawData       = file_get_contents($potentialConfigPath);
+                $parsedData    = json_decode($rawData, true, 2, JSON_THROW_ON_ERROR);
+                $normalizedCfg = $this->normalizeConfig($parsedData);
+                $error         = $this->validateConfig($normalizedCfg);
 
                 if ($error) {
                     die(sprintf('Bad config.json at `%s`: %s' . PHP_EOL, $potentialConfigPath, $error));
                 }
 
-                $this->config = $parsed_data;
+                $this->config = $normalizedCfg;
 
                 return;
             }
         }
 
         die('Missing config.json. Please refer to README.md.' . PHP_EOL);
+    }
+
+    /**
+     * Processes the passed raw config and returns it in normalized form.
+     *
+     * Note: This function doesn't do any validation.
+     *
+     * @param array $config The raw config to normalize. This is essentially
+     *                      just the decoded json string.
+     *
+     * @return array The normalized config.
+     */
+    private function normalizeConfig(array $rawConfig): array
+    {
+        $normalizedConfig = $rawConfig; // Create a copy.
+
+        $normalizedConfig['directoryAvailabilities'] = $this->normalizeAvailabilitiesDir($rawConfig['directoryAvailabilities']);
+        $normalizedConfig['maxAvailabilitiesPerUser'] = $rawConfig['maxAvailabilitiesPerUser'] ?? 100;
+        $normalizedConfig['defaultDay'] = $rawConfig['defaultDay'] ?? "monday";
+        $normalizedConfig['defaultTime'] = $rawConfig['defaultTime'] ?? "19:00";
+        $normalizedConfig['eventName'] = $rawConfig['eventName'] ?? "Dota 2";
+        $normalizedConfig['logLevel'] = $rawConfig['logLevel'] ?? "Info";
+
+        return $normalizedConfig;
+    }
+
+    private function normalizeAvailabilitiesDir(?string $inputDir): string
+    {
+        $default = '$HOME/.local/share/discord-availability/availabilities';
+
+        $dir = $inputDir ?? $default;
+        $dir = $this->getPathWithEnvironmentVariable($dir);
+        $dir = realpath($dir);
+
+        return $dir;
     }
 
     /**
@@ -107,12 +142,7 @@ class Config
      */
     public function getAvailabilitiesDir(): string
     {
-        $availabilitiesDirDefault = '$HOME/.local/share/discord-availability/availabilities';
-        $availabilitiesDir        = $this->get('directoryAvailabilities', $availabilitiesDirDefault);
-        $availabilitiesDir        = $this->getPathWithEnvironmentVariable($availabilitiesDir);
-        $availabilitiesDir        = realpath($availabilitiesDir);
-
-        return $availabilitiesDir;
+        return $this->get('directoryAvailabilities');
     }
 
     private function getPathWithEnvironmentVariable(string $path): string
@@ -138,17 +168,17 @@ class Config
 
     public function getMaxAvailabilitiesPerUser(): int
     {
-        return $this->get('maxAvailabilitiesPerUser', 100);
+        return $this->get('maxAvailabilitiesPerUser');
     }
 
     public function getDefaultTime(): string
     {
-        return $this->get('defaultTime', '19:00');
+        return $this->get('defaultTime');
     }
 
     public function getDefaultDay(): string
     {
-        return $this->get('defaultDay', 'monday');
+        return $this->get('defaultDay');
     }
 
     public function getDefaultDateTime(): string
@@ -160,11 +190,11 @@ class Config
 
     public function getEventName(): string
     {
-        return $this->get('eventName', 'Dota 2');
+        return $this->get('eventName');
     }
 
     public function getLogLevel(): string
     {
-        return $this->get('logLevel', 'Info');
+        return $this->get('logLevel');
     }
 }
