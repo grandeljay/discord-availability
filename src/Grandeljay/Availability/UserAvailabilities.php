@@ -2,9 +2,11 @@
 
 namespace Grandeljay\Availability;
 
+use Psr\Log\LoggerInterface;
+
 class UserAvailabilities extends UserAvailabilitiesIterator
 {
-    public static function getAll(): self
+    public static function getAll(LoggerInterface $logger): self
     {
         $config             = new Config();
         $userAvailabilities = new self();
@@ -23,7 +25,7 @@ class UserAvailabilities extends UserAvailabilitiesIterator
             $filepath                 = $directory . '/' . $filename;
             $userAvailabilityContents = file_get_contents($filepath);
             $userAvailabilityData     = json_decode($userAvailabilityContents, true);
-            $userAvailability         = new UserAvailability($userAvailabilityData);
+            $userAvailability         = new UserAvailability($logger, $userAvailabilityData);
 
             $userAvailabilities->add($userAvailability);
         }

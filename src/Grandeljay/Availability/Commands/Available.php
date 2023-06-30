@@ -15,7 +15,7 @@ class Available extends Command
         $discord->listenCommand(
             strtolower(Command::AVAILABLE),
             function (Interaction $interaction) {
-                $this->userAvailabilities = UserAvailabilities::getAll();
+                $this->userAvailabilities = UserAvailabilities::getAll($this->logger);
 
                 $timeAvailable = Bot::getTimeFromString($interaction->data->options['date']->value);
 
@@ -45,11 +45,11 @@ class Available extends Command
                     return;
                 }
 
-                $userAvailabilityTime = new UserAvailabilityTime();
+                $userAvailabilityTime = new UserAvailabilityTime($this->logger);
                 $userAvailabilityTime->setAvailability(true, false);
                 $userAvailabilityTime->setTime($timeAvailable);
 
-                $userAvailability = UserAvailability::get($interaction->user);
+                $userAvailability = UserAvailability::get($interaction->user, $this->logger);
                 $userAvailability->addAvailability($userAvailabilityTime);
                 $userAvailability->save();
 

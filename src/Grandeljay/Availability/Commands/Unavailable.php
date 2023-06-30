@@ -15,7 +15,7 @@ class Unavailable extends Command
         $discord->listenCommand(
             strtolower(Command::UNAVAILABLE),
             function (Interaction $interaction) {
-                $this->userAvailabilities = UserAvailabilities::getAll();
+                $this->userAvailabilities = UserAvailabilities::getAll($this->logger);
 
                 $timeUnavailable = Bot::getTimeFromString($interaction->data->options['date']->value);
 
@@ -45,11 +45,11 @@ class Unavailable extends Command
                     return;
                 }
 
-                $userUnavailabilityTime = new UserAvailabilityTime();
+                $userUnavailabilityTime = new UserAvailabilityTime($this->logger);
                 $userUnavailabilityTime->setAvailability(false, false);
                 $userUnavailabilityTime->setTime($timeUnavailable);
 
-                $userUnavailability = UserAvailability::get($interaction->user);
+                $userUnavailability = UserAvailability::get($interaction->user, $this->logger);
                 $userUnavailability->addAvailability($userUnavailabilityTime);
                 $userUnavailability->save();
 

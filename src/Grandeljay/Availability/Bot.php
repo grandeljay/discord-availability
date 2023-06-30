@@ -13,6 +13,7 @@ use Grandeljay\Availability\Commands;
 use Grandeljay\Availability\Commands\Command;
 use Monolog\{Logger, Level};
 use Monolog\Handler\StreamHandler;
+use Psr\Log\LoggerInterface;
 
 use function React\Promise\all;
 
@@ -23,6 +24,7 @@ class Bot
     protected Discord $discord;
     protected Config $config;
     protected UserAvailabilities $userAvailabilities;
+    protected LoggerInterface $logger;
 
     /**
      * Returns the unix timestamp from a user specified date/time.
@@ -61,15 +63,15 @@ class Bot
         $this->config   = new Config();
 
         $logLevel = Level::fromName($this->config->getLogLevel());
-        $logger   = new Logger('discord-availability');
-        $logger->pushHandler(new StreamHandler('php://stdout', $logLevel));
+        $this->logger = new Logger('discord-availability');
+        $this->logger->pushHandler(new StreamHandler('php://stdout', $logLevel));
 
         $this->discord = new Discord(
             array(
                 'token'          => $this->config->getAPIToken(),
                 'loadAllMembers' => true,
                 'intents'        => Intents::getDefaultIntents() | Intents::GUILD_MEMBERS,
-                'logger'         => $logger,
+                'logger'         => $this->logger,
             )
         );
 
@@ -132,7 +134,7 @@ class Bot
                         );
 
                         foreach ($botCommandsDesired as $botCommandDesiredName => $botCommandDesiredDescription) {
-                            $commandObject = new Command($discord, $botCommandDesiredName, $botCommandDesiredDescription);
+                            $commandObject = new Command($discord, $botCommandDesiredName, $botCommandDesiredDescription, $this->logger);
                             $commandToRun  = $commandObject->get();
 
                             $this->commands->add($commandToRun);
@@ -157,7 +159,7 @@ class Bot
     private function userIsSubscribed(int $userId): bool
     {
         $userIsSubscribed   = false;
-        $userAvailabilities = UserAvailabilities::getAll();
+        $userAvailabilities = UserAvailabilities::getAll($this->logger);
 
         foreach ($userAvailabilities as $availability) {
             if ($availability->getUserId() === $userId) {
@@ -242,11 +244,11 @@ class Bot
             ->setLabel('Yes')
             ->setListener(
                 function (Interaction $interaction) use ($userAvailableTime, $message) {
-                    $userAvailabilityTime = new UserAvailabilityTime();
+                    $userAvailabilityTime = new UserAvailabilityTime($this->logger);
                     $userAvailabilityTime->setAvailability(true, false);
                     $userAvailabilityTime->setTime($userAvailableTime);
 
-                    $userAvailability = UserAvailability::get($interaction->user);
+                    $userAvailability = UserAvailability::get($interaction->user, $this->logger);
                     $userAvailability->addAvailability($userAvailabilityTime);
                     $userAvailability->save();
 
@@ -384,11 +386,11 @@ class Bot
             ->setLabel('Yes')
             ->setListener(
                 function (Interaction $interaction) use ($userUnavailableTime, $message) {
-                    $userAvailabilityTime = new UserAvailabilityTime();
+                    $userAvailabilityTime = new UserAvailabilityTime($this->logger);
                     $userAvailabilityTime->setAvailability(false, false);
                     $userAvailabilityTime->setTime($userUnavailableTime);
 
-                    $userAvailability = UserAvailability::get($interaction->user);
+                    $userAvailability = UserAvailability::get($interaction->user, $this->logger);
                     $userAvailability->addAvailability($userAvailabilityTime);
                     $userAvailability->save();
 

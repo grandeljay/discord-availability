@@ -17,7 +17,7 @@ class Availability extends Command
                 $config      = new Config();
                 $messageRows = array();
 
-                $this->userAvailabilities = UserAvailabilities::getAll();
+                $this->userAvailabilities = UserAvailabilities::getAll($this->logger);
 
                 foreach ($this->userAvailabilities as $userAvailability) {
                     $userAvailabilityTimes = $userAvailability->getUserAvailabilityTimes();

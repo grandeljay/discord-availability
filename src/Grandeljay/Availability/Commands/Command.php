@@ -5,6 +5,7 @@ namespace Grandeljay\Availability\Commands;
 use Discord\Builders\CommandBuilder;
 use Discord\Discord;
 use Discord\Parts\Interactions\Command\Option;
+use Psr\Log\LoggerInterface;
 
 class Command
 {
@@ -12,6 +13,8 @@ class Command
     private string $description;
 
     protected string $name;
+
+    protected LoggerInterface $logger;
 
     public const AVAILABLE    = 'Available';
     public const AVAILABILITY = 'Availability';
@@ -21,14 +24,17 @@ class Command
     /**
      * Construct
      *
-     * @param string $command     The command to add and listen for.
-     * @param string $description Description for the command.
+     * @param Discord $discord
+     * @param string  $command     The command to add and listen for.
+     * @param string  $description Description for the command.
+     * @param LoggerInterface $logger
      */
-    public function __construct(Discord $discord, string $command, string $description)
+    public function __construct(Discord $discord, string $command, string $description, LoggerInterface $logger)
     {
         $this->discord     = $discord;
         $this->name        = $command;
         $this->description = $description;
+        $this->logger      = $logger;
 
         /**
          * When the bot is ready, attempt to create a global slash
@@ -100,7 +106,7 @@ class Command
     public function get(): self
     {
         $commandClassName = __NAMESPACE__ . '\\' . $this->name;
-        $commandClass     = new $commandClassName($this->discord, $this->name, $this->description);
+        $commandClass     = new $commandClassName($this->discord, $this->name, $this->description, $this->logger);
 
         return $commandClass;
     }

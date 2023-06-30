@@ -4,6 +4,8 @@ namespace Grandeljay\Availability;
 
 use Discord\Parts\User\User;
 
+use Psr\Log\LoggerInterface;
+
 class UserAvailabilityTime
 {
     /**
@@ -27,6 +29,8 @@ class UserAvailabilityTime
      * @var bool
      */
     private bool $userIsAvailablePerDefault;
+
+    private LoggerInterface $logger;
 
     /**
      * Retrieves all subscribed user's availabilities from storage.
@@ -60,10 +64,13 @@ class UserAvailabilityTime
     /**
      * Construct
      *
+     * @param LoggerInterface $logger
      * @param array $availability The user's raw availability data from storage.
      */
-    public function __construct(array $availabilityTimeData = array())
+    public function __construct(LoggerInterface $logger, array $availabilityTimeData = array())
     {
+        $this->logger = $logger;
+
         foreach ($availabilityTimeData as $property => $value) {
             if (property_exists($this::class, $property)) {
                 $this->$property = $value;
@@ -78,7 +85,7 @@ class UserAvailabilityTime
      */
     public function toArray(): array
     {
-        $this->userAvailabilities = UserAvailabilities::getAll();
+        $this->userAvailabilities = UserAvailabilities::getAll($this->logger);
 
         $array = array(
             'userIsAvailable'           => $this->userIsAvailable,

@@ -3,6 +3,7 @@
 namespace Grandeljay\Availability;
 
 use Discord\Parts\User\User;
+use Psr\Log\LoggerInterface;
 
 class UserAvailability implements \JsonSerializable
 {
@@ -29,16 +30,19 @@ class UserAvailability implements \JsonSerializable
      */
     private UserAvailabilityTimes $userAvailabilityTimes;
 
+    private LoggerInterface $logger;
+
     /**
      * Returns the specified user's availability.
      *
      * @param User $user
+     * @param LoggerInterface $logger
      *
      * @return self
      */
-    public static function get(User $user): self
+    public static function get(User $user, LoggerInterface $logger): self
     {
-        $availability = new self();
+        $availability = new self($logger);
         $config       = new Config();
 
         $filepathUserAvailability = $config->getAvailabilitiesDir() . '/' . $user->id . '.json';
@@ -46,14 +50,16 @@ class UserAvailability implements \JsonSerializable
         if (file_exists($filepathUserAvailability)) {
             $availabilityContents = file_get_contents($filepathUserAvailability);
             $availabilityData     = json_decode($availabilityContents, true, 512, JSON_THROW_ON_ERROR);
-            $availability         = new self($availabilityData);
+            $availability         = new self($logger, $availabilityData);
         }
 
         return $availability;
     }
 
-    public function __construct(array $availabilityData = array())
+    public function __construct(LoggerInterface $logger, array $availabilityData = array())
     {
+        $this->logger = $logger;
+
         $this->config                = new Config();
         $this->userAvailabilityTimes = new UserAvailabilityTimes();
 
@@ -67,7 +73,7 @@ class UserAvailability implements \JsonSerializable
 
         if (isset($availabilityData['availabilities'])) {
             foreach ($availabilityData['availabilities'] as $userAvailabilityTimeData) {
-                $userAvailabilityTime = new UserAvailabilityTime($userAvailabilityTimeData);
+                $userAvailabilityTime = new UserAvailabilityTime($this->logger, $userAvailabilityTimeData);
 
                 $this->userAvailabilityTimes->add($userAvailabilityTime);
             }
@@ -124,7 +130,7 @@ class UserAvailability implements \JsonSerializable
         if (false === $userHasAvailabilityForMonday) {
             $defaultDateTime = $this->config->getDefaultDateTime();
 
-            $userAvailabilityDefault = new UserAvailabilityTime();
+            $userAvailabilityDefault = new UserAvailabilityTime($this->logger);
             $userAvailabilityDefault->setAvailability(true, true);
             $userAvailabilityDefault->setTime($defaultDateTime);
 
