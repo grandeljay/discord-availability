@@ -29,6 +29,13 @@ class UserAvailability implements \JsonSerializable
      */
     private UserAvailabilityTimes $userAvailabilityTimes;
 
+    public static function fromFile(string $path): self
+    {
+        $text = file_get_contents($path);
+        $data = json_decode($text, true, 512, JSON_THROW_ON_ERROR);
+        return new self($data['userId'], $data['userName'], $data['availabilities']);
+    }
+
     /**
      * Returns the specified user's availability.
      *
@@ -38,39 +45,27 @@ class UserAvailability implements \JsonSerializable
      */
     public static function get(User $user): self
     {
-        $availability = new self();
-        $config       = new Config();
+        $config = new Config();
 
         $filepathUserAvailability = $config->getAvailabilitiesDir() . '/' . $user->id . '.json';
-
         if (file_exists($filepathUserAvailability)) {
-            $availabilityContents = file_get_contents($filepathUserAvailability);
-            $availabilityData     = json_decode($availabilityContents, true, 512, JSON_THROW_ON_ERROR);
-            $availability         = new self($availabilityData);
+            return UserAvailability::fromFile($filepathUserAvailability);
+        } else {
+            return new self($user->id, $user->username, array());
         }
-
-        return $availability;
     }
 
-    public function __construct(array $availabilityData = array())
+    public function __construct(string $userId, string $userName, array $availabilities)
     {
-        $this->config                = new Config();
+        $this->userId   = $userId;
+        $this->userName = $userName;
+
+        $this->config = new Config();
+
         $this->userAvailabilityTimes = new UserAvailabilityTimes();
-
-        if (isset($availabilityData['userId'])) {
-            $this->userId = $availabilityData['userId'];
-        }
-
-        if (isset($availabilityData['userName'])) {
-            $this->userName = $availabilityData['userName'];
-        }
-
-        if (isset($availabilityData['availabilities'])) {
-            foreach ($availabilityData['availabilities'] as $userAvailabilityTimeData) {
-                $userAvailabilityTime = new UserAvailabilityTime($userAvailabilityTimeData);
-
-                $this->userAvailabilityTimes->add($userAvailabilityTime);
-            }
+        foreach ($availabilities as $userAvailabilityTimeData) {
+            $userAvailabilityTime = new UserAvailabilityTime($userAvailabilityTimeData);
+            $this->userAvailabilityTimes->add($userAvailabilityTime);
         }
     }
 
