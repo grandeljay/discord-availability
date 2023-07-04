@@ -38,8 +38,8 @@ class Config
             if (file_exists($potentialConfigPath)) {
                 $rawData       = file_get_contents($potentialConfigPath);
                 $parsedData    = json_decode($rawData, true, 2, JSON_THROW_ON_ERROR);
-                $normalizedCfg = $this->normalizeConfig($parsedData);
-                $error         = $this->validateConfig($normalizedCfg, $parsedData);
+                $normalisedCfg = $this->normaliseConfig($parsedData);
+                $error         = $this->validateConfig($normalisedCfg, $parsedData);
 
                 if ($error) {
                     $msg = sprintf('Bad config.json at `%s`:' . PHP_EOL, $potentialConfigPath);
@@ -47,7 +47,7 @@ class Config
                     die($msg);
                 }
 
-                $this->config = $normalizedCfg;
+                $this->config = $normalisedCfg;
 
                 return;
             }
@@ -57,36 +57,36 @@ class Config
     }
 
     /**
-     * Processes the passed raw config and returns it in normalized form.
+     * Processes the passed raw config and returns it in normalised form.
      *
      * Note: This function doesn't do any validation.
      *
-     * @param array $config The raw config to normalize. This is essentially
+     * @param array $config The raw config to normalise. This is essentially
      *                      just the decoded json string.
      *
-     * @return array The normalized config.
+     * @return array The normalised config.
      */
-    private function normalizeConfig(array $rawConfig): array
+    private function normaliseConfig(array $rawConfig): array
     {
-        $normalizedConfig = $rawConfig; // Create a copy.
+        $normalisedConfig = $rawConfig; // Create a copy.
 
-        $normalizedConfig['directoryAvailabilities'] = $this->normalizeAvailabilitiesDir($rawConfig['directoryAvailabilities']);
-        $normalizedConfig['maxAvailabilitiesPerUser'] = $rawConfig['maxAvailabilitiesPerUser'] ?? 100;
-        $normalizedConfig['defaultDay'] = $rawConfig['defaultDay'] ?? "monday";
-        $normalizedConfig['defaultTime'] = $rawConfig['defaultTime'] ?? "19:00";
-        $normalizedConfig['eventName'] = $rawConfig['eventName'] ?? "Dota 2";
-        $normalizedConfig['logLevel'] = $rawConfig['logLevel'] ?? "Info";
+        $normalisedConfig['directoryAvailabilities']  = $this->normaliseAvailabilitiesDir($rawConfig['directoryAvailabilities']);
+        $normalisedConfig['maxAvailabilitiesPerUser'] = $rawConfig['maxAvailabilitiesPerUser'] ?? 100;
+        $normalisedConfig['defaultDay']               = $rawConfig['defaultDay'] ?? "monday";
+        $normalisedConfig['defaultTime']              = $rawConfig['defaultTime'] ?? "19:00";
+        $normalisedConfig['eventName']                = $rawConfig['eventName'] ?? "Dota 2";
+        $normalisedConfig['logLevel']                 = $rawConfig['logLevel'] ?? "Info";
 
-        return $normalizedConfig;
+        return $normalisedConfig;
     }
 
-    private function normalizeAvailabilitiesDir(?string $inputDir): string
+    private function normaliseAvailabilitiesDir(?string $inputDir): string
     {
         $default = '$HOME/.local/share/discord-availability/availabilities';
 
         $dir = $inputDir ?? $default;
         $dir = $this->getPathWithEnvironmentVariable($dir);
-        $dir = $this->normalizePath($dir);
+        $dir = $this->normalisePath($dir);
 
         return $dir;
     }
@@ -103,7 +103,7 @@ class Config
      *
      * @return string
      */
-    private function normalizePath(string $path): string
+    private function normalisePath(string $path): string
     {
         if ($this->isPathAbsolute($path)) {
             return $path;
@@ -147,29 +147,29 @@ class Config
     /**
      * Validates the passed config and returns an error if it is invalid.
      *
-     * @param array $normalizedConfig The config to validate.
+     * @param array $normalisedConfig The config to validate.
      * @param array $rawConfig The raw config provided by the user. Used for error messages.
      *
      * @return string|null A potential error that occurred.
      */
-    private function validateConfig(array $normalizedConfig, array $rawConfig): ?string
+    private function validateConfig(array $normalisedConfig, array $rawConfig): ?string
     {
-        if (!isset($normalizedConfig['token'])) {
+        if (!isset($normalisedConfig['token'])) {
             return 'Required key "token" is not set.';
         }
 
-        $dir = $normalizedConfig['directoryAvailabilities'];
+        $dir = $normalisedConfig['directoryAvailabilities'];
         if (file_exists($dir)) {
             if (!is_dir($dir)) {
                 $msg = 'The "directoryAvailabilities" directory is a non-directory file.' . PHP_EOL;
                 $msg = $msg . sprintf('  Specified:   "%s"' . PHP_EOL, $rawConfig['directoryAvailabilities']);
-                $msg = $msg . sprintf('  Interpreted: "%s"' . PHP_EOL, $normalizedConfig['directoryAvailabilities']);
+                $msg = $msg . sprintf('  Interpreted: "%s"' . PHP_EOL, $normalisedConfig['directoryAvailabilities']);
                 return $msg;
             }
         } else {
             $msg = 'The "directoryAvailabilities" directory does not exist.' . PHP_EOL;
             $msg = $msg . sprintf('  Specified:   "%s"' . PHP_EOL, $rawConfig['directoryAvailabilities']);
-            $msg = $msg . sprintf('  Interpreted: "%s"' . PHP_EOL, $normalizedConfig['directoryAvailabilities']);
+            $msg = $msg . sprintf('  Interpreted: "%s"' . PHP_EOL, $normalisedConfig['directoryAvailabilities']);
             return $msg;
         }
 
