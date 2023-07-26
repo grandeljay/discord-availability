@@ -36,16 +36,18 @@ class Config
             $potentialConfigPath = $this->getPathWithEnvironmentVariable($potentialConfigPath);
 
             if (file_exists($potentialConfigPath)) {
-                $raw_data    = file_get_contents($potentialConfigPath);
-                $parsed_data = json_decode($raw_data, true, 2, JSON_THROW_ON_ERROR);
-
-                $error = $this->validateConfig($parsed_data);
+                $rawData       = file_get_contents($potentialConfigPath);
+                $parsedData    = json_decode($rawData, true, 2, JSON_THROW_ON_ERROR);
+                $normalisedCfg = $this->normaliseConfig($parsedData);
+                $error         = $this->validateConfig($normalisedCfg, $parsedData);
 
                 if ($error) {
-                    die(sprintf('Bad config.json at `%s`: %s' . PHP_EOL, $potentialConfigPath, $error));
+                    $msg = sprintf('Bad config.json at `%s`:' . PHP_EOL, $potentialConfigPath);
+                    $msg = $msg . "  Error:       " . $error . PHP_EOL;
+                    die($msg);
                 }
 
-                $this->config = $parsed_data;
+                $this->config = $normalisedCfg;
 
                 return;
             }
@@ -55,19 +57,121 @@ class Config
     }
 
     /**
+     * Processes the passed raw config and returns it in normalised form.
+     *
+     * Note: This function doesn't do any validation.
+     *
+     * @param array $config The raw config to normalise. This is essentially
+     *                      just the decoded json string.
+     *
+     * @return array The normalised config.
+     */
+    private function normaliseConfig(array $rawConfig): array
+    {
+        $normalisedConfig = $rawConfig; // Create a copy.
+
+        $normalisedConfig['directoryAvailabilities']  = $this->normaliseAvailabilitiesDir($rawConfig['directoryAvailabilities']);
+        $normalisedConfig['maxAvailabilitiesPerUser'] = $rawConfig['maxAvailabilitiesPerUser'] ?? 100;
+        $normalisedConfig['defaultDay']               = $rawConfig['defaultDay'] ?? "monday";
+        $normalisedConfig['defaultTime']              = $rawConfig['defaultTime'] ?? "19:00";
+        $normalisedConfig['eventName']                = $rawConfig['eventName'] ?? "Dota 2";
+        $normalisedConfig['logLevel']                 = $rawConfig['logLevel'] ?? "Info";
+
+        return $normalisedConfig;
+    }
+
+    private function normaliseAvailabilitiesDir(?string $inputDir): string
+    {
+        $default = '$HOME/.local/share/discord-availability/availabilities';
+
+        $dir = $inputDir ?? $default;
+        $dir = $this->getPathWithEnvironmentVariable($dir);
+        $dir = $this->normalisePath($dir);
+
+        return $dir;
+    }
+
+    /**
+     * Returns an absolute path.
+     *
+     * Unlike `realpath` this function also works on paths that don't point to
+     * an existing file.
+     *
+     * Also, symlinks are not resolved.
+     *
+     * @param string $path
+     *
+     * @return string
+     */
+    private function normalisePath(string $path): string
+    {
+        if ($this->isPathAbsolute($path)) {
+            return $path;
+        }
+
+        $cwd = getcwd();
+
+        if (!$cwd) {
+            die('Could not determine current working directory.');
+        }
+
+        $segments     = array($cwd, $path);
+        $absolutePath = implode(DIRECTORY_SEPARATOR, $segments);
+
+        return $absolutePath;
+    }
+
+    /**
+     * Returns whether `$path` is an absolute path.
+     *
+     * Examples of absolute paths:
+     * - `/var/www/linux`
+     * - `C:\Windows`
+     * - `\\WindowsNetworkLocation`
+     *
+     * @param string $path
+     *
+     * @return bool `true` if the path is absolute, otherwise `false`.
+     */
+    private function isPathAbsolute(string $path): bool
+    {
+        // Note: A single backslash must be denoted as four `\` characters in a
+        // `preg_match` regex.
+        if (1 === preg_match('@^(/|[A-Z]:\\\\|\\\\\\\\)@', $path)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
      * Validates the passed config and returns an error if it is invalid.
      *
-     * @param array $config The config to validate.
+     * @param array $normalisedConfig The config to validate.
+     * @param array $rawConfig The raw config provided by the user. Used for error messages.
      *
      * @return string|null A potential error that occurred.
      */
-    private function validateConfig(array $config): ?string
+    private function validateConfig(array $normalisedConfig, array $rawConfig): ?string
     {
-        if (!isset($config['token'])) {
+        if (!isset($normalisedConfig['token'])) {
             return 'Required key "token" is not set.';
         }
 
-        // TODO: Validate that configured availabilities directory exists.
+        $dir = $normalisedConfig['directoryAvailabilities'];
+        if (file_exists($dir)) {
+            if (!is_dir($dir)) {
+                $msg = 'The "directoryAvailabilities" directory is a non-directory file.' . PHP_EOL;
+                $msg = $msg . sprintf('  Specified:   "%s"' . PHP_EOL, $rawConfig['directoryAvailabilities']);
+                $msg = $msg . sprintf('  Interpreted: "%s"' . PHP_EOL, $normalisedConfig['directoryAvailabilities']);
+                return $msg;
+            }
+        } else {
+            $msg = 'The "directoryAvailabilities" directory does not exist.' . PHP_EOL;
+            $msg = $msg . sprintf('  Specified:   "%s"' . PHP_EOL, $rawConfig['directoryAvailabilities']);
+            $msg = $msg . sprintf('  Interpreted: "%s"' . PHP_EOL, $normalisedConfig['directoryAvailabilities']);
+            return $msg;
+        }
 
         return null;
     }
@@ -107,12 +211,7 @@ class Config
      */
     public function getAvailabilitiesDir(): string
     {
-        $availabilitiesDirDefault = '$HOME/.local/share/discord-availability/availabilities';
-        $availabilitiesDir        = $this->get('directoryAvailabilities', $availabilitiesDirDefault);
-        $availabilitiesDir        = $this->getPathWithEnvironmentVariable($availabilitiesDir);
-        $availabilitiesDir        = realpath($availabilitiesDir);
-
-        return $availabilitiesDir;
+        return $this->get('directoryAvailabilities');
     }
 
     private function getPathWithEnvironmentVariable(string $path): string
@@ -138,17 +237,17 @@ class Config
 
     public function getMaxAvailabilitiesPerUser(): int
     {
-        return $this->get('maxAvailabilitiesPerUser', 100);
+        return $this->get('maxAvailabilitiesPerUser');
     }
 
     public function getDefaultTime(): string
     {
-        return $this->get('defaultTime', '19:00');
+        return $this->get('defaultTime');
     }
 
     public function getDefaultDay(): string
     {
-        return $this->get('defaultDay', 'monday');
+        return $this->get('defaultDay');
     }
 
     public function getDefaultDateTime(): string
@@ -160,11 +259,11 @@ class Config
 
     public function getEventName(): string
     {
-        return $this->get('eventName', 'Dota 2');
+        return $this->get('eventName');
     }
 
     public function getLogLevel(): string
     {
-        return $this->get('logLevel', 'Info');
+        return $this->get('logLevel');
     }
 }
