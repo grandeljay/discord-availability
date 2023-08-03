@@ -20,11 +20,9 @@ class UserAvailabilities extends UserAvailabilitiesIterator
         );
 
         foreach ($filenames as $filename) {
-            $filepath                 = $directory . '/' . $filename;
-            $userAvailabilityContents = file_get_contents($filepath);
-            $userAvailabilityData     = json_decode($userAvailabilityContents, true);
-            $userAvailability         = new UserAvailability($userAvailabilityData);
+            $filepath = $directory . '/' . $filename;
 
+            $userAvailability = UserAvailability::fromFile($filepath);
             $userAvailabilities->add($userAvailability);
         }
 
