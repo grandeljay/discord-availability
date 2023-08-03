@@ -28,7 +28,7 @@ class Available extends Command
                     return;
                 }
 
-                if (time() >= $timeAvailable) {
+                if (time() < $timeAvailable) {
                     $interaction
                     ->respondWithMessage(
                         MessageBuilder::new()

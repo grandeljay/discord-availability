@@ -28,7 +28,7 @@ class Unavailable extends Command
                     return;
                 }
 
-                if (time() >= $timeUnavailable) {
+                if (time() < $timeUnavailable) {
                     $interaction
                     ->respondWithMessage(
                         MessageBuilder::new()
