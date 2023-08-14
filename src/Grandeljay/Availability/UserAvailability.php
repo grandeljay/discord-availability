@@ -117,7 +117,8 @@ class UserAvailability implements \JsonSerializable
         }
 
         if (false === $userHasAvailabilityForMonday) {
-            $defaultDateTime = $this->config->getDefaultDateTime();
+            $defaultDateTimeText = $this->config->getDefaultDateTime();
+            $defaultDateTime     = Bot::getTimeFromString($defaultDateTimeText);
 
             $userAvailabilityDefault = new UserAvailabilityTime();
             $userAvailabilityDefault->setAvailability(true, true);
