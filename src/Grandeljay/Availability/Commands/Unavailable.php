@@ -22,7 +22,9 @@ class Unavailable extends Command
                 if (false === $timeUnavailable) {
                     $interaction
                     ->respondWithMessage(
-                        MessageBuilder::new()->setContent('Sorry, I couldn\'t parse that. Could you please specify a more machine friendly time?')
+                        MessageBuilder::new()
+                        ->setContent('Sorry, I couldn\'t parse that. Could you please specify a more machine friendly time?'),
+                        true
                     );
 
                     return;
