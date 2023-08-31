@@ -36,10 +36,9 @@ class Config
             $potentialConfigPath = $this->getPathWithEnvironmentVariable($potentialConfigPath);
 
             if (file_exists($potentialConfigPath)) {
-                $rawData       = file_get_contents($potentialConfigPath);
-                $parsedData    = json_decode($rawData, true, 2, JSON_THROW_ON_ERROR);
-                $normalisedCfg = $this->normaliseConfig($parsedData);
-                $error         = $this->validateConfig($normalisedCfg, $parsedData);
+                $rawData    = file_get_contents($potentialConfigPath);
+                $parsedData = json_decode($rawData, true, 2, JSON_THROW_ON_ERROR);
+                $error      = $this->validateConfig($parsedData);
 
                 if ($error) {
                     $msg = sprintf('Bad config.json at `%s`:' . PHP_EOL, $potentialConfigPath);
@@ -47,7 +46,8 @@ class Config
                     die($msg);
                 }
 
-                $this->config = $normalisedCfg;
+                $normalisedCfg = $this->normaliseConfig($parsedData);
+                $this->config  = $normalisedCfg;
 
                 return;
             }
@@ -147,29 +147,28 @@ class Config
     /**
      * Validates the passed config and returns an error if it is invalid.
      *
-     * @param array $normalisedConfig The config to validate.
-     * @param array $rawConfig The raw config provided by the user. Used for error messages.
+     * @param array $config The config to validate.
      *
      * @return string|null A potential error that occurred.
      */
-    private function validateConfig(array $normalisedConfig, array $rawConfig): ?string
+    private function validateConfig(array $config): ?string
     {
-        if (!isset($normalisedConfig['token'])) {
+        if (!isset($config['token'])) {
             return 'Required key "token" is not set.';
         }
 
-        $dir = $normalisedConfig['directoryAvailabilities'];
+        $dir = $this->normaliseAvailabilitiesDir($config['directoryAvailabilities']);
         if (file_exists($dir)) {
             if (!is_dir($dir)) {
                 $msg = 'The "directoryAvailabilities" directory is a non-directory file.' . PHP_EOL;
-                $msg = $msg . sprintf('  Specified:   "%s"' . PHP_EOL, $rawConfig['directoryAvailabilities']);
-                $msg = $msg . sprintf('  Interpreted: "%s"' . PHP_EOL, $normalisedConfig['directoryAvailabilities']);
+                $msg = $msg . sprintf('  Specified:   "%s"' . PHP_EOL, $config['directoryAvailabilities']);
+                $msg = $msg . sprintf('  Interpreted: "%s"' . PHP_EOL, $dir);
                 return $msg;
             }
         } else {
             $msg = 'The "directoryAvailabilities" directory does not exist.' . PHP_EOL;
-            $msg = $msg . sprintf('  Specified:   "%s"' . PHP_EOL, $rawConfig['directoryAvailabilities']);
-            $msg = $msg . sprintf('  Interpreted: "%s"' . PHP_EOL, $normalisedConfig['directoryAvailabilities']);
+            $msg = $msg . sprintf('  Specified:   "%s"' . PHP_EOL, $config['directoryAvailabilities']);
+            $msg = $msg . sprintf('  Interpreted: "%s"' . PHP_EOL, $dir);
             return $msg;
         }
 
