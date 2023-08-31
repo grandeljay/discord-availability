@@ -112,7 +112,7 @@ class Config
         $cwd = getcwd();
 
         if (!$cwd) {
-            die('Could not determine current working directory.');
+            die('Could not determine current working directory.' . PHP_EOL);
         }
 
         $segments     = array($cwd, $path);
@@ -224,7 +224,7 @@ class Config
                 $environmentVariable      = getenv($matchEnvironmentVariable);
 
                 if (false === $environmentVariable) {
-                    die(sprintf('Could not get value for environment variable "%s".', $matchEnvironmentVariable));
+                    die(sprintf('Could not get value for environment variable "%s".', $matchEnvironmentVariable) . PHP_EOL);
                 }
 
                 $path = str_replace($matchFull, $environmentVariable, $path);
