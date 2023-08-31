@@ -1,9 +1,9 @@
 { fetchzip }:
 {
-  "discord-php/http"."v9.1.8" = fetchzip {
+  "discord-php/http"."v9.1.9" = fetchzip {
     name = "discord-php/http";
-    url = "https://api.github.com/repos/discord-php/DiscordPHP-Http/zipball/8dc95a63836f7f0161fc5e52e1d9feeaa36b36ba";
-    sha256 = "0ysvg5y04ma5wimn7vz8a7pifmsp3xplqx4giz2k3c0md3l73lg7";
+    url = "https://api.github.com/repos/discord-php/DiscordPHP-Http/zipball/ccc02b4c9a7a0c5a7d00d783f9ab397cfc28ba09";
+    sha256 = "12271cg43w1svsbb6cw1046hnyqj19fn4imcsvkr895mckn8g09f";
     extension = "zip";
   };
   "discord/interactions"."2.2.0" = fetchzip {
@@ -12,10 +12,10 @@
     sha256 = "0dqmdkr31bv3l0mh8nyg6ah0pvghdgsgjc30s1wk1914diw49fr6";
     extension = "zip";
   };
-  "evenement/evenement"."v3.0.1" = fetchzip {
+  "evenement/evenement"."v3.0.2" = fetchzip {
     name = "evenement/evenement";
-    url = "https://api.github.com/repos/igorw/evenement/zipball/531bfb9d15f8aa57454f5f0285b18bec903b8fb7";
-    sha256 = "01n3d3pgbdv38ax2hs6lsj3mrh3scki4wgknh68ncw6a4w3ln46z";
+    url = "https://api.github.com/repos/igorw/evenement/zipball/0a16b0d71ab13284339abb99d9d2bd813640efbc";
+    sha256 = "118fw6a9ns15y9nz7hn2jyxnrr70lgk9waz66i1a39iqx5wcys4w";
     extension = "zip";
   };
   "fig/http-message-util"."1.1.5" = fetchzip {
@@ -24,10 +24,10 @@
     sha256 = "0lz24n18c7xzl11yk64fwpl54h7grg1h3vi0m8s0h4qzhsbb6ga7";
     extension = "zip";
   };
-  "guzzlehttp/psr7"."2.5.0" = fetchzip {
+  "guzzlehttp/psr7"."2.6.0" = fetchzip {
     name = "guzzlehttp/psr7";
-    url = "https://api.github.com/repos/guzzle/psr7/zipball/b635f279edd83fc275f822a1188157ffea568ff6";
-    sha256 = "1yx6rjz1krdkiw2wrkvyivri4hnh8z6mzjcvxlw1xkdkmxz8ia7l";
+    url = "https://api.github.com/repos/guzzle/psr7/zipball/8bd7c33a0734ae1c5d074360512beb716bef3f77";
+    sha256 = "1dwvha65fnbb6p4myb1ydd1161rgaj9prbhcy8sab05ddyn6vikj";
     extension = "zip";
   };
   "mollie/polyfill-libsodium"."v1.1.1" = fetchzip {
@@ -36,16 +36,16 @@
     sha256 = "1mrkkb5prxks58i4yq1424hi2a6haadigbza1lnisl1z5mjgz6m8";
     extension = "zip";
   };
-  "monolog/monolog"."3.3.1" = fetchzip {
+  "monolog/monolog"."3.4.0" = fetchzip {
     name = "monolog/monolog";
-    url = "https://api.github.com/repos/Seldaek/monolog/zipball/9b5daeaffce5b926cac47923798bba91059e60e2";
-    sha256 = "0nvfjlcxdfijwbppg926lj1ilnkc1hab9cwl9lb8yyy179qrwm3r";
+    url = "https://api.github.com/repos/Seldaek/monolog/zipball/e2392369686d420ca32df3803de28b5d6f76867d";
+    sha256 = "0bh3y700n0in87ca0gsn9q0v8iblvjz1448d7scsplfiqhzj258q";
     extension = "zip";
   };
-  "nesbot/carbon"."2.67.0" = fetchzip {
+  "nesbot/carbon"."2.68.1" = fetchzip {
     name = "nesbot/carbon";
-    url = "https://api.github.com/repos/briannesbitt/Carbon/zipball/c1001b3bc75039b07f38a79db5237c4c529e04c8";
-    sha256 = "06lh9bsh4bwfz68jy0bp7iaswwr69m3g0x25gx9scfx526rhvqyh";
+    url = "https://api.github.com/repos/briannesbitt/Carbon/zipball/4f991ed2a403c85efbc4f23eb4030063fdbe01da";
+    sha256 = "17swka9my7bbrb76gmg7ivpqpa2m0sar0g9wk61vsfvxy4q9k93j";
     extension = "zip";
   };
   "psr/http-factory"."1.0.2" = fetchzip {
@@ -138,10 +138,10 @@
     sha256 = "1gprvkmmi5wck5mb8xi6d1iimzyjggqq327xq10hll3d562n2fl5";
     extension = "zip";
   };
-  "react/stream"."v1.2.0" = fetchzip {
+  "react/stream"."v1.3.0" = fetchzip {
     name = "react/stream";
-    url = "https://api.github.com/repos/reactphp/stream/zipball/7a423506ee1903e89f1e08ec5f0ed430ff784ae9";
-    sha256 = "03p6wlmf7ybwc0zd3gx907r8qbhjayw4l82pd63r3zh6zsgpvazz";
+    url = "https://api.github.com/repos/reactphp/stream/zipball/6fbc9672905c7d5a885f2da2fc696f65840f4a66";
+    sha256 = "0x3hksa5i4gmcn2w7yxw6kn842wpksmkp38qb0gy33b7n15rfvs5";
     extension = "zip";
   };
   "ringcentral/psr7"."1.3.0" = fetchzip {
@@ -192,10 +192,10 @@
     sha256 = "1lla5l1krhc1f5zpgy5ir7g1bhxd5jpgzz3psqxqkm1va1hhhany";
     extension = "zip";
   };
-  "symfony/translation"."v6.3.0" = fetchzip {
+  "symfony/translation"."v6.3.3" = fetchzip {
     name = "symfony/translation";
-    url = "https://api.github.com/repos/symfony/translation/zipball/f72b2cba8f79dd9d536f534f76874b58ad37876f";
-    sha256 = "1ql6ashrdpcj4wr4yr1wk7s3fnb5lv69ypq97jc4s4lbhv3brgqv";
+    url = "https://api.github.com/repos/symfony/translation/zipball/3ed078c54bc98bbe4414e1e9b2d5e85ed5a5c8bd";
+    sha256 = "015rnfj7kcsdhxwp9av3jac1dw66821x9hhnr7mzs6wigrcyrnc4";
     extension = "zip";
   };
   "symfony/translation-contracts"."v3.3.0" = fetchzip {
