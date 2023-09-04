@@ -1,5 +1,6 @@
 {
-    "token": "super-secret-thing",
+    "token": "super-secret-thing (alternatively, use the tokenFile key)",
+    "tokenFile": "/var/secrets/token.txt",
     "directoryAvailabilities": "/var/lib/discord-availability",
     "maxAvailabilitiesPerUser": 100,
     "defaultTime": "19:00",

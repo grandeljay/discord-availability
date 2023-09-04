@@ -33,13 +33,12 @@ class Config
         }
 
         foreach ($potentialConfigPaths as $potentialConfigPath) {
-            $potentialConfigPath = $this->getPathWithEnvironmentVariable($potentialConfigPath);
+            $potentialConfigPath = $this->expandEnvVars($potentialConfigPath);
 
             if (file_exists($potentialConfigPath)) {
-                $rawData       = file_get_contents($potentialConfigPath);
-                $parsedData    = json_decode($rawData, true, 2, JSON_THROW_ON_ERROR);
-                $normalisedCfg = $this->normaliseConfig($parsedData);
-                $error         = $this->validateConfig($normalisedCfg, $parsedData);
+                $rawData    = file_get_contents($potentialConfigPath);
+                $parsedData = json_decode($rawData, true, 2, JSON_THROW_ON_ERROR);
+                $error      = $this->validateConfig($parsedData);
 
                 if ($error) {
                     $msg = sprintf('Bad config.json at `%s`:' . PHP_EOL, $potentialConfigPath);
@@ -47,7 +46,8 @@ class Config
                     die($msg);
                 }
 
-                $this->config = $normalisedCfg;
+                $normalisedCfg = $this->normaliseConfig($parsedData);
+                $this->config  = $normalisedCfg;
 
                 return;
             }
@@ -68,27 +68,51 @@ class Config
      */
     private function normaliseConfig(array $rawConfig): array
     {
-        $normalisedConfig = $rawConfig; // Create a copy.
+        $normalisedConfig = array();
 
-        $normalisedConfig['directoryAvailabilities']  = $this->normaliseAvailabilitiesDir($rawConfig['directoryAvailabilities']);
         $normalisedConfig['maxAvailabilitiesPerUser'] = $rawConfig['maxAvailabilitiesPerUser'] ?? 100;
         $normalisedConfig['defaultDay']               = $rawConfig['defaultDay'] ?? "monday";
         $normalisedConfig['defaultTime']              = $rawConfig['defaultTime'] ?? "19:00";
         $normalisedConfig['eventName']                = $rawConfig['eventName'] ?? "Dota 2";
         $normalisedConfig['logLevel']                 = $rawConfig['logLevel'] ?? "Info";
 
+        $normalisedConfig['directoryAvailabilities'] = $this->extractAvailabilitiesDirFromConfig($rawConfig);
+        $normalisedConfig['token']                   = $this->extractTokenFromConfig($rawConfig);
+
         return $normalisedConfig;
     }
 
-    private function normaliseAvailabilitiesDir(?string $inputDir): string
+    private function extractAvailabilitiesDirFromConfig(array $config): string
     {
+        $valueFromConfig = $config['directoryAvailabilities'];
         $default = '$HOME/.local/share/discord-availability/availabilities';
 
-        $dir = $inputDir ?? $default;
-        $dir = $this->getPathWithEnvironmentVariable($dir);
-        $dir = $this->normalisePath($dir);
+        return $this->normalisePathWithEnvVars($valueFromConfig ?? $default);
+    }
 
-        return $dir;
+    private function extractTokenFromConfig(array $validatedConfig): string
+    {
+        if (isset($validatedConfig['token'])) {
+            return $validatedConfig['token'];
+        }
+
+        $path = $this->normalisePathWithEnvVars($validatedConfig['tokenFile']);
+
+        $fileContents = file_get_contents($path);
+
+        if (!$fileContents) {
+            die('Failed to read token from file: ' . $path . PHP_EOL);
+        }
+
+        return trim($fileContents);
+    }
+
+    private function normalisePathWithEnvVars(string $path): string
+    {
+        $path = $this->expandEnvVars($path);
+        $path = $this->normalisePath($path);
+
+        return $path;
     }
 
     /**
@@ -112,7 +136,7 @@ class Config
         $cwd = getcwd();
 
         if (!$cwd) {
-            die('Could not determine current working directory.');
+            die('Could not determine current working directory.' . PHP_EOL);
         }
 
         $segments     = array($cwd, $path);
@@ -147,30 +171,37 @@ class Config
     /**
      * Validates the passed config and returns an error if it is invalid.
      *
-     * @param array $normalisedConfig The config to validate.
-     * @param array $rawConfig The raw config provided by the user. Used for error messages.
+     * @param array $config The config to validate.
      *
      * @return string|null A potential error that occurred.
      */
-    private function validateConfig(array $normalisedConfig, array $rawConfig): ?string
+    private function validateConfig(array $config): ?string
     {
-        if (!isset($normalisedConfig['token'])) {
-            return 'Required key "token" is not set.';
+        $path = $this->extractAvailabilitiesDirFromConfig($config);
+        if (!file_exists($path)) {
+            $msg = 'The "directoryAvailabilities" directory does not exist.' . PHP_EOL;
+            $msg = $msg . sprintf('  Specified:   "%s"' . PHP_EOL, $config['directoryAvailabilities']);
+            $msg = $msg . sprintf('  Interpreted: "%s"' . PHP_EOL, $path);
+            return $msg;
         }
 
-        $dir = $normalisedConfig['directoryAvailabilities'];
-        if (file_exists($dir)) {
-            if (!is_dir($dir)) {
-                $msg = 'The "directoryAvailabilities" directory is a non-directory file.' . PHP_EOL;
-                $msg = $msg . sprintf('  Specified:   "%s"' . PHP_EOL, $rawConfig['directoryAvailabilities']);
-                $msg = $msg . sprintf('  Interpreted: "%s"' . PHP_EOL, $normalisedConfig['directoryAvailabilities']);
+        if (isset($config['token']) and isset($config['tokenFile'])) {
+            return 'One of "token" or "tokenFile" must be set but both are set.';
+        }
+
+        if (!isset($config['token']) and !isset($config['tokenFile'])) {
+            return 'One of "token" or "tokenFile" must be set but neither are set.';
+        }
+
+        if (isset($config['tokenFile'])) {
+            $path = $this->normalisePathWithEnvVars($config['tokenFile']);
+
+            if (!file_exists($path)) {
+                $msg = 'The "tokenFile" file does not exist.' . PHP_EOL;
+                $msg = $msg . sprintf('  Specified:   "%s"' . PHP_EOL, $config['tokenFile']);
+                $msg = $msg . sprintf('  Interpreted: "%s"' . PHP_EOL, $path);
                 return $msg;
             }
-        } else {
-            $msg = 'The "directoryAvailabilities" directory does not exist.' . PHP_EOL;
-            $msg = $msg . sprintf('  Specified:   "%s"' . PHP_EOL, $rawConfig['directoryAvailabilities']);
-            $msg = $msg . sprintf('  Interpreted: "%s"' . PHP_EOL, $normalisedConfig['directoryAvailabilities']);
-            return $msg;
         }
 
         return null;
@@ -214,7 +245,7 @@ class Config
         return $this->get('directoryAvailabilities');
     }
 
-    private function getPathWithEnvironmentVariable(string $path): string
+    private function expandEnvVars(string $path): string
     {
         preg_match_all('/\$([A-Z_]+)/', $path, $environmentMatches, PREG_SET_ORDER);
 
@@ -225,7 +256,7 @@ class Config
                 $environmentVariable      = getenv($matchEnvironmentVariable);
 
                 if (false === $environmentVariable) {
-                    die(sprintf('Could not get value for environment variable "%s".', $matchEnvironmentVariable));
+                    die(sprintf('Could not get value for environment variable "%s".', $matchEnvironmentVariable) . PHP_EOL);
                 }
 
                 $path = str_replace($matchFull, $environmentVariable, $path);
