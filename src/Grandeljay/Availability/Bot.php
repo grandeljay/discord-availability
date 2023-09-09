@@ -98,13 +98,19 @@ class Bot
          */
         global $argv;
 
+        $install = false;
+
         foreach ($argv as $commandLineArgument) {
             if ('--install' === $commandLineArgument) {
-                $this->installCommands($discord);
+                $install = true;
+
+                $this->installCommands();
             }
         }
 
-        $this->registerCommands($discord);
+        if (!$install) {
+            $this->registerCommands($discord);
+        }
 
         $discord->on(
             Event::MESSAGE_CREATE,
@@ -119,25 +125,21 @@ class Bot
     /**
      * Removes orphaned commands and adds the active ones.
      *
-     * @param Discord $discord
-     *
      * @return void
      */
-    public function installCommands(Discord $discord): void
+    public function installCommands(): void
     {
-        $discord->application->commands
+        $this->discord->application->commands
         ->freshen()
         ->done(
-            function (GlobalCommandRepository $botCommandsCurrent) use ($discord) {
+            function (GlobalCommandRepository $botCommandsCurrent) {
                 $deleted = array();
 
                 foreach ($botCommandsCurrent as $botCommandCurrent) {
-                    $deleted[] = $discord->application->commands->delete($botCommandCurrent);
+                    $deleted[] = $this->discord->application->commands->delete($botCommandCurrent);
                 }
 
-                all($deleted)->then(
-                    array($this, 'registerCommands')
-                );
+                all($deleted)->then(array($this, 'registerCommands'));
             }
         );
     }
@@ -145,11 +147,9 @@ class Bot
     /**
      * Registers all slash commands so they can be used.
      *
-     * @param Discord $discord
-     *
      * @return void
      */
-    public function registerCommands(Discord $discord): void {
+    public function registerCommands(): void {
         $botCommandsDesired = array(
             Command::AVAILABILITY => 'Shows everybody\'s availability.',
             Command::AVAILABLE    => 'Mark yourself as available.',
@@ -158,12 +158,12 @@ class Bot
         );
 
         foreach ($botCommandsDesired as $botCommandDesiredName => $botCommandDesiredDescription) {
-            $commandObject = new Command($discord, $botCommandDesiredName, $botCommandDesiredDescription);
+            $commandObject = new Command($this->discord, $botCommandDesiredName, $botCommandDesiredDescription);
             $commandToRun  = $commandObject->get();
 
             $this->commands->add($commandToRun);
 
-            $commandToRun->run($discord);
+            $commandToRun->run($this->discord);
         }
     }
 
