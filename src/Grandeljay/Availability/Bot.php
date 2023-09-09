@@ -94,14 +94,13 @@ class Bot
     public function ready(Discord $discord)
     {
         /**
-         * `$argv` is a native PHP variable, which is only available when the
-         * user has supplied arguments.
+         * `$argv` is a native, global PHP variable.
          */
-        if (isset($argv)) {
-            foreach ($argv as $commandLineArgument) {
-                if ('--install' === $commandLineArgument) {
-                    $this->addCommands($discord);
-                }
+        global $argv;
+
+        foreach ($argv as $commandLineArgument) {
+            if ('--install' === $commandLineArgument) {
+                $this->installCommands($discord);
             }
         }
 
