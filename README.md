@@ -48,6 +48,12 @@ Once a user is in the system, the bot will automatically assume the user is avai
 
 Furthermore, the bot will attempt to detect the availability of users based on their messages (outside of the slash commands). This applies to all users who have used the `/available` or `/unavailable` command at least once.
 
+## Bot startup arguments
+
+-   `--install`
+
+    Updates all of the discord slash commands. Unused/orpahned commands are removed and new ones are added.
+
 ## Notes
 
 If you are a bro who is hosting this for a bro, you da real MVP.

@@ -93,7 +93,24 @@ class Bot
 
     public function ready(Discord $discord)
     {
-        $this->addCommands($discord);
+        /**
+         * `$argv` is a native, global PHP variable.
+         */
+        global $argv;
+
+        $install = false;
+
+        foreach ($argv as $commandLineArgument) {
+            if ('--install' === $commandLineArgument) {
+                $install = true;
+
+                $this->installCommands();
+            }
+        }
+
+        if (!$install) {
+            $this->registerCommands($discord);
+        }
 
         $discord->on(
             Event::MESSAGE_CREATE,
@@ -110,39 +127,44 @@ class Bot
      *
      * @return void
      */
-    public function addCommands(Discord $discord): void
+    public function installCommands(): void
     {
-        $discord->application->commands
+        $this->discord->application->commands
         ->freshen()
         ->done(
-            function (GlobalCommandRepository $botCommandsCurrent) use ($discord) {
+            function (GlobalCommandRepository $botCommandsCurrent) {
                 $deleted = array();
 
                 foreach ($botCommandsCurrent as $botCommandCurrent) {
-                    $deleted[] = $discord->application->commands->delete($botCommandCurrent);
+                    $deleted[] = $this->discord->application->commands->delete($botCommandCurrent);
                 }
 
-                all($deleted)->then(
-                    function () use ($discord) {
-                        $botCommandsDesired = array(
-                            Command::AVAILABILITY => 'Shows everybody\'s availability.',
-                            Command::AVAILABLE    => 'Mark yourself as available.',
-                            Command::UNAVAILABLE  => 'Mark yourself as unavailable.',
-                            Command::SHUTDOWN     => 'Shutdown the bot.',
-                        );
-
-                        foreach ($botCommandsDesired as $botCommandDesiredName => $botCommandDesiredDescription) {
-                            $commandObject = new Command($discord, $botCommandDesiredName, $botCommandDesiredDescription);
-                            $commandToRun  = $commandObject->get();
-
-                            $this->commands->add($commandToRun);
-
-                            $commandToRun->run($discord);
-                        }
-                    }
-                );
+                all($deleted)->then(array($this, 'registerCommands'));
             }
         );
+    }
+
+    /**
+     * Registers all slash commands so they can be used.
+     *
+     * @return void
+     */
+    public function registerCommands(): void {
+        $botCommandsDesired = array(
+            Command::AVAILABILITY => 'Shows everybody\'s availability.',
+            Command::AVAILABLE    => 'Mark yourself as available.',
+            Command::UNAVAILABLE  => 'Mark yourself as unavailable.',
+            Command::SHUTDOWN     => 'Shutdown the bot.',
+        );
+
+        foreach ($botCommandsDesired as $botCommandDesiredName => $botCommandDesiredDescription) {
+            $commandObject = new Command($this->discord, $botCommandDesiredName, $botCommandDesiredDescription);
+            $commandToRun  = $commandObject->get();
+
+            $this->commands->add($commandToRun);
+
+            $commandToRun->run($this->discord);
+        }
     }
 
     /**

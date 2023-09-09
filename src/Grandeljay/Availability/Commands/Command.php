@@ -35,8 +35,23 @@ class Command
          * command. After the command was successfully created, please
          * remove this code.
          *
+         * @var `$argv` The native, global PHP variable with all startup
+         *      arguments.
          * @see https://github.com/discord-php/DiscordPHP/wiki/Slash-Command
          */
+        global $argv;
+
+        foreach ($argv as $commandLineArgument) {
+            if ('--install' === $commandLineArgument) {
+                $this->addAll();
+
+                break;
+            }
+        }
+
+    }
+
+    private function addAll(): void {
         $commandBuilder = CommandBuilder::new()
         ->setName(strtolower($this->name))
         ->setDescription($this->description);
