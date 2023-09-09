@@ -104,6 +104,8 @@ class Bot
             }
         }
 
+        $this->registerCommands($discord);
+
         $discord->on(
             Event::MESSAGE_CREATE,
             function (Message $message, Discord $discord) {
@@ -117,9 +119,11 @@ class Bot
     /**
      * Removes orphaned commands and adds the active ones.
      *
+     * @param Discord $discord
+     *
      * @return void
      */
-    public function addCommands(Discord $discord): void
+    public function installCommands(Discord $discord): void
     {
         $discord->application->commands
         ->freshen()
@@ -132,26 +136,35 @@ class Bot
                 }
 
                 all($deleted)->then(
-                    function () use ($discord) {
-                        $botCommandsDesired = array(
-                            Command::AVAILABILITY => 'Shows everybody\'s availability.',
-                            Command::AVAILABLE    => 'Mark yourself as available.',
-                            Command::UNAVAILABLE  => 'Mark yourself as unavailable.',
-                            Command::SHUTDOWN     => 'Shutdown the bot.',
-                        );
-
-                        foreach ($botCommandsDesired as $botCommandDesiredName => $botCommandDesiredDescription) {
-                            $commandObject = new Command($discord, $botCommandDesiredName, $botCommandDesiredDescription);
-                            $commandToRun  = $commandObject->get();
-
-                            $this->commands->add($commandToRun);
-
-                            $commandToRun->run($discord);
-                        }
-                    }
+                    array($this, 'registerCommands')
                 );
             }
         );
+    }
+
+    /**
+     * Registers all slash commands so they can be used.
+     *
+     * @param Discord $discord
+     *
+     * @return void
+     */
+    public function registerCommands(Discord $discord): void {
+        $botCommandsDesired = array(
+            Command::AVAILABILITY => 'Shows everybody\'s availability.',
+            Command::AVAILABLE    => 'Mark yourself as available.',
+            Command::UNAVAILABLE  => 'Mark yourself as unavailable.',
+            Command::SHUTDOWN     => 'Shutdown the bot.',
+        );
+
+        foreach ($botCommandsDesired as $botCommandDesiredName => $botCommandDesiredDescription) {
+            $commandObject = new Command($discord, $botCommandDesiredName, $botCommandDesiredDescription);
+            $commandToRun  = $commandObject->get();
+
+            $this->commands->add($commandToRun);
+
+            $commandToRun->run($discord);
+        }
     }
 
     /**
