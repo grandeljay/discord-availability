@@ -2,8 +2,13 @@
   description = "Discord bot for DOTA 2 availability developed by Jay";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-23.05";
-    composer-nix.url = "github:tristanpemble/composer-nix";
+    nixpkgs = {
+      url = "nixpkgs/nixos-23.05";
+    };
+    composer-nix = {
+      url = "github:tristanpemble/composer-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, nixpkgs, composer-nix }:
@@ -12,7 +17,8 @@
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
       nixpkgsFor = forAllSystems (system: import nixpkgs { inherit system; });
       version = "${nixpkgs.lib.substring 0 8 self.lastModifiedDate}.${self.shortRev or "dirty"}";
-    in {
+    in
+    {
       packages = forAllSystems (system:
         let
           pkgs = nixpkgsFor.${system};
@@ -20,7 +26,8 @@
             inherit system;
             composerJson = ./composer.json;
           };
-        in {
+        in
+        {
           default = pkgs.stdenvNoCC.mkDerivation {
             pname = "discord-availability";
             inherit version;
