@@ -20,16 +20,11 @@ class Availability extends Command
                 $this->userAvailabilities = UserAvailabilities::getAll();
 
                 foreach ($this->userAvailabilities as $userAvailability) {
-                    $userAvailabilityTimes = $userAvailability->getUserAvailabilityTimes();
+                    $time                 = \strtotime($interaction->data->options['date']->value ?? $config->getDefaultDateTime());
+                    $userAvailabilityTime = $userAvailability->getUserAvailabilityTimeforTime($time);
+                    $userName             = $userAvailability->getUserName();
 
-                    $userAvailabilityTimeClosest = $this->getClosestAvailability(
-                        $userAvailabilityTimes,
-                        $interaction->data->options['date']->value ?? $config->getDefaultDateTime()
-                    );
-
-                    $userName = $userAvailability->getUserName();
-
-                    $messageRows[] = $userAvailabilityTimeClosest->toString($userName);
+                    $messageRows[] = $userAvailabilityTime->toString($userName);
                 }
 
                 if (empty($messageRows)) {

@@ -102,32 +102,7 @@ class UserAvailability implements \JsonSerializable
 
     public function getUserAvailabilityTimes(): UserAvailabilityTimes
     {
-        $userAvailabilityTimes        = $this->userAvailabilityTimes;
-        $userHasAvailabilityForMonday = false;
-
-        foreach ($userAvailabilityTimes as $userAvailabilityTime) {
-            $userAvailabilityTimeDay = strtolower(date('l', $userAvailabilityTime->getTime()));
-            $defaultDay              = $this->config->getDefaultDay();
-
-            if ($defaultDay === $userAvailabilityTimeDay) {
-                $userHasAvailabilityForMonday = true;
-
-                break;
-            }
-        }
-
-        if (false === $userHasAvailabilityForMonday) {
-            $defaultDateTimeText = $this->config->getDefaultDateTime();
-            $defaultDateTime     = Bot::getTimeFromString($defaultDateTimeText);
-
-            $userAvailabilityDefault = new UserAvailabilityTime();
-            $userAvailabilityDefault->setAvailability(true, true);
-            $userAvailabilityDefault->setTime($defaultDateTime);
-
-            $userAvailabilityTimes->add($userAvailabilityDefault);
-        }
-
-        return $userAvailabilityTimes;
+        return $this->userAvailabilityTimes;
     }
 
     public function truncate(): void
@@ -159,5 +134,51 @@ class UserAvailability implements \JsonSerializable
     public function getUserName(): string
     {
         return $this->userName;
+    }
+
+    public function getUserAvailabilityTimeforTime(int $timeAsUnixTimestamp): UserAvailabilityTime
+    {
+        $timeNow        = time();
+        $timeInSixHours = $timeNow + (3600 * 6);
+        $timesPotential = array();
+
+        foreach ($this->userAvailabilityTimes as $userAvailabilityTime) {
+            $timeAvailability = $userAvailabilityTime->getTime();
+
+            if ($timeAvailability >= $timeNow && $timeAvailability <= $timeInSixHours) {
+                $timesPotential[$timeAvailability] = $userAvailabilityTime;
+            }
+        }
+
+        if (empty($timesPotential)) {
+            /** Return user as unavailable */
+            $unavailableTimeData = array(
+                'userIsAvailable'           => false,
+                'userAvailabilityTime'      => $timeAsUnixTimestamp,
+                'userIsAvailablePerDefault' => false,
+            );
+
+            /** Available per default */
+            $config       = new Config();
+            $defaultDay   = \strtolower($config->getDefaultDay());
+            $requestedDay = \strtolower(\date('l', $timeAsUnixTimestamp));
+
+            if ($defaultDay === $requestedDay) {
+                $unavailableTimeData = array(
+                    'userIsAvailable'           => true,
+                    'userAvailabilityTime'      => $timeAsUnixTimestamp,
+                    'userIsAvailablePerDefault' => true,
+                );
+            }
+
+            $unavailableTime = new UserAvailabilityTime($unavailableTimeData);
+
+            return $unavailableTime;
+        } else {
+            /** Return earliest availability */
+            \ksort($timesPotential);
+
+            return \reset($timesPotential);
+        }
     }
 }
