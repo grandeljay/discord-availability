@@ -4,5 +4,14 @@
         "team-reflex/discord-php": "^7.3",
         "discord/interactions": "^2.2",
         "simplito/elliptic-php": "^1.0"
+    },
+    "require-dev": {
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+        "wp-coding-standards/wpcs": "3.0"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
     }
 }
