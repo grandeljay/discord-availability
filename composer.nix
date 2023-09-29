@@ -1,5 +1,11 @@
 { fetchzip }:
 {
+  "dealerdirect/phpcodesniffer-composer-installer"."v1.0.0" = fetchzip {
+    name = "dealerdirect/phpcodesniffer-composer-installer";
+    url = "https://api.github.com/repos/PHPCSStandards/composer-installer/zipball/4be43904336affa5c2f70744a348312336afd0da";
+    sha256 = "0b5spq8zcr72yfxk27q136cd3zxwn36zq81l5hivg1b82pncqim3";
+    extension = "zip";
+  };
   "discord-php/http"."v9.1.9" = fetchzip {
     name = "discord-php/http";
     url = "https://api.github.com/repos/discord-php/DiscordPHP-Http/zipball/ccc02b4c9a7a0c5a7d00d783f9ab397cfc28ba09";
@@ -46,6 +52,18 @@
     name = "nesbot/carbon";
     url = "https://api.github.com/repos/briannesbitt/Carbon/zipball/4f991ed2a403c85efbc4f23eb4030063fdbe01da";
     sha256 = "17swka9my7bbrb76gmg7ivpqpa2m0sar0g9wk61vsfvxy4q9k93j";
+    extension = "zip";
+  };
+  "phpcsstandards/phpcsextra"."1.1.2" = fetchzip {
+    name = "phpcsstandards/phpcsextra";
+    url = "https://api.github.com/repos/PHPCSStandards/PHPCSExtra/zipball/746c3190ba8eb2f212087c947ba75f4f5b9a58d5";
+    sha256 = "0ai0bvvjbdirbnqqf2n3yryv7ggzdyxnaqqlyfqqzqfclh74qpiz";
+    extension = "zip";
+  };
+  "phpcsstandards/phpcsutils"."1.0.8" = fetchzip {
+    name = "phpcsstandards/phpcsutils";
+    url = "https://api.github.com/repos/PHPCSStandards/PHPCSUtils/zipball/69465cab9d12454e5e7767b9041af0cd8cd13be7";
+    sha256 = "0n159hsmrhlyzhqp019gi4fwx4r23cv1aqmhd8xiwnak96xg2gqf";
     extension = "zip";
   };
   "psr/http-factory"."1.0.2" = fetchzip {
@@ -168,6 +186,12 @@
     sha256 = "1jxn3bs98cwy84lzalka0ssqlrz57f7r4dh5yj1n11bhl0bljnca";
     extension = "zip";
   };
+  "squizlabs/php_codesniffer"."3.7.2" = fetchzip {
+    name = "squizlabs/php_codesniffer";
+    url = "https://api.github.com/repos/squizlabs/PHP_CodeSniffer/zipball/ed8e00df0a83aa96acf703f8c2979ff33341f879";
+    sha256 = "0kx69dn5kmq7s9y9pjy5zsffm9h19xhwjrp9cx92wlrjr1xpv48h";
+    extension = "zip";
+  };
   "symfony/deprecation-contracts"."v3.3.0" = fetchzip {
     name = "symfony/deprecation-contracts";
     url = "https://api.github.com/repos/symfony/deprecation-contracts/zipball/7c3aff79d10325257a001fcf92d991f24fc967cf";
@@ -214,6 +238,12 @@
     name = "trafficcophp/bytebuffer";
     url = "https://api.github.com/repos/nesQuick/ByteBuffer/zipball/e94e5c87c41bc79c0f738b0fa89bad11d27ae0b4";
     sha256 = "194yxdfkmc85zshnk0i6q2lvczp67czzzyrim342cf3bv2malj0d";
+    extension = "zip";
+  };
+  "wp-coding-standards/wpcs"."3.0.0" = fetchzip {
+    name = "wp-coding-standards/wpcs";
+    url = "https://api.github.com/repos/WordPress/WordPress-Coding-Standards/zipball/bb792cb331472b82c5d7f28fb9b8ec2d20f68826";
+    sha256 = "1blwvx9vf7h61r9gy36wydm6rcy8ji02h078ivk7sinny2as89qk";
     extension = "zip";
   };
 }
