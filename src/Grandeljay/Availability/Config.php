@@ -85,7 +85,7 @@ class Config
     private function extractAvailabilitiesDirFromConfig(array $config): string
     {
         $valueFromConfig = $config['directoryAvailabilities'];
-        $default = '$HOME/.local/share/discord-availability/availabilities';
+        $default         = '$HOME/.local/share/discord-availability/availabilities';
 
         return $this->normalisePathWithEnvVars($valueFromConfig ?? $default);
     }
