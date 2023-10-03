@@ -6,5 +6,6 @@
     "defaultTime": "19:00",
     "defaultDay": "monday",
     "eventName": "Dota 2",
-    "logLevel": "Info"
+    "logLevel": "Info",
+    "timeZone": "Europe/Berlin"
 }

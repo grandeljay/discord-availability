@@ -75,6 +75,7 @@ class Config
         $normalisedConfig['defaultTime']              = $rawConfig['defaultTime'] ?? "19:00";
         $normalisedConfig['eventName']                = $rawConfig['eventName'] ?? "Dota 2";
         $normalisedConfig['logLevel']                 = $rawConfig['logLevel'] ?? "Info";
+        $normalisedConfig['timeZone']                 = $rawConfig['timeZone'] ?? \ini_get('date.timezone');
 
         $normalisedConfig['directoryAvailabilities'] = $this->extractAvailabilitiesDirFromConfig($rawConfig);
         $normalisedConfig['token']                   = $this->extractTokenFromConfig($rawConfig);
@@ -296,5 +297,10 @@ class Config
     public function getLogLevel(): string
     {
         return $this->get('logLevel');
+    }
+
+    public function getTimeZone(): string
+    {
+        return $this->get('timeZone');
     }
 }

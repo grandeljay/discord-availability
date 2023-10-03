@@ -64,6 +64,8 @@ class Bot
         $logger   = new Logger('discord-availability');
         $logger->pushHandler(new StreamHandler('php://stdout', $logLevel));
 
+        date_default_timezone_set($this->config->getTimeZone());
+
         $this->discord = new Discord(
             array(
                 'token'          => $this->config->getAPIToken(),
