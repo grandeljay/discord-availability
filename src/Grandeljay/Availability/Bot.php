@@ -149,7 +149,8 @@ class Bot
      *
      * @return void
      */
-    public function registerCommands(): void {
+    public function registerCommands(): void
+    {
         $botCommandsDesired = array(
             Command::AVAILABILITY => 'Shows everybody\'s availability.',
             Command::AVAILABLE    => 'Mark yourself as available.',
