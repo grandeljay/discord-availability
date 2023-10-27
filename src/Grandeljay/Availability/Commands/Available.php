@@ -2,6 +2,7 @@
 
 namespace Grandeljay\Availability\Commands;
 
+use Discord\Builders\Components\{Button, ActionRow};
 use Discord\Builders\MessageBuilder;
 use Discord\Discord;
 use Discord\Parts\Channel\Message;
@@ -16,6 +17,7 @@ class Available extends Command
             strtolower(Command::AVAILABLE),
             function (Interaction $interaction) {
                 $timeAvailable = Bot::getTimeFromString($interaction->data->options['date']->value);
+                $timeNow       = time();
 
                 if (false === $timeAvailable) {
                     $interaction
@@ -67,6 +69,82 @@ class Available extends Command
                     ),
                     true
                 );
+
+                if (\date('d.m.Y H:i', $timeNow) === \date('d.m.Y H:i', $timeAvailable)) {
+                    $userId = $interaction->user->id;
+
+                    $actionRow = ActionRow::new()
+                    ->addComponent(
+                        Button::new(Button::STYLE_PRIMARY)
+                        ->setLabel('Yes, I am available')
+                        ->setListener(
+                            function (Interaction $interaction) use ($timeAvailable, $userId) {
+                                $config       = new Config();
+                                $userIdButton = $interaction->user->id;
+                                $guild        = $interaction->guild;
+                                $member       = $guild->members->get('id', $userId);
+                                $userName     = $member->nick ?: $member->user->username;
+                                $event        = $config->getEventName();
+
+                                if ($userId === $userIdButton) {
+                                    $interaction
+                                    ->respondWithMessage(
+                                        MessageBuilder::new()
+                                        ->setContent('D\'uh!')
+                                        ->_setFlags(Message::FLAG_EPHEMERAL)
+                                    );
+                                } else {
+                                    $userAvailabilityTime = new UserAvailabilityTime();
+                                    $userAvailabilityTime->setAvailability(true, false);
+                                    $userAvailabilityTime->setTime($timeAvailable);
+
+                                    $userAvailability = UserAvailability::get($interaction->user);
+                                    $userAvailability->addAvailability($userAvailabilityTime);
+                                    $userAvailability->save();
+
+                                    $interaction
+                                    ->respondWithMessage(
+                                        MessageBuilder::new()->setContent(
+                                            sprintf(
+                                                '**%s** is available for **%s** now!',
+                                                $userName,
+                                                $event
+                                            )
+                                        )
+                                    );
+                                }
+                            },
+                            $this->discord
+                        )
+                    )
+                    ->addComponent(
+                        Button::new(Button::STYLE_SECONDARY)
+                        ->setLabel('Ignore')
+                        ->setListener(
+                            function (Interaction $interaction) {
+                                $interaction->acknowledge();
+                            },
+                            $this->discord
+                        )
+                    );
+
+                    $guild    = $interaction->guild;
+                    $member   = $guild->members->get('id', $userId);
+                    $userName = $member->nick ?: $member->user->username;
+                    $event    = $config->getEventName();
+
+                    $messageReply = MessageBuilder::new()
+                    ->setContent(
+                        sprintf(
+                            '**%s** is available for **%s** now! Are you available too?',
+                            $userName,
+                            $event
+                        )
+                    )
+                    ->addComponent($actionRow);
+
+                    $interaction->sendFollowUpMessage($messageReply);
+                }
             }
         );
     }

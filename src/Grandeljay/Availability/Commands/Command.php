@@ -8,9 +8,9 @@ use Discord\Parts\Interactions\Command\Option;
 
 class Command
 {
-    private Discord $discord;
     private string $description;
 
+    protected Discord $discord;
     protected string $name;
 
     public const AVAILABLE    = 'Available';
