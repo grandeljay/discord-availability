@@ -57,24 +57,4 @@ class Availability extends Command
             }
         );
     }
-
-    private function getClosestAvailability(UserAvailabilityTimes $userAvailabilityTimes, string $userAvailabilityTimeText): UserAvailabilityTime
-    {
-        $closestuserAvailabilityTime           = null;
-        $closestuserAvailabilityTimeDifference = null;
-
-        $userAvailabilityTimeTarget = Bot::getTimeFromString($userAvailabilityTimeText);
-
-        foreach ($userAvailabilityTimes as $userAvailabilityTime) {
-            $time       = $userAvailabilityTime->getTime();
-            $difference = abs($userAvailabilityTimeTarget - $time);
-
-            if (null === $closestuserAvailabilityTimeDifference || $difference < $closestuserAvailabilityTimeDifference) {
-                $closestuserAvailabilityTimeDifference = $difference;
-                $closestuserAvailabilityTime           = $userAvailabilityTime;
-            }
-        }
-
-        return $closestuserAvailabilityTime;
-    }
 }
