@@ -29,9 +29,9 @@ class Availability extends Command
                     '',
                 );
 
-                $this->userAvailabilities = UserAvailabilities::getAll();
+                $userAvailabilities = UserAvailabilities::getAll();
 
-                foreach ($this->userAvailabilities as $userAvailability) {
+                foreach ($userAvailabilities as $userAvailability) {
                     $userAvailabilityTime = $userAvailability->getUserAvailabilityTimeforTime($time);
                     $userName             = $userAvailability->getUserName();
 
