@@ -29,6 +29,15 @@ class UserAvailability implements \JsonSerializable
      */
     private UserAvailabilityTimes $userAvailabilityTimes;
 
+    /**
+     * Time to look into the past and future when looking for user
+     * availabilities.
+     *
+     * To do: Consider adding this to the config.
+     */
+    public const TIME_PAST   = 3600 * 3;
+    public const TIME_FUTURE = 3600 * 6;
+
     public static function fromFile(string $path): self
     {
         $text = file_get_contents($path);
@@ -138,14 +147,14 @@ class UserAvailability implements \JsonSerializable
 
     public function getUserAvailabilityTimeforTime(int $timeAsUnixTimestamp): UserAvailabilityTime
     {
-        $timeNow        = time();
-        $timeInSixHours = $timeNow + (3600 * 6);
-        $timesPotential = array();
+        $timeThreeHoursAgo = $timeAsUnixTimestamp - self::TIME_PAST;
+        $timeInSixHours    = $timeAsUnixTimestamp + self::TIME_FUTURE;
+        $timesPotential    = array();
 
         foreach ($this->userAvailabilityTimes as $userAvailabilityTime) {
             $timeAvailability = $userAvailabilityTime->getTime();
 
-            if ($timeAvailability >= $timeNow && $timeAvailability <= $timeInSixHours) {
+            if ($timeAvailability >= $timeThreeHoursAgo && $timeAvailability <= $timeInSixHours) {
                 $timesPotential[$timeAvailability] = $userAvailabilityTime;
             }
         }

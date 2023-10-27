@@ -5,7 +5,7 @@ namespace Grandeljay\Availability\Commands;
 use Discord\Builders\MessageBuilder;
 use Discord\Discord;
 use Discord\Parts\Interactions\Interaction;
-use Grandeljay\Availability\{Bot, Config, UserAvailabilities, UserAvailabilityTimes, UserAvailabilityTime};
+use Grandeljay\Availability\{Bot, Config, UserAvailability, UserAvailabilities, UserAvailabilityTimes, UserAvailabilityTime};
 
 class Availability extends Command
 {
@@ -14,13 +14,24 @@ class Availability extends Command
         $discord->listenCommand(
             strtolower(Command::AVAILABILITY),
             function (Interaction $interaction) {
-                $config      = new Config();
-                $messageRows = array();
+                $config            = new Config();
+                $time              = \strtotime($interaction->data->options['date']->value ?? $config->getDefaultDateTime());
+                $timeThreeHoursAgo = $time - UserAvailability::TIME_PAST;
+                $timeInSixHours    = $time + UserAvailability::TIME_FUTURE;
+                $messageRows       = array(
+                    \sprintf(
+                        'Showing availabilities for all users on **%s** (`%s`) between `%s` and `%s`.',
+                        date('l', $time),
+                        date('d.m.Y', $time),
+                        date('H:i', $timeThreeHoursAgo),
+                        date('H:i', $timeInSixHours)
+                    ),
+                    '',
+                );
 
                 $this->userAvailabilities = UserAvailabilities::getAll();
 
                 foreach ($this->userAvailabilities as $userAvailability) {
-                    $time                 = \strtotime($interaction->data->options['date']->value ?? $config->getDefaultDateTime());
                     $userAvailabilityTime = $userAvailability->getUserAvailabilityTimeforTime($time);
                     $userName             = $userAvailability->getUserName();
 
