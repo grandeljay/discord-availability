@@ -48,10 +48,10 @@ class Command
                 break;
             }
         }
-
     }
 
-    private function addAll(): void {
+    private function addAll(): void
+    {
         $commandBuilder = CommandBuilder::new()
         ->setName(strtolower($this->name))
         ->setDescription($this->description);
