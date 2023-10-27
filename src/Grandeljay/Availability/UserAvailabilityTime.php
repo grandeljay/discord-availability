@@ -78,8 +78,6 @@ class UserAvailabilityTime
      */
     public function toArray(): array
     {
-        $this->userAvailabilities = UserAvailabilities::getAll();
-
         $array = array(
             'userIsAvailable'           => $this->userIsAvailable,
             'userAvailabilityTime'      => $this->userAvailabilityTime,

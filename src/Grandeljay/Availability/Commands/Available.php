@@ -15,8 +15,6 @@ class Available extends Command
         $discord->listenCommand(
             strtolower(Command::AVAILABLE),
             function (Interaction $interaction) {
-                $this->userAvailabilities = UserAvailabilities::getAll();
-
                 $timeAvailable = Bot::getTimeFromString($interaction->data->options['date']->value);
 
                 if (false === $timeAvailable) {

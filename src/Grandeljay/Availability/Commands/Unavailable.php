@@ -15,8 +15,6 @@ class Unavailable extends Command
         $discord->listenCommand(
             strtolower(Command::UNAVAILABLE),
             function (Interaction $interaction) {
-                $this->userAvailabilities = UserAvailabilities::getAll();
-
                 $timeUnavailable = Bot::getTimeFromString($interaction->data->options['date']->value);
 
                 if (false === $timeUnavailable) {
