@@ -82,7 +82,7 @@ class Available extends Command
                                 $config       = new Config();
                                 $userIdButton = $interaction->user->id;
                                 $guild        = $interaction->guild;
-                                $member       = $guild->members->get('id', $userId);
+                                $member       = $guild->members->get('id', $userIdButton);
                                 $userName     = $member->nick ?: $member->user->username;
                                 $event        = $config->getEventName();
 
