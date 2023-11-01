@@ -67,7 +67,9 @@ class Availability extends Command
 
         foreach ($userAvailabilities as $userAvailability) {
             $userAvailabilityTime = $userAvailability->getUserAvailabilityforTime($timeFrom, $timeTo);
-            $userIsAvailable      = $userAvailabilityTime->getUserIsAvailableFrom($timeFrom);
+            $userIsAvailableFrom  = $userAvailabilityTime->getUserIsAvailableFrom($timeFrom);
+            $userIsAvailableTo    = $userAvailabilityTime->getUserIsAvailableTo($timeTo);
+            $userIsAvailable      = $userIsAvailableFrom || $userIsAvailableTo;
 
             $userIcon       = $userIsAvailable ? 'Y' : 'N';
             $userName       = $userAvailability->getUserName();

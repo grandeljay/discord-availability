@@ -143,8 +143,9 @@ class UserAvailability implements \JsonSerializable
 
         foreach ($this->userAvailabilityTimes as $userAvailabilityTime) {
             $timeAvailabilityFrom = $userAvailabilityTime->getTimeFrom();
+            $timeAvailabilityTo   = $userAvailabilityTime->getTimeTo();
 
-            if ($timeAvailabilityFrom >= $timeFrom) {
+            if ($timeAvailabilityFrom >= $timeFrom || $timeAvailabilityTo <= $timeTo) {
                 $timesPotential[$timeAvailabilityFrom] = $userAvailabilityTime;
             }
         }
