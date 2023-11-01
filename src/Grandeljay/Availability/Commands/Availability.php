@@ -36,7 +36,7 @@ class Availability extends Command
             return;
         }
 
-        $messageRows = array(
+        $messageRows  = array(
             \sprintf(
                 'Showing availabilities for all users on `%s` at `%s` (until `%s` at `%s`).',
                 date('d.m.Y', $timeFrom),
@@ -46,17 +46,72 @@ class Availability extends Command
             ),
             '',
         );
+        $messageTable = array(
+            array(
+                'icon'   => '',
+                'name'   => 'User',
+                'status' => 'Status',
+                'from'   => 'From',
+                'to'     => 'To',
+            ),
+            array(
+                'icon'   => '-',
+                'name'   => '-',
+                'status' => '-',
+                'from'   => '-',
+                'to'     => '-',
+            ),
+        );
 
         $userAvailabilities = UserAvailabilities::getAll();
 
         foreach ($userAvailabilities as $userAvailability) {
             $userAvailabilityTime = $userAvailability->getUserAvailabilityforTime($timeFrom, $timeTo);
-            $userName             = $userAvailability->getUserName();
+            $userIsAvailable      = $userAvailabilityTime->getUserIsAvailableFrom($timeFrom);
 
-            $messageRows[] = $userAvailabilityTime->toString($userName, $timeFrom, $timeTo);
+            $userIcon       = $userIsAvailable ? 'Y' : 'N';
+            $userName       = $userAvailability->getUserName();
+            $userStatus     = $userIsAvailable ? 'Available' : 'Unavailable';
+            $userStatusFrom = '';
+            $userStatusTo   = '';
+
+            if ($userIsAvailable) {
+                $userStatusFrom = date('d.m.Y H:i', $userAvailabilityTime->getUserAvailabilityTimeFrom());
+                $userStatusTo   = date('d.m.Y H:i', $userAvailabilityTime->getUserAvailabilityTimeTo());
+            }
+
+            $messageTable[] = array(
+                'icon'   => $userIcon,
+                'name'   => $userName,
+                'status' => $userStatus,
+                'from'   => $userStatusFrom ?: '',
+                'to'     => $userStatusTo   ?: '',
+            );
         }
 
-        if (empty($messageRows)) {
+        $pad = array();
+
+        foreach ($messageTable as $messageRow) {
+            foreach ($messageRow as $key => $value) {
+                if (isset($pad[$key])) {
+                    $pad[$key] = max($pad[$key], \mb_strlen($value));
+                } else {
+                    $pad[$key] = \mb_strlen($value);
+                }
+            }
+        }
+
+        foreach ($messageTable as $index => &$messageRow) {
+            foreach ($pad as $column => $amount) {
+                if (1 === $index) {
+                    $messageRow[$column] = \str_pad($messageRow[$column], $amount, '-');
+                } else {
+                    $messageRow[$column] = \str_pad($messageRow[$column], $amount);
+                }
+            }
+        }
+
+        if (1 === count($messageTable)) {
             $interaction->respondWithMessage(
                 MessageBuilder::new()
                 ->setContent(
@@ -66,6 +121,20 @@ class Availability extends Command
                 true
             );
         } else {
+            $messageRows[] = '```';
+
+            foreach ($messageTable as $columns) {
+                $row = '| ';
+
+                foreach ($columns as $value) {
+                    $row .= $value . ' | ';
+                }
+
+                $messageRows[] = $row;
+            }
+
+            $messageRows[] = '```';
+
             $interaction->respondWithMessage(
                 MessageBuilder::new()
                 ->setContent(implode(PHP_EOL, $messageRows)),

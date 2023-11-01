@@ -157,63 +157,6 @@ class UserAvailabilityTime
         $this->userIsAvailablePerDefault = $userIsAvailablePerDefault;
     }
 
-    /**
-     * Returns this instance's availability as a pretty (your mileage may vary),
-     * human readable string.
-     *
-     * @return string
-     */
-    public function toString(string $userName, int $timeFrom, int $timeTo): string
-    {
-        $string = sprintf(
-            '- :angry: %s is unavailable',
-            $userName,
-        );
-
-        $userIsAvailableFrom = $this->getUserIsAvailableFrom($timeFrom);
-
-        if (isset($this->userAvailabilityTimeFrom)) {
-            $userDateFrom = date('d.m.Y', $this->userAvailabilityTimeFrom);
-            $userTimeFrom = date('H:i', $this->userAvailabilityTimeFrom);
-        }
-
-        if (isset($this->userAvailabilityTimeTo)) {
-            $userDateTo = date('d.m.Y', $this->userAvailabilityTimeTo);
-            $userTimeTo = date('H:i', $this->userAvailabilityTimeTo);
-        }
-
-        $userIsAvailableTo = $this->getUserIsAvailableTo($timeTo);
-
-        $text       = $userIsAvailableFrom             ? 'available'      : 'unavailable';
-        $emoji      = $userIsAvailableFrom             ? ':slight_smile:' : ':angry:';
-        $perDefault = $this->userIsAvailablePerDefault ? ' (per default)' : '';
-
-        if ($userIsAvailableFrom) {
-            $userDateFrom = date('d.m.Y', $this->userAvailabilityTimeFrom);
-            $userTimeFrom = date('H:i', $this->userAvailabilityTimeFrom);
-        }
-
-        if ($userIsAvailableTo) {
-            $emoji = ':star_struck:';
-        }
-
-        if ($userIsAvailableFrom) {
-            $string = sprintf(
-                '- %s %s is %s on `%s` at `%s`%s (until `%s` at `%s`)',
-                $emoji,
-                $userName,
-                $text,
-                $userDateFrom,
-                $userTimeFrom,
-                $perDefault,
-                $userDateTo,
-                $userTimeTo
-            );
-        }
-
-        return $string;
-    }
-
     public function getUserIsAvailableFrom(int $timeFrom): bool
     {
         $userIsAvailableFrom = false;
