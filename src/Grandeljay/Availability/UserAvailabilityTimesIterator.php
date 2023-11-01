@@ -62,13 +62,13 @@ class UserAvailabilityTimesIterator implements Iterator, JsonSerializable, Count
         $json = array();
 
         foreach ($this->elements as $userAvailabilityTime) {
-            $userIsAvailable           = $userAvailabilityTime->getUserIsAvailable();
-            $userAvailabilityTimeTime  = $userAvailabilityTime->getUserAvailabilityTime();
+            $userAvailabilityTimeFrom  = $userAvailabilityTime->getUserAvailabilityTimeFrom();
+            $userAvailabilityTimeTo    = $userAvailabilityTime->getUserAvailabilityTimeTo();
             $userIsAvailablePerDefault = $userAvailabilityTime->getUserIsAvailablePerDefault();
 
-            $json[$userAvailabilityTimeTime] = array(
-                'userIsAvailable'           => $userIsAvailable,
-                'userAvailabilityTime'      => $userAvailabilityTimeTime,
+            $json[$userAvailabilityTimeFrom] = array(
+                'userAvailabilityTimeFrom'  => $userAvailabilityTimeFrom,
+                'userAvailabilityTimeTo'    => $userAvailabilityTimeTo,
                 'userIsAvailablePerDefault' => $userIsAvailablePerDefault,
             );
         }

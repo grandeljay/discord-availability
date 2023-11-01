@@ -36,11 +36,15 @@ class Bot
         $config          = new Config();
         $defaultDateTime = $config->getDefaultDateTime();
 
-        $message = str_replace(
-            array('next week', 'next time', 'next ', 'on ', 'at '),
-            array($defaultDateTime, $defaultDateTime, '', '', ''),
-            $message
-        );
+        if (empty($message)) {
+            $message = $defaultDateTime;
+        } else {
+            $message = str_replace(
+                array('next week', 'next time', 'next ', 'on ', 'at '),
+                array($defaultDateTime, $defaultDateTime, '', '', ''),
+                $message
+            );
+        }
 
         $time = strtotime($message);
 

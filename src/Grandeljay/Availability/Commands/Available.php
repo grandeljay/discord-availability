@@ -14,21 +14,19 @@ class Available extends Command
     public function run(Discord $discord): void
     {
         $command  = strtolower(Command::AVAILABLE);
-        $callback = array($this, 'available');
+        $callback = array($this, 'setUserAvailability');
 
         $discord->listenCommand($command, $callback);
     }
 
-    public function available(Interaction $interaction): void
+    public function setUserAvailability(Interaction $interaction): void
     {
-        $timeAvailableText      = $interaction->data->options['date']->value ?? '';
-        $timeAvailable          = $this->getTimeAvailable($timeAvailableText);
-        $timeAvailableInMinutes = (int) ($timeAvailable / 60);
-        $timeNowInMinutes       = (int) (time() / 60);
-        $timeAvailableIsNow     = $timeNowInMinutes === $timeAvailableInMinutes;
-        $timeAvailableIsPast    = $timeAvailableInMinutes < $timeNowInMinutes;
+        $timeAvailableFromText = $interaction->data->options['from']->value ?? '';
+        $timeAvailableFrom     = Bot::getTimeFromString($timeAvailableFromText);
+        $timeAvailableToText   = $interaction->data->options['to']->value ?? '';
+        $timeAvailableTo       = Bot::getTimeFromString($timeAvailableToText);
 
-        if (false === $timeAvailable) {
+        if (false === $timeAvailableFrom || false === $timeAvailableTo) {
             $interaction
             ->respondWithMessage(
                 MessageBuilder::new()
@@ -39,15 +37,20 @@ class Available extends Command
             return;
         }
 
-        if ($timeAvailableIsPast) {
+        $userAvailabilityTime = new UserAvailabilityTime();
+        $userAvailabilityTime->setTimeFrom($timeAvailableFrom);
+        $userAvailabilityTime->setTimeTo($timeAvailableTo);
+        $userAvailabilityTime->setAvailablePerDefault(false);
+
+        if ($userAvailabilityTime->isInPast()) {
             $interaction
             ->respondWithMessage(
                 MessageBuilder::new()
                 ->setContent(
                     sprintf(
                         'You\'re available on `%s` at `%s`? That doesn\'t sound right. Please specify a time in the future.',
-                        date('d.m.Y', $timeAvailable),
-                        date('H:i', $timeAvailable),
+                        date('d.m.Y', $timeAvailableFrom),
+                        date('H:i', $timeAvailableFrom),
                     )
                 )
                 ->_setFlags(Message::FLAG_EPHEMERAL)
@@ -55,10 +58,6 @@ class Available extends Command
 
             return;
         }
-
-        $userAvailabilityTime = new UserAvailabilityTime();
-        $userAvailabilityTime->setAvailability(true, false);
-        $userAvailabilityTime->setTime($timeAvailable);
 
         $userAvailability = UserAvailability::get($interaction->user);
         $userAvailability->addAvailability($userAvailabilityTime);
@@ -71,16 +70,19 @@ class Available extends Command
             MessageBuilder::new()
             ->setContent(
                 sprintf(
-                    'Gotcha! You are **available** for %s on `%s` at `%s`.',
+                    'Gotcha! You are **available** for **%s** on `%s` at `%s` (until `%s` at `%s`).',
                     $config->getEventName(),
-                    date('d.m.Y', $timeAvailable),
-                    date('H:i', $timeAvailable)
+                    date('d.m.Y', $timeAvailableFrom),
+                    date('H:i', $timeAvailableFrom),
+                    date('d.m.Y', $timeAvailableTo),
+                    date('H:i', $timeAvailableTo)
                 )
             )
             ->_setFlags(Message::FLAG_EPHEMERAL)
         );
 
-        if ($timeAvailableIsNow) {
+        return;
+        if ($userAvailabilityTime->isCurrent()) {
             $userId = $interaction->user->id;
 
             $actionRow = ActionRow::new()
@@ -88,7 +90,7 @@ class Available extends Command
                 Button::new(Button::STYLE_PRIMARY)
                 ->setLabel('Yes, I am available')
                 ->setListener(
-                    function (Interaction $interaction) use ($timeAvailable, $userId) {
+                    function (Interaction $interaction) use ($timeAvailableFrom, $userId) {
                         $config       = new Config();
                         $userIdButton = $interaction->user->id;
                         $guild        = $interaction->guild;
@@ -106,7 +108,7 @@ class Available extends Command
                         } else {
                             $userAvailabilityTime = new UserAvailabilityTime();
                             $userAvailabilityTime->setAvailability(true, false);
-                            $userAvailabilityTime->setTime($timeAvailable);
+                            $userAvailabilityTime->setTime($timeAvailableFrom);
 
                             $userAvailability = UserAvailability::get($interaction->user);
                             $userAvailability->addAvailability($userAvailabilityTime);
@@ -155,18 +157,5 @@ class Available extends Command
 
             $interaction->sendFollowUpMessage($messageReply);
         }
-    }
-
-    private function getTimeAvailable(string $timeAvailableText): int
-    {
-        if (empty($timeAvailableText)) {
-            $config = new Config();
-
-            $timeAvailableText = $config->getDefaultDateTime();
-        }
-
-        $timeAvailable = Bot::getTimeFromString($timeAvailableText);
-
-        return $timeAvailable;
     }
 }

@@ -68,25 +68,22 @@ class Command
                 break;
 
             case Command::AVAILABLE:
-                $option = new Option($this->discord);
-                $option
+                $optionFrom = new Option($this->discord);
+                $optionFrom
                 ->setType(Option::STRING)
-                ->setName('date')
+                ->setName('from')
                 ->setDescription('When will you be available?')
                 ->setRequired(true);
 
-                $commandBuilder->addOption($option);
-                break;
-
-            case Command::AVAILABLE:
-                $option = new Option($this->discord);
-                $option
+                $optionTo = new Option($this->discord);
+                $optionTo
                 ->setType(Option::STRING)
-                ->setName('date')
-                ->setDescription('When will you be available?')
-                ->setRequired(true);
+                ->setName('to')
+                ->setDescription('Until when will you be available?')
+                ->setRequired(false);
 
-                $commandBuilder->addOption($option);
+                $commandBuilder->addOption($optionFrom);
+                $commandBuilder->addOption($optionTo);
                 break;
 
             case Command::UNAVAILABLE:

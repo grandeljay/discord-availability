@@ -18,7 +18,8 @@ class UserAvailabilityTime
      *
      * @var int
      */
-    private int $userAvailabilityTime;
+    private int $userAvailabilityTimeFrom;
+    private int $userAvailabilityTimeTo;
 
     /**
      * Whether the user is assumed to be available by the bot. Usually this
@@ -80,7 +81,8 @@ class UserAvailabilityTime
     {
         $array = array(
             'userIsAvailable'           => $this->userIsAvailable,
-            'userAvailabilityTime'      => $this->userAvailabilityTime,
+            'userAvailabilityTimeFrom'  => $this->userAvailabilityTimeFrom,
+            'userAvailabilityTimeTo'    => $this->userAvailabilityTimeTo,
             'userIsAvailablePerDefault' => $this->userIsAvailablePerDefault,
         );
 
@@ -94,9 +96,16 @@ class UserAvailabilityTime
      */
     public function isInPast(): bool
     {
-        $isInPast = $this->userAvailabilityTime < time();
+        $isInPast = $this->userAvailabilityTimeFrom < time();
 
         return $isInPast;
+    }
+
+    public function isCurrent(): bool
+    {
+        $isCurrent = time() >= $this->userAvailabilityTimeFrom && time() < $this->userAvailabilityTimeTo;
+
+        return $isCurrent;
     }
 
     /**
@@ -113,6 +122,8 @@ class UserAvailabilityTime
 
     /**
      * Set this instance's availability.
+     *
+     * @deprecated
      *
      * @param boolean $userIsAvailable           Whether the user is available.
      * @param boolean $userIsAvailablePerDefault Whether the user is available
@@ -132,24 +143,32 @@ class UserAvailabilityTime
      *
      * @return integer
      */
-    public function getTime(): int
+    public function getTimeFrom(): int
     {
-        $time = $this->userAvailabilityTime;
+        return $this->userAvailabilityTimeFrom;
+    }
 
-        return $time;
+    public function getTimeTo(): int
+    {
+        return $this->userAvailabilityTimeTo;
     }
 
     /**
      * Set this instance's availability time using a unix timestamp.
      *
-     * @param integer $userAvailabilityTime The user's availability time as a
-     *                                      unix timestamp.
+     * @param integer $userAvailabilityTimeFrom The user's availability time as
+     *                                          a unix timestamp.
      *
      * @return void
      */
-    public function setTime(int $userAvailabilityTime): void
+    public function setTimeFrom(int $userAvailabilityTimeFrom): void
     {
-        $this->userAvailabilityTime = $userAvailabilityTime;
+        $this->userAvailabilityTimeFrom = $userAvailabilityTimeFrom;
+    }
+
+    public function setTimeTo(int $userAvailabilityTimeTo): void
+    {
+        $this->userAvailabilityTimeTo = $userAvailabilityTimeTo;
     }
 
     /**
@@ -165,6 +184,11 @@ class UserAvailabilityTime
         return $isAvailablePerDefault;
     }
 
+    public function setAvailablePerDefault(bool $userIsAvailablePerDefault): void
+    {
+        $this->userIsAvailablePerDefault = $userIsAvailablePerDefault;
+    }
+
     /**
      * Returns this instance's availability as a pretty (your mileage may vary),
      * human readable string.
@@ -176,8 +200,8 @@ class UserAvailabilityTime
         $text       = $this->userIsAvailable           ? 'available'      : 'unavailable';
         $emoji      = $this->userIsAvailable           ? ':star_struck:'  : ':angry:';
         $perDefault = $this->userIsAvailablePerDefault ? ' (per default)' : '';
-        $date       = date('d.m.Y', $this->userAvailabilityTime);
-        $time       = date('H:i', $this->userAvailabilityTime);
+        $date       = date('d.m.Y', $this->userAvailabilityTimeFrom);
+        $time       = date('H:i', $this->userAvailabilityTimeFrom);
 
         $string = sprintf(
             '- %s %s is %s on `%s` at `%s`%s',
@@ -197,9 +221,14 @@ class UserAvailabilityTime
         return $this->userIsAvailable;
     }
 
-    public function getUserAvailabilityTime(): int
+    public function getUserAvailabilityTimeFrom(): int
     {
-        return $this->userAvailabilityTime;
+        return $this->userAvailabilityTimeFrom;
+    }
+
+    public function getUserAvailabilityTimeTo(): int
+    {
+        return $this->userAvailabilityTimeTo;
     }
 
     public function getUserIsAvailablePerDefault(): bool
