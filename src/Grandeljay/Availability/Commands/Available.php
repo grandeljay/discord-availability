@@ -21,8 +21,12 @@ class Available extends Command
 
     private function available(Interaction $interaction): void
     {
-        $timeAvailable = Bot::getTimeFromString($interaction->data->options['date']->value);
-        $timeNow       = time();
+        $timeAvailableText      = $interaction->data->options['date']->value ?? '';
+        $timeAvailable          = $this->getTimeAvailable($timeAvailableText);
+        $timeAvailableInMinutes = (int) ($timeAvailable / 60);
+        $timeNowInMinutes       = (int) (time() / 60);
+        $timeAvailableIsNow     = $timeNowInMinutes === $timeAvailableInMinutes;
+        $timeAvailableIsPast    = $timeAvailableInMinutes < $timeNowInMinutes;
 
         if (false === $timeAvailable) {
             $interaction
@@ -35,7 +39,7 @@ class Available extends Command
             return;
         }
 
-        if ($timeAvailable < time()) {
+        if ($timeAvailableIsPast) {
             $interaction
             ->respondWithMessage(
                 MessageBuilder::new()
@@ -75,7 +79,7 @@ class Available extends Command
             true
         );
 
-        if (\date('d.m.Y H:i', $timeNow) === \date('d.m.Y H:i', $timeAvailable)) {
+        if ($timeAvailableIsNow) {
             $userId = $interaction->user->id;
 
             $actionRow = ActionRow::new()
@@ -150,5 +154,18 @@ class Available extends Command
 
             $interaction->sendFollowUpMessage($messageReply);
         }
+    }
+
+    private function getTimeAvailable(string $timeAvailableText): int
+    {
+        if (empty($timeAvailableText)) {
+            $config = new Config();
+
+            $timeAvailableText = $config->getDefaultDateTime();
+        }
+
+        $timeAvailable = Bot::getTimeFromString($timeAvailableText);
+
+        return $timeAvailable;
     }
 }
