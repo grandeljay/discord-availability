@@ -113,7 +113,7 @@ class Availability extends Command
             }
         }
 
-        if (1 === count($messageTable)) {
+        if (2 === count($messageTable)) {
             $interaction->respondWithMessage(
                 MessageBuilder::new()
                 ->setContent(
