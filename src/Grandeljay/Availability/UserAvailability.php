@@ -29,15 +29,6 @@ class UserAvailability implements \JsonSerializable
      */
     private UserAvailabilityTimes $userAvailabilityTimes;
 
-    /**
-     * Time to look into the past and future when looking for user
-     * availabilities.
-     *
-     * To do: Consider adding this to the config.
-     */
-    public const TIME_PAST   = 3600 * 3;
-    public const TIME_FUTURE = 3600 * 6;
-
     public static function fromFile(string $path): self
     {
         $text = file_get_contents($path);
@@ -72,6 +63,7 @@ class UserAvailability implements \JsonSerializable
         $this->config = new Config();
 
         $this->userAvailabilityTimes = new UserAvailabilityTimes();
+
         foreach ($availabilities as $userAvailabilityTimeData) {
             $userAvailabilityTime = new UserAvailabilityTime($userAvailabilityTimeData);
             $this->userAvailabilityTimes->add($userAvailabilityTime);
@@ -145,37 +137,31 @@ class UserAvailability implements \JsonSerializable
         return $this->userName;
     }
 
-    public function getUserAvailabilityTimeforTime(int $timeAsUnixTimestamp): UserAvailabilityTime
+    public function getUserAvailabilityforTime(int $timeFrom, int $timeTo): UserAvailabilityTime
     {
-        $timeThreeHoursAgo = $timeAsUnixTimestamp - self::TIME_PAST;
-        $timeInSixHours    = $timeAsUnixTimestamp + self::TIME_FUTURE;
-        $timesPotential    = array();
+        $timesPotential = array();
 
         foreach ($this->userAvailabilityTimes as $userAvailabilityTime) {
-            $timeAvailability = $userAvailabilityTime->getTime();
+            $timeAvailabilityFrom = $userAvailabilityTime->getTimeFrom();
 
-            if ($timeAvailability >= $timeThreeHoursAgo && $timeAvailability <= $timeInSixHours) {
-                $timesPotential[$timeAvailability] = $userAvailabilityTime;
+            if ($timeAvailabilityFrom >= $timeFrom) {
+                $timesPotential[$timeAvailabilityFrom] = $userAvailabilityTime;
             }
         }
 
         if (empty($timesPotential)) {
             /** Return user as unavailable */
             $unavailableTimeData = array(
-                'userIsAvailable'           => false,
-                'userAvailabilityTime'      => $timeAsUnixTimestamp,
                 'userIsAvailablePerDefault' => false,
             );
 
             /** Available per default */
             $config       = new Config();
             $defaultDay   = \strtolower($config->getDefaultDay());
-            $requestedDay = \strtolower(\date('l', $timeAsUnixTimestamp));
+            $requestedDay = \strtolower(\date('l', $timeFrom));
 
             if ($defaultDay === $requestedDay) {
                 $unavailableTimeData = array(
-                    'userIsAvailable'           => true,
-                    'userAvailabilityTime'      => $timeAsUnixTimestamp,
                     'userIsAvailablePerDefault' => true,
                 );
             }

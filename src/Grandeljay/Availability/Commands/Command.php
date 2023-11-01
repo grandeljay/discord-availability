@@ -5,6 +5,7 @@ namespace Grandeljay\Availability\Commands;
 use Discord\Builders\CommandBuilder;
 use Discord\Discord;
 use Discord\Parts\Interactions\Command\Option;
+use Grandeljay\Availability\Config;
 
 class Command
 {
@@ -52,19 +53,35 @@ class Command
 
     private function addAll(): void
     {
+        $config = new Config();
+
         $commandBuilder = CommandBuilder::new()
         ->setName(strtolower($this->name))
         ->setDescription($this->description);
 
         switch ($this->name) {
             case Command::AVAILABILITY:
-                $option = new Option($this->discord);
-                $option
+                $optionFrom = new Option($this->discord);
+                $optionFrom
                 ->setType(Option::STRING)
-                ->setName('date')
-                ->setDescription('Check user availability for date/time. Leave empty to check for monday.');
+                ->setName('from')
+                ->setDescription(
+                    \sprintf(
+                        'Check user availability for date/time. Leave empty to check for %s.',
+                        $config->getDefaultDay()
+                    )
+                )
+                ->setRequired(false);
 
-                $commandBuilder->addOption($option);
+                $optionTo = new Option($this->discord);
+                $optionTo
+                ->setType(Option::STRING)
+                ->setName('to')
+                ->setDescription('Date/time to include availabilities. Leave empty to check for default.')
+                ->setRequired(false);
+
+                $commandBuilder->addOption($optionFrom);
+                $commandBuilder->addOption($optionTo);
                 break;
 
             case Command::AVAILABLE:

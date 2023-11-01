@@ -7,13 +7,6 @@ use Discord\Parts\User\User;
 class UserAvailabilityTime
 {
     /**
-     * Whether the user is available or not.
-     *
-     * @var bool
-     */
-    private bool $userIsAvailable;
-
-    /**
      * The user's specified availability time as a unix timestamp.
      *
      * @var int
@@ -70,6 +63,12 @@ class UserAvailabilityTime
                 $this->$property = $value;
             }
         }
+
+        /** Backwards compatibility */
+        if (isset($availabilityTimeData['userAvailabilityTime'])) {
+            $this->userAvailabilityTimeFrom = $availabilityTimeData['userAvailabilityTime'];
+            $this->userAvailabilityTimeTo   = $availabilityTimeData['userAvailabilityTime'] + 3600 * 3;
+        }
     }
 
     /**
@@ -80,7 +79,6 @@ class UserAvailabilityTime
     public function toArray(): array
     {
         $array = array(
-            'userIsAvailable'           => $this->userIsAvailable,
             'userAvailabilityTimeFrom'  => $this->userAvailabilityTimeFrom,
             'userAvailabilityTimeTo'    => $this->userAvailabilityTimeTo,
             'userIsAvailablePerDefault' => $this->userIsAvailablePerDefault,
@@ -106,36 +104,6 @@ class UserAvailabilityTime
         $isCurrent = time() >= $this->userAvailabilityTimeFrom && time() < $this->userAvailabilityTimeTo;
 
         return $isCurrent;
-    }
-
-    /**
-     * Returns whether this instance's availability is `true`.
-     *
-     * @return boolean
-     */
-    public function isAvailable(): bool
-    {
-        $isAvailable = $this->userIsAvailable;
-
-        return $isAvailable;
-    }
-
-    /**
-     * Set this instance's availability.
-     *
-     * @deprecated
-     *
-     * @param boolean $userIsAvailable           Whether the user is available.
-     * @param boolean $userIsAvailablePerDefault Whether the user is available
-     *                                           without the user explicitly
-     *                                           specifying whether he is.
-     *
-     * @return void
-     */
-    public function setAvailability(bool $userIsAvailable, bool $userIsAvailablePerDefault): void
-    {
-        $this->userIsAvailable           = $userIsAvailable;
-        $this->userIsAvailablePerDefault = $userIsAvailablePerDefault;
     }
 
     /**
@@ -195,30 +163,77 @@ class UserAvailabilityTime
      *
      * @return string
      */
-    public function toString(string $userName): string
+    public function toString(string $userName, int $timeFrom, int $timeTo): string
     {
-        $text       = $this->userIsAvailable           ? 'available'      : 'unavailable';
-        $emoji      = $this->userIsAvailable           ? ':star_struck:'  : ':angry:';
-        $perDefault = $this->userIsAvailablePerDefault ? ' (per default)' : '';
-        $date       = date('d.m.Y', $this->userAvailabilityTimeFrom);
-        $time       = date('H:i', $this->userAvailabilityTimeFrom);
-
         $string = sprintf(
-            '- %s %s is %s on `%s` at `%s`%s',
-            $emoji,
+            '- :angry: %s is unavailable',
             $userName,
-            $text,
-            $date,
-            $time,
-            $perDefault
         );
+
+        $userIsAvailableFrom = $this->getUserIsAvailableFrom($timeFrom);
+
+        if (isset($this->userAvailabilityTimeFrom)) {
+            $userDateFrom = date('d.m.Y', $this->userAvailabilityTimeFrom);
+            $userTimeFrom = date('H:i', $this->userAvailabilityTimeFrom);
+        }
+
+        if (isset($this->userAvailabilityTimeTo)) {
+            $userDateTo = date('d.m.Y', $this->userAvailabilityTimeTo);
+            $userTimeTo = date('H:i', $this->userAvailabilityTimeTo);
+        }
+
+        $userIsAvailableTo = $this->getUserIsAvailableTo($timeTo);
+
+        $text       = $userIsAvailableFrom             ? 'available'      : 'unavailable';
+        $emoji      = $userIsAvailableFrom             ? ':slight_smile:' : ':angry:';
+        $perDefault = $this->userIsAvailablePerDefault ? ' (per default)' : '';
+
+        if ($userIsAvailableFrom) {
+            $userDateFrom = date('d.m.Y', $this->userAvailabilityTimeFrom);
+            $userTimeFrom = date('H:i', $this->userAvailabilityTimeFrom);
+        }
+
+        if ($userIsAvailableTo) {
+            $emoji = ':star_struck:';
+        }
+
+        if ($userIsAvailableFrom) {
+            $string = sprintf(
+                '- %s %s is %s on `%s` at `%s`%s (until `%s` at `%s`)',
+                $emoji,
+                $userName,
+                $text,
+                $userDateFrom,
+                $userTimeFrom,
+                $perDefault,
+                $userDateTo,
+                $userTimeTo
+            );
+        }
 
         return $string;
     }
 
-    public function getUserIsAvailable(): bool
+    public function getUserIsAvailableFrom(int $timeFrom): bool
     {
-        return $this->userIsAvailable;
+        $userIsAvailableFrom = false;
+
+        if (isset($this->userAvailabilityTimeFrom)) {
+            $userIsAvailableFrom = $this->userAvailabilityTimeFrom >= $timeFrom;
+        }
+
+        return $userIsAvailableFrom;
+    }
+
+    public function getUserIsAvailableTo(int $timeTo): bool
+    {
+        $userIsAvailableTo = false;
+
+        if (isset($this->userAvailabilityTimeTo)) {
+            $userIsAvailableTo = $this->userAvailabilityTimeTo <= $timeTo;
+        }
+
+        return $userIsAvailableTo;
     }
 
     public function getUserAvailabilityTimeFrom(): int

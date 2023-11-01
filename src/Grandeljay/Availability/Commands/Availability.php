@@ -4,57 +4,73 @@ namespace Grandeljay\Availability\Commands;
 
 use Discord\Builders\MessageBuilder;
 use Discord\Discord;
+use Discord\Parts\Channel\Message;
 use Discord\Parts\Interactions\Interaction;
-use Grandeljay\Availability\{Bot, Config, UserAvailability, UserAvailabilities, UserAvailabilityTimes, UserAvailabilityTime};
+use Grandeljay\Availability\{Bot, UserAvailabilities};
 
 class Availability extends Command
 {
     public function run(Discord $discord): void
     {
-        $discord->listenCommand(
-            strtolower(Command::AVAILABILITY),
-            function (Interaction $interaction) {
-                $config            = new Config();
-                $time              = \strtotime($interaction->data->options['date']->value ?? $config->getDefaultDateTime());
-                $timeThreeHoursAgo = $time - UserAvailability::TIME_PAST;
-                $timeInSixHours    = $time + UserAvailability::TIME_FUTURE;
-                $messageRows       = array(
-                    \sprintf(
-                        'Showing availabilities for all users on **%s** (`%s`) between `%s` and `%s`.',
-                        date('l', $time),
-                        date('d.m.Y', $time),
-                        date('H:i', $timeThreeHoursAgo),
-                        date('H:i', $timeInSixHours)
-                    ),
-                    '',
-                );
+        $command  = strtolower(Command::AVAILABILITY);
+        $callback = array($this, 'getUsersAvailabilities');
 
-                $userAvailabilities = UserAvailabilities::getAll();
+        $discord->listenCommand($command, $callback);
+    }
 
-                foreach ($userAvailabilities as $userAvailability) {
-                    $userAvailabilityTime = $userAvailability->getUserAvailabilityTimeforTime($time);
-                    $userName             = $userAvailability->getUserName();
+    public function getUsersAvailabilities(Interaction $interaction): void
+    {
+        $timeFromText = $interaction->data->options['from']->value ?? '';
+        $timeFrom     = Bot::getTimeFromString($timeFromText);
+        $timeToText   = $interaction->data->options['to']->value ?? '';
+        $timeTo       = Bot::getTimeFromString($timeToText);
 
-                    $messageRows[] = $userAvailabilityTime->toString($userName);
-                }
+        if (false === $timeFrom || false === $timeTo) {
+            $interaction
+            ->respondWithMessage(
+                MessageBuilder::new()
+                ->setContent('Sorry, I couldn\'t parse that. Could you please specify a more machine friendly time?')
+                ->_setFlags(Message::FLAG_EPHEMERAL)
+            );
 
-                if (empty($messageRows)) {
-                    $interaction->respondWithMessage(
-                        MessageBuilder::new()
-                        ->setContent(
-                            'Woah! I can\'t find shit.' . PHP_EOL . PHP_EOL .
-                            'Please use the `/available` or `/unavailable` command to add yourself.'
-                        ),
-                        true
-                    );
-                } else {
-                    $interaction->respondWithMessage(
-                        MessageBuilder::new()
-                        ->setContent(implode(PHP_EOL, $messageRows)),
-                        true
-                    );
-                }
-            }
+            return;
+        }
+
+        $messageRows = array(
+            \sprintf(
+                'Showing availabilities for all users on `%s` at `%s` (until `%s` at `%s`).',
+                date('d.m.Y', $timeFrom),
+                date('H:i', $timeFrom),
+                date('d.m.Y', $timeTo),
+                date('H:i', $timeTo)
+            ),
+            '',
         );
+
+        $userAvailabilities = UserAvailabilities::getAll();
+
+        foreach ($userAvailabilities as $userAvailability) {
+            $userAvailabilityTime = $userAvailability->getUserAvailabilityforTime($timeFrom, $timeTo);
+            $userName             = $userAvailability->getUserName();
+
+            $messageRows[] = $userAvailabilityTime->toString($userName, $timeFrom, $timeTo);
+        }
+
+        if (empty($messageRows)) {
+            $interaction->respondWithMessage(
+                MessageBuilder::new()
+                ->setContent(
+                    'Woah! I can\'t find shit.' . PHP_EOL . PHP_EOL .
+                    'Please use the `/available` or `/unavailable` command to add yourself.'
+                ),
+                true
+            );
+        } else {
+            $interaction->respondWithMessage(
+                MessageBuilder::new()
+                ->setContent(implode(PHP_EOL, $messageRows)),
+                true
+            );
+        }
     }
 }
