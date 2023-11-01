@@ -19,7 +19,7 @@ class Available extends Command
         $discord->listenCommand($command, $callback);
     }
 
-    private function available(Interaction $interaction): void
+    public function available(Interaction $interaction): void
     {
         $timeAvailableText      = $interaction->data->options['date']->value ?? '';
         $timeAvailable          = $this->getTimeAvailable($timeAvailableText);
