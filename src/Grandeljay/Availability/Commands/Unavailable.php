@@ -12,62 +12,65 @@ class Unavailable extends Command
 {
     public function run(Discord $discord): void
     {
-        $discord->listenCommand(
-            strtolower(Command::UNAVAILABLE),
-            function (Interaction $interaction) {
-                $timeUnavailable = Bot::getTimeFromString($interaction->data->options['date']->value);
+        $command  = strtolower(Command::AVAILABLE);
+        $callback = array($this, 'setUserUnavailability');
 
-                if (false === $timeUnavailable) {
-                    $interaction
-                    ->respondWithMessage(
-                        MessageBuilder::new()
-                        ->setContent('Sorry, I couldn\'t parse that. Could you please specify a more machine friendly time?'),
-                        true
-                    );
+        $discord->listenCommand($command, $callback);
+    }
 
-                    return;
-                }
+    public function setUserUnavailability(Interaction $interaction): void
+    {
+        $timeUnavailable = Bot::getTimeFromString($interaction->data->options['date']->value);
 
-                if ($timeUnavailable < time()) {
-                    $interaction
-                    ->respondWithMessage(
-                        MessageBuilder::new()
-                        ->setContent(
-                            sprintf(
-                                'You\'re unavailable on `%s` at `%s`? That doesn\'t sound right. Please specify a time in the future.',
-                                date('d.m.Y', $timeUnavailable),
-                                date('H:i', $timeUnavailable),
-                            )
-                        )
-                        ->_setFlags(Message::FLAG_EPHEMERAL)
-                    );
+        if (false === $timeUnavailable) {
+            $interaction
+            ->respondWithMessage(
+                MessageBuilder::new()
+                ->setContent('Sorry, I couldn\'t parse that. Could you please specify a more machine friendly time?'),
+                true
+            );
 
-                    return;
-                }
+            return;
+        }
 
-                $userUnavailabilityTime = new UserAvailabilityTime();
-                $userUnavailabilityTime->setAvailability(false, false);
-                $userUnavailabilityTime->setTime($timeUnavailable);
+        if ($timeUnavailable < time()) {
+            $interaction
+            ->respondWithMessage(
+                MessageBuilder::new()
+                ->setContent(
+                    sprintf(
+                        'You\'re unavailable on `%s` at `%s`? That doesn\'t sound right. Please specify a time in the future.',
+                        date('d.m.Y', $timeUnavailable),
+                        date('H:i', $timeUnavailable),
+                    )
+                )
+                ->_setFlags(Message::FLAG_EPHEMERAL)
+            );
 
-                $userUnavailability = UserAvailability::get($interaction->user);
-                $userUnavailability->addAvailability($userUnavailabilityTime);
-                $userUnavailability->save();
+            return;
+        }
 
-                $config = new Config();
+        $userUnavailabilityTime = new UserAvailabilityTime();
+        $userUnavailabilityTime->setAvailability(false, false);
+        $userUnavailabilityTime->setTime($timeUnavailable);
 
-                $interaction
-                ->respondWithMessage(
-                    MessageBuilder::new()->setContent(
-                        sprintf(
-                            'Gotcha! You are **unavailable** for %s on `%s` at `%s`.',
-                            $config->getEventName(),
-                            date('d.m.Y', $timeUnavailable),
-                            date('H:i', $timeUnavailable)
-                        )
-                    ),
-                    true
-                );
-            }
+        $userUnavailability = UserAvailability::get($interaction->user);
+        $userUnavailability->addAvailability($userUnavailabilityTime);
+        $userUnavailability->save();
+
+        $config = new Config();
+
+        $interaction
+        ->respondWithMessage(
+            MessageBuilder::new()->setContent(
+                sprintf(
+                    'Gotcha! You are **unavailable** for %s on `%s` at `%s`.',
+                    $config->getEventName(),
+                    date('d.m.Y', $timeUnavailable),
+                    date('H:i', $timeUnavailable)
+                )
+            ),
+            true
         );
     }
 }
