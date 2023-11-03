@@ -6,7 +6,7 @@ use Discord\Builders\MessageBuilder;
 use Discord\Discord;
 use Discord\Parts\Channel\Message;
 use Discord\Parts\Interactions\Interaction;
-use Grandeljay\Availability\{Bot, UserAvailabilities};
+use Grandeljay\Availability\{Bot, UserAvailabilities, Config};
 
 class Availability extends Command
 {
@@ -20,6 +20,8 @@ class Availability extends Command
 
     public function getUsersAvailabilities(Interaction $interaction): void
     {
+        $config = new Config();
+
         $timeFromText = $interaction->data->options['from']->value ?? '';
         $timeToText   = $interaction->data->options['to']->value   ?? '';
 
@@ -33,6 +35,9 @@ class Availability extends Command
             $timeFrom = Bot::getTimeFromString($timeFromText);
             $timeTo   = Bot::getTimeFromString($timeToText);
         }
+
+        $timeDefault   = Bot::getTimeFromString($config->getDefaultDateTime());
+        $timeIsDefault = $timeFrom === $timeDefault;
 
         if (false === $timeFrom || false === $timeTo) {
             $interaction
@@ -89,6 +94,12 @@ class Availability extends Command
             if ($userIsAvailable) {
                 $userStatusFrom = date('H:i', $userAvailabilityTime->getUserAvailabilityTimeFrom());
                 $userStatusTo   = date('H:i', $userAvailabilityTime->getUserAvailabilityTimeTo());
+            } elseif ($timeIsDefault) {
+                $userIcon       = '-';
+                $userName       = $userAvailability->getUserName();
+                $userStatus     = 'Available*';
+                $userStatusFrom = date('H:i', $timeFrom);
+                $userStatusTo   = date('H:i', $timeTo);
             }
 
             $messageTable[] = array(
@@ -145,6 +156,10 @@ class Availability extends Command
             }
 
             $messageRows[] = '```';
+
+            if ($timeIsDefault) {
+                $messageRows[] = '`*` = The user is available per default and did not explicitly specify his availability.';
+            }
 
             $interaction->respondWithMessage(
                 MessageBuilder::new()
