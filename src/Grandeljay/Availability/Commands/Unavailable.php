@@ -12,7 +12,7 @@ class Unavailable extends Command
 {
     public function run(Discord $discord): void
     {
-        $command  = strtolower(Command::AVAILABLE);
+        $command  = strtolower(Command::UNAVAILABLE);
         $callback = array($this, 'setUserUnavailability');
 
         $discord->listenCommand($command, $callback);
@@ -20,9 +20,21 @@ class Unavailable extends Command
 
     public function setUserUnavailability(Interaction $interaction): void
     {
-        $timeUnavailable = Bot::getTimeFromString($interaction->data->options['date']->value);
+        $timeFromText = $interaction->data->options['from']->value ?? '';
+        $timeToText   = $interaction->data->options['to']->value   ?? '';
 
-        if (false === $timeUnavailable) {
+        if (empty($timeToText)) {
+            $timeUnavailableFrom = Bot::getTimeFromString($timeFromText);
+            $timeUnavailableTo   = $timeUnavailableFrom + 3600 * 4;
+        } elseif (!empty($timeToText) && empty($timeFromText)) {
+            $timeUnavailableTo   = Bot::getTimeFromString($timeToText);
+            $timeUnavailableFrom = $timeUnavailableTo - 3600 * 4;
+        } else {
+            $timeUnavailableFrom = Bot::getTimeFromString($timeFromText);
+            $timeUnavailableTo   = Bot::getTimeFromString($timeToText);
+        }
+
+        if (false === $timeUnavailableFrom || false === $timeUnavailableTo) {
             $interaction
             ->respondWithMessage(
                 MessageBuilder::new()
@@ -33,15 +45,20 @@ class Unavailable extends Command
             return;
         }
 
-        if ($timeUnavailable < time()) {
+        $userAvailabilityTime = new UserAvailabilityTime();
+        $userAvailabilityTime->setTimeFrom($timeUnavailableFrom);
+        $userAvailabilityTime->setTimeTo($timeUnavailableTo);
+        $userAvailabilityTime->setAvailablePerDefault(false);
+
+        if ($userAvailabilityTime->isInPast()) {
             $interaction
             ->respondWithMessage(
                 MessageBuilder::new()
                 ->setContent(
                     sprintf(
                         'You\'re unavailable on `%s` at `%s`? That doesn\'t sound right. Please specify a time in the future.',
-                        date('d.m.Y', $timeUnavailable),
-                        date('H:i', $timeUnavailable),
+                        date('d.m.Y', $timeUnavailableFrom),
+                        date('H:i', $timeUnavailableFrom),
                     )
                 )
                 ->_setFlags(Message::FLAG_EPHEMERAL)
@@ -50,13 +67,9 @@ class Unavailable extends Command
             return;
         }
 
-        $userUnavailabilityTime = new UserAvailabilityTime();
-        $userUnavailabilityTime->setAvailability(false, false);
-        $userUnavailabilityTime->setTime($timeUnavailable);
-
-        $userUnavailability = UserAvailability::get($interaction->user);
-        $userUnavailability->addAvailability($userUnavailabilityTime);
-        $userUnavailability->save();
+        $userAvailability = UserAvailability::get($interaction->user);
+        $userAvailability->addAvailability($userAvailabilityTime);
+        $userAvailability->save();
 
         $config = new Config();
 
@@ -65,10 +78,12 @@ class Unavailable extends Command
             MessageBuilder::new()
             ->setContent(
                 sprintf(
-                    'Gotcha! You are **unavailable** for %s on `%s` at `%s`.',
+                    'Gotcha! You are **unavailable** for **%s** on `%s` at `%s` (until `%s` at `%s`).',
                     $config->getEventName(),
-                    date('d.m.Y', $timeUnavailable),
-                    date('H:i', $timeUnavailable)
+                    date('d.m.Y', $timeUnavailableFrom),
+                    date('H:i', $timeUnavailableFrom),
+                    date('d.m.Y', $timeUnavailableTo),
+                    date('H:i', $timeUnavailableTo)
                 )
             )
             ->_setFlags(Message::FLAG_EPHEMERAL)
