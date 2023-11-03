@@ -81,7 +81,6 @@ class Available extends Command
             ->_setFlags(Message::FLAG_EPHEMERAL)
         );
 
-        return;
         if ($userAvailabilityTime->isNow()) {
             $userId = $interaction->user->id;
 
@@ -90,7 +89,7 @@ class Available extends Command
                 Button::new(Button::STYLE_PRIMARY)
                 ->setLabel('Yes, I am available')
                 ->setListener(
-                    function (Interaction $interaction) use ($timeAvailableFrom, $userId) {
+                    function (Interaction $interaction) use ($userId, $timeAvailableFrom, $timeAvailableTo) {
                         $config       = new Config();
                         $userIdButton = $interaction->user->id;
                         $guild        = $interaction->guild;
@@ -107,8 +106,9 @@ class Available extends Command
                             );
                         } else {
                             $userAvailabilityTime = new UserAvailabilityTime();
-                            $userAvailabilityTime->setAvailability(true, false);
-                            $userAvailabilityTime->setTime($timeAvailableFrom);
+                            $userAvailabilityTime->setTimeFrom($timeAvailableFrom);
+                            $userAvailabilityTime->setTimeTo($timeAvailableTo);
+                            $userAvailabilityTime->setAvailablePerDefault(false);
 
                             $userAvailability = UserAvailability::get($interaction->user);
                             $userAvailability->addAvailability($userAvailabilityTime);
