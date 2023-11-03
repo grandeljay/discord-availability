@@ -21,9 +21,18 @@ class Availability extends Command
     public function getUsersAvailabilities(Interaction $interaction): void
     {
         $timeFromText = $interaction->data->options['from']->value ?? '';
-        $timeFrom     = Bot::getTimeFromString($timeFromText);
-        $timeToText   = $interaction->data->options['to']->value ?? '';
-        $timeTo       = Bot::getTimeFromString($timeToText);
+        $timeToText   = $interaction->data->options['to']->value   ?? '';
+
+        if (empty($timeToText)) {
+            $timeFrom = Bot::getTimeFromString($timeFromText);
+            $timeTo   = $timeFrom + 3600 * 4;
+        } elseif (!empty($timeToText) && empty($timeFromText)) {
+            $timeTo   = Bot::getTimeFromString($timeToText);
+            $timeFrom = $timeTo - 3600 * 4;
+        } else {
+            $timeFrom = Bot::getTimeFromString($timeFromText);
+            $timeTo   = Bot::getTimeFromString($timeToText);
+        }
 
         if (false === $timeFrom || false === $timeTo) {
             $interaction
