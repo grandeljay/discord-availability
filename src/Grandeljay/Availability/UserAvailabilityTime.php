@@ -173,7 +173,7 @@ class UserAvailabilityTime
         $userIsAvailableTo = false;
 
         if (isset($this->userAvailabilityTimeTo)) {
-            $userIsAvailableTo = $this->userAvailabilityTimeTo <= $timeTo;
+            $userIsAvailableTo = $this->userAvailabilityTimeTo >= $timeTo;
         }
 
         return $userIsAvailableTo;
