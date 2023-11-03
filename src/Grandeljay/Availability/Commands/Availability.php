@@ -87,8 +87,8 @@ class Availability extends Command
             $userStatusTo   = '';
 
             if ($userIsAvailable) {
-                $userStatusFrom = date('d.m.Y H:i', $userAvailabilityTime->getUserAvailabilityTimeFrom());
-                $userStatusTo   = date('d.m.Y H:i', $userAvailabilityTime->getUserAvailabilityTimeTo());
+                $userStatusFrom = date('H:i', $userAvailabilityTime->getUserAvailabilityTimeFrom());
+                $userStatusTo   = date('H:i', $userAvailabilityTime->getUserAvailabilityTimeTo());
             }
 
             $messageTable[] = array(
