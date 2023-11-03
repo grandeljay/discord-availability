@@ -82,7 +82,7 @@ class Available extends Command
         );
 
         return;
-        if ($userAvailabilityTime->isCurrent()) {
+        if ($userAvailabilityTime->isNow()) {
             $userId = $interaction->user->id;
 
             $actionRow = ActionRow::new()
