@@ -26,8 +26,8 @@ class Unavailable extends Command
             $interaction
             ->respondWithMessage(
                 MessageBuilder::new()
-                ->setContent('Sorry, I couldn\'t parse that. Could you please specify a more machine friendly time?'),
-                true
+                ->setContent('Sorry, I couldn\'t parse that. Could you please specify a more machine friendly time?')
+                ->_setFlags(Message::FLAG_EPHEMERAL)
             );
 
             return;
@@ -62,15 +62,16 @@ class Unavailable extends Command
 
         $interaction
         ->respondWithMessage(
-            MessageBuilder::new()->setContent(
+            MessageBuilder::new()
+            ->setContent(
                 sprintf(
                     'Gotcha! You are **unavailable** for %s on `%s` at `%s`.',
                     $config->getEventName(),
                     date('d.m.Y', $timeUnavailable),
                     date('H:i', $timeUnavailable)
                 )
-            ),
-            true
+            )
+            ->_setFlags(Message::FLAG_EPHEMERAL)
         );
     }
 }
