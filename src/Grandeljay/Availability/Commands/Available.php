@@ -21,10 +21,19 @@ class Available extends Command
 
     public function setUserAvailability(Interaction $interaction): void
     {
-        $timeAvailableFromText = $interaction->data->options['from']->value ?? '';
-        $timeAvailableFrom     = Bot::getTimeFromString($timeAvailableFromText);
-        $timeAvailableToText   = $interaction->data->options['to']->value ?? '';
-        $timeAvailableTo       = Bot::getTimeFromString($timeAvailableToText);
+        $timeFromText = $interaction->data->options['from']->value ?? '';
+        $timeToText   = $interaction->data->options['to']->value   ?? '';
+
+        if (empty($timeToText)) {
+            $timeAvailableFrom = Bot::getTimeFromString($timeFromText);
+            $timeAvailableTo   = $timeAvailableFrom + 3600 * 4;
+        } elseif (!empty($timeToText) && empty($timeFromText)) {
+            $timeAvailableTo   = Bot::getTimeFromString($timeToText);
+            $timeAvailableFrom = $timeAvailableTo - 3600 * 4;
+        } else {
+            $timeAvailableFrom = Bot::getTimeFromString($timeFromText);
+            $timeAvailableTo   = Bot::getTimeFromString($timeToText);
+        }
 
         if (false === $timeAvailableFrom || false === $timeAvailableTo) {
             $interaction
