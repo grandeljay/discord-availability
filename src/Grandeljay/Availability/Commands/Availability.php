@@ -77,6 +77,7 @@ class Availability extends Command
             ),
         );
 
+        $guild              = $interaction->guild;
         $userAvailabilities = UserAvailabilities::getAll();
 
         foreach ($userAvailabilities as $userAvailability) {
@@ -90,6 +91,9 @@ class Availability extends Command
             $userStatus     = $userIsAvailable ? 'Available' : 'Unavailable';
             $userStatusFrom = '';
             $userStatusTo   = '';
+
+            $member   = $guild->members->get('id', $userAvailability->getUserId());
+            $userName = $member->nick ?? $member->user->username ?? $userAvailability->getUserName();
 
             if ($userIsAvailable) {
                 $userStatusFrom = date('H:i', $userAvailabilityTime->getUserAvailabilityTimeFrom());
