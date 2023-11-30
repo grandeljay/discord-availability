@@ -416,7 +416,7 @@ class Bot
             ->setListener(
                 function (Interaction $interaction) use ($userUnavailableTime, $message) {
                     $userAvailabilityTime = new UserAvailabilityTime();
-                    $userAvailabilityTime->setAvailability(true);
+                    $userAvailabilityTime->setAvailability(false);
                     $userAvailabilityTime->setTimeFrom($userUnavailableTime);
                     $userAvailabilityTime->setTimeTo($userUnavailableTime + 3600 * 4);
                     $userAvailabilityTime->setAvailablePerDefault(false);
