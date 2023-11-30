@@ -23,7 +23,7 @@ class UserAvailabilityTime
      *
      * @var bool
      */
-    private bool $userIsAvailable = true;
+    private bool $userIsAvailable;
 
     /**
      * Whether the user is assumed to be available by the bot. Usually this
@@ -76,6 +76,14 @@ class UserAvailabilityTime
         }
 
         /** Backwards compatibility */
+        if (!isset($this->userIsAvailable)) {
+            $this->userIsAvailable = true;
+        }
+
+        if (!isset($this->userIsAvailablePerDefault)) {
+            $this->userIsAvailablePerDefault = false;
+        }
+
         if (isset($availabilityTimeData['userAvailabilityTime'])) {
             $this->userAvailabilityTimeFrom = $availabilityTimeData['userAvailabilityTime'];
             $this->userAvailabilityTimeTo   = $availabilityTimeData['userAvailabilityTime'] + 3600 * 4;
