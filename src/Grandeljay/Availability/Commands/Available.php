@@ -47,6 +47,7 @@ class Available extends Command
         }
 
         $userAvailabilityTime = new UserAvailabilityTime();
+        $userAvailabilityTime->setAvailability(true);
         $userAvailabilityTime->setTimeFrom($timeAvailableFrom);
         $userAvailabilityTime->setTimeTo($timeAvailableTo);
         $userAvailabilityTime->setAvailablePerDefault(false);
@@ -115,6 +116,7 @@ class Available extends Command
                             );
                         } else {
                             $userAvailabilityTime = new UserAvailabilityTime();
+                            $userAvailabilityTime->setAvailability(true);
                             $userAvailabilityTime->setTimeFrom($timeAvailableFrom);
                             $userAvailabilityTime->setTimeTo($timeAvailableTo);
                             $userAvailabilityTime->setAvailablePerDefault(false);

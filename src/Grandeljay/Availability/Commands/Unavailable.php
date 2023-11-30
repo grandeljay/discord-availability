@@ -46,6 +46,7 @@ class Unavailable extends Command
         }
 
         $userAvailabilityTime = new UserAvailabilityTime();
+        $userAvailabilityTime->setAvailability(false);
         $userAvailabilityTime->setTimeFrom($timeUnavailableFrom);
         $userAvailabilityTime->setTimeTo($timeUnavailableTo);
         $userAvailabilityTime->setAvailablePerDefault(false);

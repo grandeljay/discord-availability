@@ -145,36 +145,50 @@ class UserAvailability implements \JsonSerializable
             $timeAvailabilityFrom = $userAvailabilityTime->getTimeFrom();
             $timeAvailabilityTo   = $userAvailabilityTime->getTimeTo();
 
-            if ($timeAvailabilityFrom >= $timeFrom || $timeAvailabilityTo <= $timeTo) {
-                $timesPotential[$timeAvailabilityFrom] = $userAvailabilityTime;
+            if ($timeAvailabilityFrom >= $timeFrom && $timeAvailabilityTo <= $timeTo) {
+                $differenceFrom    = \abs($timeAvailabilityFrom - $timeFrom);
+                $differenceTo      = \abs($timeAvailabilityTo   - $timeTo);
+                $differenceAverage = ($differenceFrom + $differenceTo) / 2;
+
+                $timesPotential[] = array(
+                    'differenceFrom'       => $differenceFrom,
+                    'differenceTo'         => $differenceTo,
+                    'differenceAverage'    => $differenceAverage,
+                    'userAvailabilityTime' => $userAvailabilityTime,
+                );
             }
         }
 
         if (empty($timesPotential)) {
             /** Return user as unavailable */
-            $unavailableTimeData = array(
-                'userIsAvailablePerDefault' => false,
-            );
+            $unavailableTime = new UserAvailabilityTime();
+            $unavailableTime->setAvailability(false);
 
             /** Available per default */
-            $config       = new Config();
-            $defaultDay   = \strtolower($config->getDefaultDay());
-            $requestedDay = \strtolower(\date('l', $timeFrom));
+            $config          = new Config();
+            $defaultDay      = \strtolower($config->getDefaultDay());
+            $defaultDateTime = Bot::getTimeFromString($config->getDefaultDateTime());
+            $requestedDay    = \strtolower(\date('l', $timeFrom));
 
             if ($defaultDay === $requestedDay) {
-                $unavailableTimeData = array(
-                    'userIsAvailablePerDefault' => true,
-                );
+                $unavailableTime->setAvailability(true);
+                $unavailableTime->setAvailablePerDefault(true);
+                $unavailableTime->setTimeFrom($defaultDateTime);
+                $unavailableTime->setTimeTo($defaultDateTime + 3600 * 4);
             }
-
-            $unavailableTime = new UserAvailabilityTime($unavailableTimeData);
 
             return $unavailableTime;
         } else {
-            /** Return earliest availability */
-            \ksort($timesPotential);
+            /** Return closest availability */
+            \usort(
+                $timesPotential,
+                function ($a, $b) {
+                    return $a['differenceAverage'] <=> $b['differenceAverage'];
+                }
+            );
+            $closestTime = \reset($timesPotential);
 
-            return \reset($timesPotential);
+            return $closestTime['userAvailabilityTime'];
         }
     }
 }

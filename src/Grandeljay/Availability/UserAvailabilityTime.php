@@ -15,6 +15,13 @@ class UserAvailabilityTime
     private int $userAvailabilityTimeTo;
 
     /**
+     * Whether the user is availabile for the specified time.
+     *
+     * @var bool
+     */
+    private bool $userIsAvailable = true;
+
+    /**
      * Whether the user is assumed to be available by the bot. Usually this
      * means that the user did not explicitly specify an availability.
      *
@@ -67,7 +74,7 @@ class UserAvailabilityTime
         /** Backwards compatibility */
         if (isset($availabilityTimeData['userAvailabilityTime'])) {
             $this->userAvailabilityTimeFrom = $availabilityTimeData['userAvailabilityTime'];
-            $this->userAvailabilityTimeTo   = $availabilityTimeData['userAvailabilityTime'] + 3600 * 3;
+            $this->userAvailabilityTimeTo   = $availabilityTimeData['userAvailabilityTime'] + 3600 * 4;
         }
     }
 
@@ -79,6 +86,7 @@ class UserAvailabilityTime
     public function toArray(): array
     {
         $array = array(
+            'userIsAvailable'           => $this->userIsAvailable,
             'userAvailabilityTimeFrom'  => $this->userAvailabilityTimeFrom,
             'userAvailabilityTimeTo'    => $this->userAvailabilityTimeTo,
             'userIsAvailablePerDefault' => $this->userIsAvailablePerDefault,
@@ -150,6 +158,16 @@ class UserAvailabilityTime
         $isAvailablePerDefault = $this->userIsAvailablePerDefault;
 
         return $isAvailablePerDefault;
+    }
+
+    public function setAvailability(bool $userIsAvailable): void
+    {
+        $this->userIsAvailable = $userIsAvailable;
+    }
+
+    public function getUserIsAvailable(): bool
+    {
+        return $this->userIsAvailable;
     }
 
     public function setAvailablePerDefault(bool $userIsAvailablePerDefault): void

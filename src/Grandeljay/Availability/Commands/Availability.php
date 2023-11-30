@@ -81,37 +81,34 @@ class Availability extends Command
         $userAvailabilities = UserAvailabilities::getAll();
 
         foreach ($userAvailabilities as $userAvailability) {
-            $userAvailabilityTime = $userAvailability->getUserAvailabilityforTime($timeFrom, $timeTo);
-            $userIsAvailableFrom  = $userAvailabilityTime->getUserIsAvailableFrom($timeFrom);
-            $userIsAvailableTo    = $userAvailabilityTime->getUserIsAvailableTo($timeTo);
-            $userIsAvailable      = $userIsAvailableFrom || $userIsAvailableTo;
+            $userAvailabilityTime      = $userAvailability->getUserAvailabilityforTime($timeFrom, $timeTo);
+            $userIsAvailableFrom       = $userAvailabilityTime->getUserIsAvailableFrom($timeFrom);
+            $userIsAvailableTo         = $userAvailabilityTime->getUserIsAvailableTo($timeTo);
+            $userIsAvailable           = $userAvailabilityTime->getUserIsAvailable();
+            $userIsAvailablePerDefault = $userAvailabilityTime->getUserIsAvailablePerDefault();
 
             $userIcon       = $userIsAvailable ? 'Y' : 'N';
             $userName       = $userAvailability->getUserName();
             $userStatus     = $userIsAvailable ? 'Available' : 'Unavailable';
-            $userStatusFrom = '';
-            $userStatusTo   = '';
+            $userStatusFrom = date('H:i', $userAvailabilityTime->getUserAvailabilityTimeFrom());
+            $userStatusTo   = date('H:i', $userAvailabilityTime->getUserAvailabilityTimeTo());
 
             $member   = $guild->members->get('id', $userAvailability->getUserId());
             $userName = $member->nick ?? $member->user->username ?? $userAvailability->getUserName();
 
-            if ($userIsAvailable) {
-                $userStatusFrom = date('H:i', $userAvailabilityTime->getUserAvailabilityTimeFrom());
-                $userStatusTo   = date('H:i', $userAvailabilityTime->getUserAvailabilityTimeTo());
-            } elseif ($timeIsDefault) {
+            if ($userIsAvailablePerDefault) {
                 $userIcon       = '-';
-                $userName       = $userAvailability->getUserName();
-                $userStatus     = 'Available*';
-                $userStatusFrom = date('H:i', $timeFrom);
-                $userStatusTo   = date('H:i', $timeTo);
+                $userStatus    .= '*';
+                $userStatusFrom = '';
+                $userStatusTo   = '';
             }
 
             $messageTable[] = array(
                 'icon'   => $userIcon,
                 'name'   => $userName,
                 'status' => $userStatus,
-                'from'   => $userStatusFrom ?: '',
-                'to'     => $userStatusTo   ?: '',
+                'from'   => $userStatusFrom,
+                'to'     => $userStatusTo,
             );
         }
 

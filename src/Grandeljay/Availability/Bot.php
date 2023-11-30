@@ -272,8 +272,10 @@ class Bot
             ->setListener(
                 function (Interaction $interaction) use ($userAvailableTime, $message) {
                     $userAvailabilityTime = new UserAvailabilityTime();
-                    $userAvailabilityTime->setAvailability(true, false);
-                    $userAvailabilityTime->setTime($userAvailableTime);
+                    $userAvailabilityTime->setAvailability(true);
+                    $userAvailabilityTime->setTimeFrom($userAvailableTime);
+                    $userAvailabilityTime->setTimeTo($userAvailableTime + 3600 * 4);
+                    $userAvailabilityTime->setAvailablePerDefault(false);
 
                     $userAvailability = UserAvailability::get($interaction->user);
                     $userAvailability->addAvailability($userAvailabilityTime);
@@ -414,8 +416,10 @@ class Bot
             ->setListener(
                 function (Interaction $interaction) use ($userUnavailableTime, $message) {
                     $userAvailabilityTime = new UserAvailabilityTime();
-                    $userAvailabilityTime->setAvailability(false, false);
-                    $userAvailabilityTime->setTime($userUnavailableTime);
+                    $userAvailabilityTime->setAvailability(true);
+                    $userAvailabilityTime->setTimeFrom($userUnavailableTime);
+                    $userAvailabilityTime->setTimeTo($userUnavailableTime + 3600 * 4);
+                    $userAvailabilityTime->setAvailablePerDefault(false);
 
                     $userAvailability = UserAvailability::get($interaction->user);
                     $userAvailability->addAvailability($userAvailabilityTime);
