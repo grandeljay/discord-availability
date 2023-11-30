@@ -10,6 +10,8 @@ use Discord\Parts\Interactions\Interaction;
 
 class UserAvailabilityTime
 {
+    public const GRACE_PERIOD = 300;
+
     /**
      * The user's specified availability time as a unix timestamp.
      *

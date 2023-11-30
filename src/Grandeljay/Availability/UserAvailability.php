@@ -142,10 +142,15 @@ class UserAvailability implements \JsonSerializable
         $timesPotential = array();
 
         foreach ($this->userAvailabilityTimes as $userAvailabilityTime) {
-            $timeAvailabilityFrom = $userAvailabilityTime->getTimeFrom();
-            $timeAvailabilityTo   = $userAvailabilityTime->getTimeTo();
+            $gracePeriod = UserAvailabilityTime::GRACE_PERIOD;
 
-            if ($timeAvailabilityFrom >= $timeFrom && $timeAvailabilityTo <= $timeTo) {
+            $timeAvailabilityFrom           = $userAvailabilityTime->getTimeFrom();
+            $timeAvailabilityTo             = $userAvailabilityTime->getTimeTo();
+            $timeAvailabilityStartedInPast  = $timeAvailabilityFrom <= $timeFrom + $gracePeriod && $timeAvailabilityTo >= $timeTo - $gracePeriod;
+            $timeAvailabilityStartsInFuture = $timeAvailabilityFrom >= $timeFrom - $gracePeriod && $timeAvailabilityTo <= $timeTo + $gracePeriod;
+            $timeAvailabilityIsOngoing      = $timeAvailabilityStartedInPast || $timeAvailabilityStartsInFuture;
+
+            if ($timeAvailabilityIsOngoing) {
                 $differenceFrom    = \abs($timeAvailabilityFrom - $timeFrom);
                 $differenceTo      = \abs($timeAvailabilityTo   - $timeTo);
                 $differenceAverage = ($differenceFrom + $differenceTo) / 2;
