@@ -21,19 +21,9 @@ class Available extends Command
 
     public function setUserAvailability(Interaction $interaction): void
     {
-        $timeFromText = $interaction->data->options['from']->value ?? '';
-        $timeToText   = $interaction->data->options['to']->value   ?? '';
-
-        if (empty($timeToText)) {
-            $timeAvailableFrom = Bot::getTimeFromString($timeFromText);
-            $timeAvailableTo   = $timeAvailableFrom + 3600 * 4;
-        } elseif (!empty($timeToText) && empty($timeFromText)) {
-            $timeAvailableTo   = Bot::getTimeFromString($timeToText);
-            $timeAvailableFrom = $timeAvailableTo - 3600 * 4;
-        } else {
-            $timeAvailableFrom = Bot::getTimeFromString($timeFromText);
-            $timeAvailableTo   = Bot::getTimeFromString($timeToText);
-        }
+        $userAvailability  = Command::getAvailabilityTimes($interaction);
+        $timeAvailableFrom = $userAvailability['from'];
+        $timeAvailableTo   = $userAvailability['to'];
 
         if (false === $timeAvailableFrom || false === $timeAvailableTo) {
             $interaction
@@ -91,82 +81,6 @@ class Available extends Command
             ->_setFlags(Message::FLAG_EPHEMERAL)
         );
 
-        if ($userAvailabilityTime->isNow()) {
-            $userId = $interaction->user->id;
-
-            $actionRow = ActionRow::new()
-            ->addComponent(
-                Button::new(Button::STYLE_PRIMARY)
-                ->setLabel('Yes, I am available')
-                ->setListener(
-                    function (Interaction $interaction) use ($userId, $timeAvailableFrom, $timeAvailableTo) {
-                        $config       = new Config();
-                        $userIdButton = $interaction->user->id;
-                        $guild        = $interaction->guild;
-                        $member       = $guild->members->get('id', $userIdButton);
-                        $userName     = $member->nick ?: $member->user->username;
-                        $event        = $config->getEventName();
-
-                        if ($userId === $userIdButton) {
-                            $interaction
-                            ->respondWithMessage(
-                                MessageBuilder::new()
-                                ->setContent('D\'uh!')
-                                ->_setFlags(Message::FLAG_EPHEMERAL)
-                            );
-                        } else {
-                            $userAvailabilityTime = new UserAvailabilityTime();
-                            $userAvailabilityTime->setAvailability(true);
-                            $userAvailabilityTime->setTimeFrom($timeAvailableFrom);
-                            $userAvailabilityTime->setTimeTo($timeAvailableTo);
-                            $userAvailabilityTime->setAvailablePerDefault(false);
-
-                            $userAvailability = UserAvailability::get($interaction->user);
-                            $userAvailability->addAvailability($userAvailabilityTime);
-                            $userAvailability->save();
-
-                            $interaction
-                            ->respondWithMessage(
-                                MessageBuilder::new()->setContent(
-                                    sprintf(
-                                        '**%s** is available for **%s** now!',
-                                        $userName,
-                                        $event
-                                    )
-                                )
-                            );
-                        }
-                    },
-                    $this->discord
-                )
-            )
-            ->addComponent(
-                Button::new(Button::STYLE_SECONDARY)
-                ->setLabel('Ignore')
-                ->setListener(
-                    function (Interaction $interaction) {
-                        $interaction->acknowledge();
-                    },
-                    $this->discord
-                )
-            );
-
-            $guild    = $interaction->guild;
-            $member   = $guild->members->get('id', $userId);
-            $userName = $member->nick ?: $member->user->username;
-            $event    = $config->getEventName();
-
-            $messageReply = MessageBuilder::new()
-            ->setContent(
-                sprintf(
-                    '**%s** is available for **%s** now! Are you available too?',
-                    $userName,
-                    $event
-                )
-            )
-            ->addComponent($actionRow);
-
-            $interaction->sendFollowUpMessage($messageReply);
-        }
+        $userAvailabilityTime->promptIfAvailableNow($this->discord, $interaction);
     }
 }

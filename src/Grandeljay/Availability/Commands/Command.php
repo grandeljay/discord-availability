@@ -5,7 +5,8 @@ namespace Grandeljay\Availability\Commands;
 use Discord\Builders\CommandBuilder;
 use Discord\Discord;
 use Discord\Parts\Interactions\Command\Option;
-use Grandeljay\Availability\Config;
+use Discord\Parts\Interactions\Interaction;
+use Grandeljay\Availability\{Bot, Config};
 
 class Command
 {
@@ -18,6 +19,28 @@ class Command
     public const AVAILABILITY = 'Availability';
     public const UNAVAILABLE  = 'Unavailable';
     public const SHUTDOWN     = 'Shutdown';
+
+    public static function getAvailabilityTimes(Interaction $interaction): array
+    {
+        $timeFromText = $interaction->data->options['from']->value ?? '';
+        $timeToText   = $interaction->data->options['to']->value   ?? '';
+
+        if (empty($timeToText)) {
+            $timeAvailabilityFrom = Bot::getTimeFromString($timeFromText);
+            $timeAvailabilityTo   = $timeAvailabilityFrom + 3600 * 4;
+        } elseif (!empty($timeToText) && empty($timeFromText)) {
+            $timeAvailabilityTo   = Bot::getTimeFromString($timeToText);
+            $timeAvailabilityFrom = $timeAvailabilityTo - 3600 * 4;
+        } else {
+            $timeAvailabilityFrom = Bot::getTimeFromString($timeFromText);
+            $timeAvailabilityTo   = Bot::getTimeFromString($timeToText);
+        }
+
+        return array(
+            'from' => $timeAvailabilityFrom,
+            'to'   => $timeAvailabilityTo,
+        );
+    }
 
     /**
      * Construct

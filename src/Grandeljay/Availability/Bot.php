@@ -270,7 +270,7 @@ class Bot
             Button::new(Button::STYLE_PRIMARY)
             ->setLabel('Yes')
             ->setListener(
-                function (Interaction $interaction) use ($userAvailableTime, $message) {
+                function (Interaction $interaction) use ($discord, $userAvailableTime, $message) {
                     $userAvailabilityTime = new UserAvailabilityTime();
                     $userAvailabilityTime->setAvailability(true);
                     $userAvailabilityTime->setTimeFrom($userAvailableTime);
@@ -294,6 +294,8 @@ class Bot
                         )
                         ->_setFlags(Message::FLAG_EPHEMERAL)
                     );
+
+                    $userAvailabilityTime->promptIfAvailableNow($discord, $interaction);
                 },
                 $discord
             )
