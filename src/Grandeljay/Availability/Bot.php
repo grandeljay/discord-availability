@@ -251,7 +251,7 @@ class Bot
             return false;
         }
 
-        $userIsAvailable = 1 === preg_match('/' . $userAvailabilityPhrase . ' (.+)/i', $message->content, $matches);
+        $userIsAvailable = 1 === preg_match('/' . $userAvailabilityPhrase . '(.+)/i', $message->content, $matches);
 
         if (!$userIsAvailable || !isset($matches[1])) {
             return false;
@@ -260,7 +260,7 @@ class Bot
         /** Validate availability time */
         $userAvailableTime = Bot::getTimeFromString($matches[1]);
 
-        if (false === $userAvailableTime || $userAvailableTime >= time()) {
+        if (false === $userAvailableTime || $userAvailableTime < time()) {
             return false;
         }
 
@@ -395,7 +395,7 @@ class Bot
             return false;
         }
 
-        $userIsUnavailable = 1 === preg_match('/' . $userAvailabilityPhrase . ' (.+)/i', $message->content, $matches);
+        $userIsUnavailable = 1 === preg_match('/' . $userAvailabilityPhrase . '(.+)/i', $message->content, $matches);
 
         if (!$userIsUnavailable || !isset($matches[1])) {
             return false;
