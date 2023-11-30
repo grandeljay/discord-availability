@@ -260,7 +260,7 @@ class Bot
         /** Validate availability time */
         $userAvailableTime = Bot::getTimeFromString($matches[1]);
 
-        if (false === $userAvailableTime || time() >= $userAvailableTime) {
+        if (false === $userAvailableTime || $userAvailableTime >= time()) {
             return false;
         }
 
@@ -404,7 +404,7 @@ class Bot
         /** Validate unavailability time */
         $userUnavailableTime = Bot::getTimeFromString($matches[1]);
 
-        if (false === $userUnavailableTime || time() >= $userUnavailableTime) {
+        if (false === $userUnavailableTime || $userUnavailableTime < time()) {
             return false;
         }
 
