@@ -99,8 +99,8 @@ class Availability extends Command
             if ($userIsAvailablePerDefault) {
                 $userIcon       = '-';
                 $userStatus    .= '*';
-                $userStatusFrom = '';
-                $userStatusTo   = '';
+                $userStatusFrom = \date('H:i', $timeFrom);
+                $userStatusTo   = \date('H:i', $timeTo);
             }
 
             $messageTable[] = array(
