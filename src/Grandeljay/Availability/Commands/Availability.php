@@ -58,7 +58,6 @@ class Availability extends Command
                 date('d.m.Y', $timeTo),
                 date('H:i', $timeTo)
             ),
-            '',
         );
         $messageTable = array(
             array(
