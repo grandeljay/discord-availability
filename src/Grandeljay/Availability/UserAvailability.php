@@ -163,6 +163,8 @@ class UserAvailability implements \JsonSerializable
             /** Return user as unavailable */
             $unavailableTime = new UserAvailabilityTime();
             $unavailableTime->setAvailability(false);
+            $unavailableTime->setTimeFrom($timeFrom);
+            $unavailableTime->setTimeTo($timeTo);
 
             /** Available per default */
             $config          = new Config();
