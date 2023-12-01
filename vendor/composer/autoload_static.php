@@ -66,7 +66,6 @@ class ComposerStaticInitefa27cf69dd24f258b8e78faf0cb5951
         'E' => 
         array (
             'Evenement\\' => 10,
-            'Elliptic\\' => 9,
         ),
         'D' => 
         array (
@@ -76,11 +75,6 @@ class ComposerStaticInitefa27cf69dd24f258b8e78faf0cb5951
         'C' => 
         array (
             'Carbon\\' => 7,
-        ),
-        'B' => 
-        array (
-            'BN\\' => 3,
-            'BI\\' => 3,
         ),
     );
 
@@ -186,10 +180,6 @@ class ComposerStaticInitefa27cf69dd24f258b8e78faf0cb5951
         array (
             0 => __DIR__ . '/..' . '/evenement/evenement/src',
         ),
-        'Elliptic\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/simplito/elliptic-php/lib',
-        ),
         'Discord\\Http\\' => 
         array (
             0 => __DIR__ . '/..' . '/discord-php/http/src/Discord',
@@ -202,14 +192,6 @@ class ComposerStaticInitefa27cf69dd24f258b8e78faf0cb5951
         'Carbon\\' => 
         array (
             0 => __DIR__ . '/..' . '/nesbot/carbon/src/Carbon',
-        ),
-        'BN\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/simplito/bn-php/lib',
-        ),
-        'BI\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/simplito/bigint-wrapper-php/lib',
         ),
     );
 

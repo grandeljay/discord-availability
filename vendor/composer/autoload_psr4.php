@@ -31,10 +31,7 @@ return array(
     'GuzzleHttp\\Psr7\\' => array($vendorDir . '/guzzlehttp/psr7/src'),
     'Fig\\Http\\Message\\' => array($vendorDir . '/fig/http-message-util/src'),
     'Evenement\\' => array($vendorDir . '/evenement/evenement/src'),
-    'Elliptic\\' => array($vendorDir . '/simplito/elliptic-php/lib'),
     'Discord\\Http\\' => array($vendorDir . '/discord-php/http/src/Discord'),
     'Discord\\' => array($vendorDir . '/discord/interactions/discord', $vendorDir . '/team-reflex/discord-php/src/Discord'),
     'Carbon\\' => array($vendorDir . '/nesbot/carbon/src/Carbon'),
-    'BN\\' => array($vendorDir . '/simplito/bn-php/lib'),
-    'BI\\' => array($vendorDir . '/simplito/bigint-wrapper-php/lib'),
 );
