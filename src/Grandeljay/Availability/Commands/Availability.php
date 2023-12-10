@@ -89,8 +89,10 @@ class Availability extends Command
             $userIcon       = $userIsAvailable ? 'Y' : 'N';
             $userName       = $userAvailability->getUserName();
             $userStatus     = $userIsAvailable ? 'Available' : 'Unavailable';
-            $userStatusFrom = date('H:i', $userAvailabilityTime->getUserAvailabilityTimeFrom());
-            $userStatusTo   = date('H:i', $userAvailabilityTime->getUserAvailabilityTimeTo());
+            $outputTimeFrom = max($timeFrom, $userAvailabilityTime->getUserAvailabilityTimeFrom());
+            $outputTimeTo   = min($timeTo, $userAvailabilityTime->getUserAvailabilityTimeTo());
+            $userStatusFrom = date('H:i', $outputTimeFrom);
+            $userStatusTo   = date('H:i', $outputTimeTo);
 
             $member   = $guild->members->get('id', $userAvailability->getUserId());
             $userName = $member->nick ?? $member->user->username ?? $userAvailability->getUserName();
