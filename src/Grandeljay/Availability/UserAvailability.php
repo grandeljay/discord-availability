@@ -142,8 +142,6 @@ class UserAvailability implements \JsonSerializable
         $timesPotential = array();
 
         foreach ($this->userAvailabilityTimes as $userAvailabilityTime) {
-            $gracePeriod = UserAvailabilityTime::GRACE_PERIOD;
-
             $timeAvailabilityFrom           = $userAvailabilityTime->getTimeFrom();
             $timeAvailabilityTo             = $userAvailabilityTime->getTimeTo();
             $timeAvailabilityStartedInPast  = $timeAvailabilityFrom <= $timeFrom && $timeAvailabilityTo >= $timeFrom;
