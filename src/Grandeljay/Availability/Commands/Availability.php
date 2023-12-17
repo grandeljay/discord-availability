@@ -112,9 +112,21 @@ class Availability extends Command
                 $userStatusTo = $userStatusTo . ' ';
             }
 
+            /** Get user */
             $member   = $guild->members->get('id', $userAvailability->getUserId());
             $userName = $member->nick ?? $member->user->username ?? $userAvailability->getUserName();
 
+            /** Truncate name */
+            $userNameMaxLength = 19;
+
+            if (\mb_strlen($userName) > $userNameMaxLength) {
+                $dots       = '...';
+                $dotsLength = \mb_strlen($dots);
+
+                $userName = \substr($userName, 0, $userNameMaxLength - $dotsLength) . $dots;
+            }
+
+            /** Output */
             if ($userIsAvailablePerDefault) {
                 $userIcon       = '-';
                 $userStatus    .= '*';
