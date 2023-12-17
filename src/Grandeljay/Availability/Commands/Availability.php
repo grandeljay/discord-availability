@@ -38,6 +38,8 @@ class Availability extends Command
 
         $timeDefault   = Bot::getTimeFromString($config->getDefaultDateTime());
         $timeIsDefault = $timeFrom === $timeDefault;
+        $timeIsMore    = false;
+        $timeIsLess    = false;
 
         if (false === $timeFrom || false === $timeTo) {
             $interaction
@@ -93,6 +95,22 @@ class Availability extends Command
             $outputTimeTo   = min($timeTo, $userAvailabilityTime->getUserAvailabilityTimeTo());
             $userStatusFrom = date('H:i', $outputTimeFrom);
             $userStatusTo   = date('H:i', $outputTimeTo);
+
+            if ($userAvailabilityTime->getUserAvailabilityTimeFrom() < $timeFrom) {
+                $timeIsLess = true;
+
+                $userStatusFrom = '-' . $userStatusFrom;
+            } else {
+                $userStatusFrom = ' ' . $userStatusFrom;
+            }
+
+            if ($userAvailabilityTime->getUserAvailabilityTimeTo() > $timeTo) {
+                $timeIsMore = true;
+
+                $userStatusTo = $userStatusTo . '+';
+            } else {
+                $userStatusTo = $userStatusTo . ' ';
+            }
 
             $member   = $guild->members->get('id', $userAvailability->getUserId());
             $userName = $member->nick ?? $member->user->username ?? $userAvailability->getUserName();
@@ -161,6 +179,14 @@ class Availability extends Command
 
             if ($timeIsDefault) {
                 $messageRows[] = '`*` = The user is available per default and did not explicitly specify his availability.';
+            }
+
+            if ($timeIsLess) {
+                $messageRows[] = '`-` = The user\'s _From_ availability starts earlier than displayed.';
+            }
+
+            if ($timeIsMore) {
+                $messageRows[] = '`+` = The user\'s _To_ availability is later than displayed.';
             }
 
             $interaction->respondWithMessage(
