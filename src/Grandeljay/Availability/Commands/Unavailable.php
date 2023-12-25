@@ -6,7 +6,7 @@ use Discord\Builders\MessageBuilder;
 use Discord\Discord;
 use Discord\Parts\Channel\Message;
 use Discord\Parts\Interactions\Interaction;
-use Grandeljay\Availability\{Bot, Config, UserAvailabilities, UserAvailability, UserAvailabilityTime};
+use Grandeljay\Availability\{Config, UserAvailability, UserAvailabilityTime};
 
 class Unavailable extends Command
 {
