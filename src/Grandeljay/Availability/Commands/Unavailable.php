@@ -20,9 +20,9 @@ class Unavailable extends Command
 
     public function setUserUnavailability(Interaction $interaction): void
     {
-        $userUnavailability  = Command::getAvailabilityTimes($interaction);
-        $timeUnavailableFrom = $userUnavailability['from'];
-        $timeUnavailableTo   = $userUnavailability['to'];
+        $timeAvailable       = Command::getAvailabilityTimes($interaction);
+        $timeUnavailableFrom = $timeAvailable['from'];
+        $timeUnavailableTo   = $timeAvailable['to'];
 
         if (false === $timeUnavailableFrom || false === $timeUnavailableTo) {
             $interaction

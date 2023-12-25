@@ -21,9 +21,9 @@ class Available extends Command
 
     public function setUserAvailability(Interaction $interaction): void
     {
-        $userAvailability  = Command::getAvailabilityTimes($interaction);
-        $timeAvailableFrom = $userAvailability['from'];
-        $timeAvailableTo   = $userAvailability['to'];
+        $timeAvailable     = Command::getAvailabilityTimes($interaction);
+        $timeAvailableFrom = $timeAvailable['from'];
+        $timeAvailableTo   = $timeAvailable['to'];
 
         if (false === $timeAvailableFrom || false === $timeAvailableTo) {
             $interaction
