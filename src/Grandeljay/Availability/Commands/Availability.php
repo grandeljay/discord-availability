@@ -99,17 +99,13 @@ class Availability extends Command
             if ($userAvailabilityTime->getUserAvailabilityTimeFrom() < $timeFrom) {
                 $timeIsLess = true;
 
-                $userStatusFrom = '-' . $userStatusFrom;
-            } else {
-                $userStatusFrom = ' ' . $userStatusFrom;
+                $userStatusFrom = '<' . $userStatusFrom;
             }
 
             if ($userAvailabilityTime->getUserAvailabilityTimeTo() > $timeTo) {
                 $timeIsMore = true;
 
-                $userStatusTo = $userStatusTo . '+';
-            } else {
-                $userStatusTo = $userStatusTo . ' ';
+                $userStatusTo = '>' . $userStatusTo;
             }
 
             /** Get user */
@@ -160,7 +156,16 @@ class Availability extends Command
                 if (1 === $index) {
                     $messageRow[$column] = \str_pad($messageRow[$column], $amount, '-');
                 } else {
-                    $messageRow[$column] = \str_pad($messageRow[$column], $amount);
+                    switch ($column) {
+                        case 'from':
+                        case 'to':
+                            $messageRow[$column] = \str_pad($messageRow[$column], $amount, ' ', \STR_PAD_LEFT);
+                            break;
+
+                        default:
+                            $messageRow[$column] = \str_pad($messageRow[$column], $amount);
+                            break;
+                    }
                 }
             }
         }
@@ -194,11 +199,11 @@ class Availability extends Command
             }
 
             if ($timeIsLess) {
-                $messageRows[] = '`-` = The user\'s _From_ availability starts earlier than displayed.';
+                $messageRows[] = '`<` = The user\'s _From_ availability starts earlier than displayed.';
             }
 
             if ($timeIsMore) {
-                $messageRows[] = '`+` = The user\'s _To_ availability is later than displayed.';
+                $messageRows[] = '`>` = The user\'s _To_ availability is later than displayed.';
             }
 
             $interaction->respondWithMessage(
