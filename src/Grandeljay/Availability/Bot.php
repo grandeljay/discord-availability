@@ -2,13 +2,9 @@
 
 namespace Grandeljay\Availability;
 
-use Discord\Builders\Components\{Button, ActionRow};
-use Discord\Builders\MessageBuilder;
 use Discord\Discord;
-use Discord\Parts\Channel\Message;
-use Discord\Parts\Interactions\Interaction;
 use Discord\Repository\Interaction\GlobalCommandRepository;
-use Discord\WebSockets\{Event, Intents};
+use Discord\WebSockets\Intents;
 use Grandeljay\Availability\Commands;
 use Grandeljay\Availability\Commands\Command;
 use Monolog\{Logger, Level};
