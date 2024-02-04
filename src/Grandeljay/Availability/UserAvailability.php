@@ -197,4 +197,23 @@ class UserAvailability implements \JsonSerializable
             return $closestTime['userAvailabilityTime'];
         }
     }
+
+    /**
+     * An availability is considered irrelevant, when it's most recent time is
+     * three months in the past of the requested query.
+     *
+     * @return bool
+     */
+    public function isRelevant(int $timeFrom): bool
+    {
+        $threeMonths    = 3600 * 24 * 30 * 3;
+        $threeMonthsAgo = $timeFrom - $threeMonths;
+
+        $availabilities = $this->userAvailabilityTimes;
+        $availabilities->sort('DESC');
+
+        $closestInFuture = $this->userAvailabilityTimes->first();
+
+        return $closestInFuture->getTimeFrom() >= $threeMonthsAgo;
+    }
 }

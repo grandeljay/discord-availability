@@ -52,7 +52,7 @@ class Availability extends Command
             return;
         }
 
-        $messageRows  = array(
+        $messageRows = array(
             \sprintf(
                 'Showing availabilities for all users on `%s` at `%s` (until `%s` at `%s`).',
                 date('d.m.Y', $timeFrom),
@@ -61,6 +61,7 @@ class Availability extends Command
                 date('H:i', $timeTo)
             ),
         );
+
         $messageTable = array(
             array(
                 'icon'   => '',
@@ -80,16 +81,18 @@ class Availability extends Command
 
         $guild              = $interaction->guild;
         $userAvailabilities = UserAvailabilities::getAll();
+        $usersSkipped       = 0;
 
         foreach ($userAvailabilities as $userAvailability) {
-            $userAvailabilityTime      = $userAvailability->getUserAvailabilityforTime($timeFrom, $timeTo);
-            $userIsAvailableFrom       = $userAvailabilityTime->getUserIsAvailableFrom($timeFrom);
-            $userIsAvailableTo         = $userAvailabilityTime->getUserIsAvailableTo($timeTo);
-            $userIsAvailable           = $userAvailabilityTime->getUserIsAvailable();
-            $userIsAvailablePerDefault = $userAvailabilityTime->getUserIsAvailablePerDefault();
-            $userAvailabilityIsRecent  = $userAvailabilityTime->isRecent();
+            $userAvailabilityTime       = $userAvailability->getUserAvailabilityforTime($timeFrom, $timeTo);
+            $userAvailabilityIsRelevant = $userAvailability->isRelevant($timeFrom);
+            $userIsAvailableFrom        = $userAvailabilityTime->getUserIsAvailableFrom($timeFrom);
+            $userIsAvailableTo          = $userAvailabilityTime->getUserIsAvailableTo($timeTo);
+            $userIsAvailable            = $userAvailabilityTime->getUserIsAvailable();
+            $userIsAvailablePerDefault  = $userAvailabilityTime->getUserIsAvailablePerDefault();
 
-            if (!$userAvailabilityIsRecent) {
+            if (!$userAvailabilityIsRelevant) {
+                $usersSkipped++;
                 continue;
             }
 
@@ -142,6 +145,14 @@ class Availability extends Command
                 'from'   => $userStatusFrom,
                 'to'     => $userStatusTo,
             );
+        }
+
+        if ($usersSkipped > 0) {
+            if (1 === $usersSkipped) {
+                $messageRows[] = \sprintf('%d user has been skipped and determined irrelevant for this query.', $usersSkipped);
+            } elseif ($usersSkipped >= 2) {
+                $messageRows[] = \sprintf('%d users have been skipped and determined as irrelevant for this query.', $usersSkipped);
+            }
         }
 
         $pad = array();

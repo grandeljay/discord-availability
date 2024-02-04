@@ -25,6 +25,11 @@ class UserAvailabilityTimesIterator implements Iterator, JsonSerializable, Count
         return $position;
     }
 
+    public function first(): UserAvailabilityTime
+    {
+        return $this->elements[0];
+    }
+
     public function next(): void
     {
         $this->position += 1;
