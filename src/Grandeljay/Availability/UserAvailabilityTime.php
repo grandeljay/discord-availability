@@ -311,4 +311,12 @@ class UserAvailabilityTime
 
         $interaction->sendFollowUpMessage($messageReply);
     }
+
+    public function isRecent(): bool
+    {
+        $seconds  = \abs(\time() - $this->userAvailabilityTimeFrom);
+        $isRecent = $seconds < 3600 * 24 * 30 * 3; /** Three months */
+
+        return $isRecent;
+    }
 }

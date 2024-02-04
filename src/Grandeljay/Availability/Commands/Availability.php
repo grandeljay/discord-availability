@@ -87,6 +87,11 @@ class Availability extends Command
             $userIsAvailableTo         = $userAvailabilityTime->getUserIsAvailableTo($timeTo);
             $userIsAvailable           = $userAvailabilityTime->getUserIsAvailable();
             $userIsAvailablePerDefault = $userAvailabilityTime->getUserIsAvailablePerDefault();
+            $userAvailabilityIsRecent  = $userAvailabilityTime->isRecent();
+
+            if (!$userAvailabilityIsRecent) {
+                continue;
+            }
 
             $userIcon       = $userIsAvailable ? 'Y' : 'N';
             $userName       = $userAvailability->getUserName();
