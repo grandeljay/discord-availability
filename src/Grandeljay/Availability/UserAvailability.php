@@ -150,14 +150,10 @@ class UserAvailability implements \JsonSerializable
             $timeAvailabilityIsOngoing      = $timeAvailabilityStartedInPast || $timeAvailabilityStartsInFuture || $timeAvailabilityInBetween;
 
             if ($timeAvailabilityIsOngoing) {
-                $differenceFrom    = \abs($timeAvailabilityFrom - $timeFrom);
-                $differenceTo      = \abs($timeAvailabilityTo   - $timeTo);
-                $differenceAverage = ($differenceFrom + $differenceTo) / 2;
+                $differenceFrom = \abs($timeAvailabilityFrom - $timeFrom);
 
                 $timesPotential[] = array(
                     'differenceFrom'       => $differenceFrom,
-                    'differenceTo'         => $differenceTo,
-                    'differenceAverage'    => $differenceAverage,
                     'userAvailabilityTime' => $userAvailabilityTime,
                 );
             }
@@ -189,7 +185,7 @@ class UserAvailability implements \JsonSerializable
             \usort(
                 $timesPotential,
                 function ($a, $b) {
-                    return $a['differenceAverage'] <=> $b['differenceAverage'];
+                    return $a['differenceFrom'] <=> $b['differenceFrom'];
                 }
             );
             $closestTime = \reset($timesPotential);
