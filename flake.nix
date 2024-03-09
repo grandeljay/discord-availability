@@ -3,7 +3,7 @@
 
   inputs = {
     nixpkgs = {
-      url = "nixpkgs/nixos-23.05";
+      url = "nixpkgs/nixos-unstable-small";
     };
     composer-nix = {
       url = "github:tristanpemble/composer-nix";
