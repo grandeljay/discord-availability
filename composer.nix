@@ -168,24 +168,6 @@
     sha256 = "1b25n01ik57gnhm4l0ngpcxpxv4cxzpsddcnjr8bissn5jdy4j6g";
     extension = "zip";
   };
-  "simplito/bigint-wrapper-php"."1.0.0" = fetchzip {
-    name = "simplito/bigint-wrapper-php";
-    url = "https://api.github.com/repos/simplito/bigint-wrapper-php/zipball/cf21ec76d33f103add487b3eadbd9f5033a25930";
-    sha256 = "0qwmi88s9010rgw9qhhm58zn50yqb588qagixj1q3kl82vxw1grd";
-    extension = "zip";
-  };
-  "simplito/bn-php"."1.1.3" = fetchzip {
-    name = "simplito/bn-php";
-    url = "https://api.github.com/repos/simplito/bn-php/zipball/189167f940cdb681288a967b0f4d66de81adcd97";
-    sha256 = "1g47137mw4vdzdh3f3p3i5drvl9v7cxgim5fj7rp9jchjgn3xhws";
-    extension = "zip";
-  };
-  "simplito/elliptic-php"."1.0.10" = fetchzip {
-    name = "simplito/elliptic-php";
-    url = "https://api.github.com/repos/simplito/elliptic-php/zipball/a6228f480c729cf8efe2650a617c8500e981716d";
-    sha256 = "1jxn3bs98cwy84lzalka0ssqlrz57f7r4dh5yj1n11bhl0bljnca";
-    extension = "zip";
-  };
   "squizlabs/php_codesniffer"."3.7.2" = fetchzip {
     name = "squizlabs/php_codesniffer";
     url = "https://api.github.com/repos/squizlabs/PHP_CodeSniffer/zipball/ed8e00df0a83aa96acf703f8c2979ff33341f879";
