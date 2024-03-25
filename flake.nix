@@ -15,7 +15,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, composer-nix }:
+  outputs = { self, nixpkgs, composer-nix, ... }:
     let
       supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
