@@ -2,12 +2,16 @@
   description = "Discord bot for DOTA 2 availability developed by Jay";
 
   inputs = {
+    flake-utils = {
+      url = "github:numtide/flake-utils";
+    };
     nixpkgs = {
       url = "nixpkgs/nixos-unstable-small";
     };
     composer-nix = {
       url = "github:tristanpemble/composer-nix";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.utils.follows = "flake-utils";
     };
   };
 
