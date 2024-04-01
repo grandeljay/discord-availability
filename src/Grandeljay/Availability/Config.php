@@ -19,6 +19,7 @@ class Config
         switch (PHP_OS) {
             case 'WINNT':
                 $potentialConfigPaths = array(
+                    'config.json',
                     '$USERPROFILE/.config/' . $filepathRelative,
                     '$APPDATA/' . $filepathRelative,
                 );
@@ -26,6 +27,7 @@ class Config
 
             default:
                 $potentialConfigPaths = array(
+                    'config.json',
                     '$HOME/.config/' . $filepathRelative,
                     '/etc/' . $filepathRelative,
                 );
