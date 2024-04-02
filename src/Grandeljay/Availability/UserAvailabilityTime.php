@@ -235,7 +235,7 @@ class UserAvailabilityTime
         $actionRow = ActionRow::new()
         ->addComponent(
             Button::new(Button::STYLE_PRIMARY)
-            ->setLabel('Yes, I am available')
+            ->setLabel('Yes')
             ->setListener(
                 function (Interaction $interaction) use ($userId) {
                     $config       = new Config();
