@@ -284,10 +284,26 @@ class UserAvailabilityTime
         )
         ->addComponent(
             Button::new(Button::STYLE_SECONDARY)
-            ->setLabel('Ignore')
+            ->setLabel('No')
             ->setListener(
                 function (Interaction $interaction) {
-                    $interaction->acknowledge();
+                    $config       = new Config();
+                    $userIdButton = $interaction->user->id;
+                    $guild        = $interaction->guild;
+                    $member       = $guild->members->get('id', $userIdButton);
+                    $userName     = $member->nick ?: $member->user->username;
+                    $event        = $config->getEventName();
+
+                    $interaction
+                        ->respondWithMessage(
+                            MessageBuilder::new()->setContent(
+                                sprintf(
+                                    '**%s** is **not available** for %s now.',
+                                    $userName,
+                                    $event
+                                )
+                            )
+                        );
                 },
                 $discord
             )
