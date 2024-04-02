@@ -1,6 +1,6 @@
 # Discord Availability
 
-Discord Availability is a discord bot used to track who will be available for dota.
+Discord Availability is a discord bot used to track who will be available for a certain event (i. e. a game).
 
 ## Requirements
 
@@ -13,12 +13,6 @@ Discord Availability is a discord bot used to track who will be available for do
 
     Copy `config-example.json` to either `~/.config/discord-availability/config.json` or `/etc/discord-availability/config.json`.
 
-1. Install dependencies
-
-    ```sh
-    composer install
-    ```
-
 1. Run the script
 
     ```sh
@@ -29,9 +23,16 @@ Discord Availability is a discord bot used to track who will be available for do
 
 1. Add it to your server
 
-    Use the following link to authorize the bot for your server. It only asks for the permissions it needs (as little as possible).
+    1. Create an app (key) for your server: https://discord.com/developers/applications
+    1. Set the OAuth scope to
 
-    https://discord.com/api/oauth2/authorize?client_id=1100405938801872956&permissions=0&redirect_uri=https%3A%2F%2Fgithub.com%2Fgrandeljay%2Fdiscord-availability&response_type=code&scope=identify%20applications.commands%20bot
+        - `identify`
+        - `bot`
+
+    1. Copy the generated URL and follow the link to add it to your server. It should look like this:
+        ```
+         https://discord.com/api/oauth2/authorize?client_id=XXXXXXXXXXXXXXXXXXX&permissions=0&redirect_uri=https%3A%2F%2Fgithub.com%2Fgrandeljay%2Fdiscord-availability&response_type=code&scope=identify%20applications.commands%20bot
+        ```
 
 Once started, the script will run in loop, indefinitly until stopped. A schedule/cron is not necessary.
 
