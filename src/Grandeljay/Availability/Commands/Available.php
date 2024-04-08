@@ -6,39 +6,65 @@ use Discord\Builders\MessageBuilder;
 use Discord\Discord;
 use Discord\Parts\Channel\Message;
 use Discord\Parts\Interactions\Interaction;
-use Grandeljay\Availability\{Config, UserAvailability, UserAvailabilityTime};
+use Discord\Repository\Interaction\OptionRepository;
+use Grandeljay\Availability\Bot;
+use Grandeljay\Availability\Config;
+use Grandeljay\Availability\UserAvailability;
+use Grandeljay\Availability\UserAvailabilityTime;
 
 class Available extends Command
 {
     public function run(Discord $discord): void
     {
         $command  = strtolower(Command::AVAILABLE);
-        $callback = array($this, 'setUserAvailability');
+        $callback = array($this, 'command');
 
         $discord->listenCommand($command, $callback);
     }
 
-    public function setUserAvailability(Interaction $interaction): void
+    private function getOptions(Interaction $interaction): OptionRepository
     {
-        $timeAvailable     = Command::getAvailabilityTimes($interaction);
-        $timeAvailableFrom = $timeAvailable['from'];
-        $timeAvailableTo   = $timeAvailable['to'];
+        return $interaction->data->options;
+    }
 
-        if (false === $timeAvailableFrom || false === $timeAvailableTo) {
-            $interaction
-            ->respondWithMessage(
-                MessageBuilder::new()
-                ->setContent('Sorry, I couldn\'t parse that. Could you please specify a more machine friendly time?')
-                ->_setFlags(Message::FLAG_EPHEMERAL)
-            );
+    private function parseOptions(OptionRepository $options): array
+    {
+        $timeFromText = $options['from']->value ?? '';
+        $timeToText   = $options['to']->value   ?? '';
 
-            return;
+        if (empty($timeToText)) {
+            $timeAvailabilityFrom = Bot::getTimeFromString($timeFromText);
+            $timeAvailabilityTo   = $timeAvailabilityFrom + 3600 * 4;
+        } elseif (!empty($timeToText) && empty($timeFromText)) {
+            $timeAvailabilityTo   = Bot::getTimeFromString($timeToText);
+            $timeAvailabilityFrom = $timeAvailabilityTo - 3600 * 4;
+        } else {
+            $timeAvailabilityFrom = Bot::getTimeFromString($timeFromText);
+            $timeAvailabilityTo   = Bot::getTimeFromString($timeToText);
         }
 
+        return array(
+            'from' => $timeAvailabilityFrom,
+            'to'   => $timeAvailabilityTo,
+        );
+    }
+
+    private function validateOptions(Interaction $interaction, array $parsedOptions): void
+    {
+        $timeAvailableFrom = $parsedOptions['from'];
+        $timeAvailableTo   = $parsedOptions['to'];
+
+        if (false === $timeAvailableFrom || false === $timeAvailableTo) {
+            Bot::respondCouldNotParseTime($interaction);
+        }
+    }
+
+    private function setAvailability(Interaction $interaction, int $from, int $to): void
+    {
         $userAvailabilityTime = new UserAvailabilityTime();
         $userAvailabilityTime->setAvailability(true);
-        $userAvailabilityTime->setTimeFrom($timeAvailableFrom);
-        $userAvailabilityTime->setTimeTo($timeAvailableTo);
+        $userAvailabilityTime->setTimeFrom($from);
+        $userAvailabilityTime->setTimeTo($from);
         $userAvailabilityTime->setAvailablePerDefault(false);
 
         if ($userAvailabilityTime->isInPast()) {
@@ -48,8 +74,8 @@ class Available extends Command
                 ->setContent(
                     sprintf(
                         'You\'re available on `%s` at `%s`? That doesn\'t sound right. Please specify a time in the future.',
-                        date('d.m.Y', $timeAvailableFrom),
-                        date('H:i', $timeAvailableFrom),
+                        date('d.m.Y', $from),
+                        date('H:i', $from),
                     )
                 )
                 ->_setFlags(Message::FLAG_EPHEMERAL)
@@ -71,15 +97,28 @@ class Available extends Command
                 sprintf(
                     'Gotcha! You are **available** for **%s** on `%s` at `%s` (until `%s` at `%s`).',
                     $config->getEventName(),
-                    date('d.m.Y', $timeAvailableFrom),
-                    date('H:i', $timeAvailableFrom),
-                    date('d.m.Y', $timeAvailableTo),
-                    date('H:i', $timeAvailableTo)
+                    date('d.m.Y', $from),
+                    date('H:i', $from),
+                    date('d.m.Y', $to),
+                    date('H:i', $to)
                 )
             )
             ->_setFlags(Message::FLAG_EPHEMERAL)
         );
 
         $userAvailabilityTime->promptIfAvailableNow($this->discord, $interaction);
+    }
+
+    public function command(Interaction $interaction): void
+    {
+        $options         = $this->getOptions($interaction);
+        $optionsParsed   = $this->parseOptions($options);
+        $optionsAreValid = $this->validateOptions($interaction, $optionsParsed);
+
+        if (!$optionsAreValid) {
+            return;
+        }
+
+        $this->setAvailability($interaction, $optionsParsed['from'], $optionsParsed['to']);
     }
 }

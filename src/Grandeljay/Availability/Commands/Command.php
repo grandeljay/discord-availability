@@ -20,6 +20,14 @@ class Command
     public const UNAVAILABLE  = 'Unavailable';
     public const SHUTDOWN     = 'Shutdown';
 
+    /**
+     * getAvailabilityTimes
+     *
+     * @param  Interaction $interaction
+     *
+     * @deprecated
+     * @return array
+     */
     public static function getAvailabilityTimes(Interaction $interaction): array
     {
         $timeFromText = $interaction->data->options['from']->value ?? '';

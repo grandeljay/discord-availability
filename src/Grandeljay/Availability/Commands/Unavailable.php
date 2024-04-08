@@ -25,12 +25,7 @@ class Unavailable extends Command
         $timeUnavailableTo   = $timeAvailable['to'];
 
         if (false === $timeUnavailableFrom || false === $timeUnavailableTo) {
-            $interaction
-            ->respondWithMessage(
-                MessageBuilder::new()
-                ->setContent('Sorry, I couldn\'t parse that. Could you please specify a more machine friendly time?')
-                ->_setFlags(Message::FLAG_EPHEMERAL)
-            );
+            Bot::respondCouldNotParseTime($interaction);
 
             return;
         }

@@ -42,12 +42,7 @@ class Availability extends Command
         $timeIsLess    = false;
 
         if (false === $timeFrom || false === $timeTo) {
-            $interaction
-            ->respondWithMessage(
-                MessageBuilder::new()
-                ->setContent('Sorry, I couldn\'t parse that. Could you please specify a more machine friendly time?')
-                ->_setFlags(Message::FLAG_EPHEMERAL)
-            );
+            Bot::respondCouldNotParseTime($interaction);
 
             return;
         }

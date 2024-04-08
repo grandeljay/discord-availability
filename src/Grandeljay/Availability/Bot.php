@@ -2,13 +2,17 @@
 
 namespace Grandeljay\Availability;
 
+use Discord\Builders\MessageBuilder;
 use Discord\Discord;
+use Discord\Parts\Channel\Message;
+use Discord\Parts\Interactions\Interaction;
 use Discord\Repository\Interaction\GlobalCommandRepository;
 use Discord\WebSockets\Intents;
 use Grandeljay\Availability\Commands;
 use Grandeljay\Availability\Commands\Command;
-use Monolog\{Logger, Level};
 use Monolog\Handler\StreamHandler;
+use Monolog\Level;
+use Monolog\Logger;
 
 use function React\Promise\all;
 
@@ -50,6 +54,16 @@ class Bot
         }
 
         return $time;
+    }
+
+    public static function respondCouldNotParseTime(Interaction $interaction): void
+    {
+        $interaction
+        ->respondWithMessage(
+            MessageBuilder::new()
+            ->setContent('Sorry, I couldn\'t parse that. Could you please specify a more machine friendly time?')
+            ->_setFlags(Message::FLAG_EPHEMERAL)
+        );
     }
 
     /**
