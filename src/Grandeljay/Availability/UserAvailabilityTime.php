@@ -286,7 +286,7 @@ class UserAvailabilityTime
             Button::new(Button::STYLE_SECONDARY)
             ->setLabel('No')
             ->setListener(
-                function (Interaction $interaction) {
+                function (Interaction $interaction) use ($userId) {
                     $config       = new Config();
                     $userIdButton = $interaction->user->id;
                     $guild        = $interaction->guild;
@@ -294,7 +294,15 @@ class UserAvailabilityTime
                     $userName     = $member->nick ?: $member->user->username;
                     $event        = $config->getEventName();
 
-                    $interaction
+                    if ($userId === $userIdButton) {
+                        $interaction
+                        ->respondWithMessage(
+                            MessageBuilder::new()
+                            ->setContent('D\'uh!')
+                            ->_setFlags(Message::FLAG_EPHEMERAL)
+                        );
+                    } else {
+                        $interaction
                         ->respondWithMessage(
                             MessageBuilder::new()->setContent(
                                 sprintf(
@@ -304,6 +312,7 @@ class UserAvailabilityTime
                                 )
                             )
                         );
+                    }
                 },
                 $discord
             )
