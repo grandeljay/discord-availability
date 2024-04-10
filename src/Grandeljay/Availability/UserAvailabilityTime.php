@@ -121,7 +121,7 @@ class UserAvailabilityTime
 
     public function isNow(): bool
     {
-        $isNow = time() >= $this->userAvailabilityTimeFrom && time() < $this->userAvailabilityTimeTo;
+        $isNow = time() >= $this->userAvailabilityTimeFrom && time() <= $this->userAvailabilityTimeTo;
 
         return $isNow;
     }
