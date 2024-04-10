@@ -31,11 +31,11 @@ class MessageRepository extends AbstractRepository
     /**
      * @inheritdoc
      */
-    protected $endpoints = array(
-        'get'    => Endpoint::CHANNEL_MESSAGE,
+    protected $endpoints = [
+        'get' => Endpoint::CHANNEL_MESSAGE,
         'update' => Endpoint::CHANNEL_MESSAGE,
         'delete' => Endpoint::CHANNEL_MESSAGE,
-    );
+    ];
 
     /**
      * @inheritdoc
