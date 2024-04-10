@@ -49,14 +49,18 @@ class Available extends Command
         );
     }
 
-    private function validateOptions(Interaction $interaction, array $parsedOptions): void
+    private function validateOptions(Interaction $interaction, array $parsedOptions): bool
     {
         $timeAvailableFrom = $parsedOptions['from'];
         $timeAvailableTo   = $parsedOptions['to'];
 
         if (false === $timeAvailableFrom || false === $timeAvailableTo) {
             Bot::respondCouldNotParseTime($interaction);
+
+            return false;
         }
+
+        return true;
     }
 
     private function setAvailability(Interaction $interaction, int $from, int $to): void
