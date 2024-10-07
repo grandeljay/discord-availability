@@ -40,8 +40,8 @@ class Bot
             $message = $defaultDateTime;
         } else {
             $message = str_replace(
-                array('next week', 'next time', 'next ', 'on ', 'at '),
-                array($defaultDateTime, $defaultDateTime, '', '', ''),
+                ['next week', 'next time', 'next ', 'on ', 'at '],
+                [$defaultDateTime, $defaultDateTime, '', '', ''],
                 $message
             );
         }
@@ -81,12 +81,12 @@ class Bot
         date_default_timezone_set($this->config->getTimeZone());
 
         $this->discord = new Discord(
-            array(
+            [
                 'token'          => $this->config->getAPIToken(),
                 'loadAllMembers' => true,
                 'intents'        => Intents::getDefaultIntents() | Intents::GUILD_MEMBERS,
                 'logger'         => $logger,
-            )
+            ]
         );
 
         // TODO: Add availabilities
@@ -101,7 +101,7 @@ class Bot
     {
         $this->discord->on(
             'ready', // Event::READY won't work
-            array($this, 'ready')
+            [$this, 'ready']
         );
 
         $this->discord->run();
@@ -140,13 +140,13 @@ class Bot
         ->freshen()
         ->done(
             function (GlobalCommandRepository $botCommandsCurrent) {
-                $deleted = array();
+                $deleted = [];
 
                 foreach ($botCommandsCurrent as $botCommandCurrent) {
                     $deleted[] = $this->discord->application->commands->delete($botCommandCurrent);
                 }
 
-                all($deleted)->then(array($this, 'registerCommands'));
+                all($deleted)->then([$this, 'registerCommands']);
             }
         );
     }
@@ -158,12 +158,12 @@ class Bot
      */
     public function registerCommands(): void
     {
-        $botCommandsDesired = array(
+        $botCommandsDesired = [
             Command::AVAILABILITY => 'Shows everybody\'s availability.',
             Command::AVAILABLE    => 'Mark yourself as available.',
             Command::UNAVAILABLE  => 'Mark yourself as unavailable.',
             Command::SHUTDOWN     => 'Shutdown the bot.',
-        );
+        ];
 
         foreach ($botCommandsDesired as $botCommandDesiredName => $botCommandDesiredDescription) {
             $commandObject = new Command($this->discord, $botCommandDesiredName, $botCommandDesiredDescription);

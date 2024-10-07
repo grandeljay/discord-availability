@@ -51,7 +51,7 @@ class UserAvailability implements \JsonSerializable
         if (file_exists($filepathUserAvailability)) {
             return UserAvailability::fromFile($filepathUserAvailability);
         } else {
-            return new self($user->id, $user->username, array());
+            return new self($user->id, $user->username, []);
         }
     }
 
@@ -92,11 +92,11 @@ class UserAvailability implements \JsonSerializable
 
     public function jsonSerialize(): array
     {
-        $json = array(
+        $json = [
             'userId'         => $this->userId,
             'userName'       => $this->userName,
             'availabilities' => $this->userAvailabilityTimes->jsonSerialize(),
-        );
+        ];
 
         return $json;
     }
@@ -139,7 +139,7 @@ class UserAvailability implements \JsonSerializable
 
     public function getUserAvailabilityforTime(int $timeFrom, int $timeTo): UserAvailabilityTime
     {
-        $timesPotential = array();
+        $timesPotential = [];
 
         foreach ($this->userAvailabilityTimes as $userAvailabilityTime) {
             $timeAvailabilityFrom           = $userAvailabilityTime->getTimeFrom();
@@ -152,10 +152,10 @@ class UserAvailability implements \JsonSerializable
             if ($timeAvailabilityIsOngoing) {
                 $differenceFrom = \abs($timeAvailabilityFrom - $timeFrom);
 
-                $timesPotential[] = array(
+                $timesPotential[] = [
                     'differenceFrom'       => $differenceFrom,
                     'userAvailabilityTime' => $userAvailabilityTime,
-                );
+                ];
             }
         }
 

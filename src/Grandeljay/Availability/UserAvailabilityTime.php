@@ -42,7 +42,7 @@ class UserAvailabilityTime
     {
         $config = new Config();
 
-        $availabilities = array();
+        $availabilities = [];
 
         $directory = $config->get('directoryAvailabilities');
         $files     = array_filter(
@@ -67,7 +67,7 @@ class UserAvailabilityTime
      *
      * @param array $availability The user's raw availability data from storage.
      */
-    public function __construct(array $availabilityTimeData = array())
+    public function __construct(array $availabilityTimeData = [])
     {
         foreach ($availabilityTimeData as $property => $value) {
             if (property_exists($this::class, $property)) {
@@ -97,12 +97,12 @@ class UserAvailabilityTime
      */
     public function toArray(): array
     {
-        $array = array(
+        $array = [
             'userIsAvailable'           => $this->userIsAvailable,
             'userAvailabilityTimeFrom'  => $this->userAvailabilityTimeFrom,
             'userAvailabilityTimeTo'    => $this->userAvailabilityTimeTo,
             'userIsAvailablePerDefault' => $this->userIsAvailablePerDefault,
-        );
+        ];
 
         return $array;
     }

@@ -9,7 +9,7 @@ use JsonSerializable;
 class UserAvailabilityTimesIterator implements Iterator, JsonSerializable, Countable
 {
     private int $position     = 0;
-    protected array $elements = array();
+    protected array $elements = [];
 
     public function current(): mixed
     {
@@ -64,7 +64,7 @@ class UserAvailabilityTimesIterator implements Iterator, JsonSerializable, Count
 
     public function jsonSerialize(): array
     {
-        $json = array();
+        $json = [];
 
         foreach ($this->elements as $userAvailabilityTime) {
             $userAvailabilityTimeFrom = $userAvailabilityTime->getUserAvailabilityTimeFrom();

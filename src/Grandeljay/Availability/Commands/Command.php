@@ -44,10 +44,10 @@ class Command
             $timeAvailabilityTo   = Bot::getTimeFromString($timeToText);
         }
 
-        return array(
+        return [
             'from' => $timeAvailabilityFrom,
             'to'   => $timeAvailabilityTo,
-        );
+        ];
     }
 
     /**

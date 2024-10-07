@@ -9,7 +9,7 @@ class CommandsIterator implements Iterator
 {
     private int $position = 0;
 
-    protected array $elements = array();
+    protected array $elements = [];
 
     public function current(): mixed
     {

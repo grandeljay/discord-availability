@@ -8,7 +8,7 @@ use JsonSerializable;
 class UserAvailabilitiesIterator implements Iterator, JsonSerializable
 {
     private int $position     = 0;
-    protected array $elements = array();
+    protected array $elements = [];
 
     public function current(): mixed
     {
@@ -48,14 +48,14 @@ class UserAvailabilitiesIterator implements Iterator, JsonSerializable
 
     public function jsonSerialize(): array
     {
-        $json = array();
+        $json = [];
 
         foreach ($this->elements as $userAvailabilityTime) {
-            $json[] = array(
+            $json[] = [
                 'userId'                => $userAvailabilityTime->getUserId(),
                 'userName'              => $userAvailabilityTime->getUserName(),
                 'userAvailabilityTimes' => $userAvailabilityTime->getUserAvailabilityTimes(),
-            );
+            ];
         }
 
         return $json;

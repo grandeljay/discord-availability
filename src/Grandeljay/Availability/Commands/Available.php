@@ -17,7 +17,7 @@ class Available extends Command
     public function run(Discord $discord): void
     {
         $command  = strtolower(Command::AVAILABLE);
-        $callback = array($this, 'command');
+        $callback = [$this, 'command'];
 
         $discord->listenCommand($command, $callback);
     }
@@ -43,10 +43,10 @@ class Available extends Command
             $timeAvailabilityTo   = Bot::getTimeFromString($timeToText);
         }
 
-        return array(
+        return [
             'from' => $timeAvailabilityFrom,
             'to'   => $timeAvailabilityTo,
-        );
+        ];
     }
 
     private function validateOptions(Interaction $interaction, array $parsedOptions): bool

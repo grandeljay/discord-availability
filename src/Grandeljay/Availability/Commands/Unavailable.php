@@ -13,7 +13,7 @@ class Unavailable extends Command
     public function run(Discord $discord): void
     {
         $command  = strtolower(Command::UNAVAILABLE);
-        $callback = array($this, 'setUserUnavailability');
+        $callback = [$this, 'setUserUnavailability'];
 
         $discord->listenCommand($command, $callback);
     }

@@ -13,7 +13,7 @@ class Availability extends Command
     public function run(Discord $discord): void
     {
         $command  = strtolower(Command::AVAILABILITY);
-        $callback = array($this, 'getUsersAvailabilities');
+        $callback = [$this, 'getUsersAvailabilities'];
 
         $discord->listenCommand($command, $callback);
     }
@@ -47,7 +47,7 @@ class Availability extends Command
             return;
         }
 
-        $messageRows = array(
+        $messageRows = [
             \sprintf(
                 'Showing availabilities for all users on `%s` at `%s` (until `%s` at `%s`).',
                 date('d.m.Y', $timeFrom),
@@ -55,24 +55,24 @@ class Availability extends Command
                 date('d.m.Y', $timeTo),
                 date('H:i', $timeTo)
             ),
-        );
+        ];
 
-        $messageTable = array(
-            array(
+        $messageTable = [
+            [
                 'icon'   => '',
                 'name'   => 'User',
                 'status' => 'Status',
                 'from'   => 'From',
                 'to'     => 'To',
-            ),
-            array(
+            ],
+            [
                 'icon'   => '-',
                 'name'   => '-',
                 'status' => '-',
                 'from'   => '-',
                 'to'     => '-',
-            ),
-        );
+            ],
+        ];
 
         $guild              = $interaction->guild;
         $userAvailabilities = UserAvailabilities::getAll();
@@ -133,13 +133,13 @@ class Availability extends Command
                 $userStatusTo   = \date('H:i', $timeTo);
             }
 
-            $messageTable[] = array(
+            $messageTable[] = [
                 'icon'   => $userIcon,
                 'name'   => $userName,
                 'status' => $userStatus,
                 'from'   => $userStatusFrom,
                 'to'     => $userStatusTo,
-            );
+            ];
         }
 
         if ($usersSkipped > 0) {
@@ -150,7 +150,7 @@ class Availability extends Command
             }
         }
 
-        $pad = array();
+        $pad = [];
 
         foreach ($messageTable as $messageRow) {
             foreach ($messageRow as $key => $value) {

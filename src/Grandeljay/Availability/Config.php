@@ -14,23 +14,23 @@ class Config
     private function loadConfig(): void
     {
         $filepathRelative     = 'discord-availability/config.json';
-        $potentialConfigPaths = array();
+        $potentialConfigPaths = [];
 
         switch (PHP_OS) {
             case 'WINNT':
-                $potentialConfigPaths = array(
+                $potentialConfigPaths = [
                     'config.json',
                     '$USERPROFILE/.config/' . $filepathRelative,
                     '$APPDATA/' . $filepathRelative,
-                );
+                ];
                 break;
 
             default:
-                $potentialConfigPaths = array(
+                $potentialConfigPaths = [
                     'config.json',
                     '$HOME/.config/' . $filepathRelative,
                     '/etc/' . $filepathRelative,
-                );
+                ];
                 break;
         }
 
@@ -70,7 +70,7 @@ class Config
      */
     private function normaliseConfig(array $rawConfig): array
     {
-        $normalisedConfig = array();
+        $normalisedConfig = [];
 
         $normalisedConfig['maxAvailabilitiesPerUser'] = $rawConfig['maxAvailabilitiesPerUser'] ?? 100;
         $normalisedConfig['defaultDay']               = $rawConfig['defaultDay'] ?? "monday";
@@ -142,7 +142,7 @@ class Config
             die('Could not determine current working directory.' . PHP_EOL);
         }
 
-        $segments     = array($cwd, $path);
+        $segments     = [$cwd, $path];
         $absolutePath = implode(DIRECTORY_SEPARATOR, $segments);
 
         return $absolutePath;
