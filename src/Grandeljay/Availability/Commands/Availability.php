@@ -22,26 +22,16 @@ class Availability extends Command
     {
         $config = new Config();
 
-        $requestedTimeTextFrom = $interaction->data->options['from']->value ?? '';
-        $requestedTimeTextTo   = $interaction->data->options['to']->value   ?? '';
-
-        if (empty($requestedTimeTextTo)) {
-            $requestedTimeFrom = Bot::getTimeFromString($requestedTimeTextFrom);
-            $requestedTimeTo   = $requestedTimeFrom + 3600 * 4;
-        } elseif (!empty($requestedTimeTextTo) && empty($requestedTimeTextFrom)) {
-            $requestedTimeTo   = Bot::getTimeFromString($requestedTimeTextTo);
-            $requestedTimeFrom = $requestedTimeTo - 3600 * 4;
-        } else {
-            $requestedTimeFrom = Bot::getTimeFromString($requestedTimeTextFrom);
-            $requestedTimeTo   = Bot::getTimeFromString($requestedTimeTextTo);
-        }
+        $requestedDateTime     = $this->getRequestedDateTime($interaction);
+        $requestedDateTimeFrom = $requestedDateTime['from'];
+        $requestedDateTimeTo   = $requestedDateTime['to'];
 
         $availabilityTimeDefault = Bot::getTimeFromString($config->getDefaultDateTime());
-        $requestedTimeIsDefault  = $requestedTimeFrom === $availabilityTimeDefault;
+        $requestedTimeIsDefault  = $requestedDateTimeFrom === $availabilityTimeDefault;
         $requestedTimeIsMore     = false;
         $requestedTimeIsLess     = false;
 
-        if (false === $requestedTimeFrom || false === $requestedTimeTo) {
+        if (false === $requestedDateTimeFrom || false === $requestedDateTimeTo) {
             Bot::respondCouldNotParseTime($interaction);
 
             return;
@@ -50,10 +40,10 @@ class Availability extends Command
         $messageRows = [
             \sprintf(
                 'Showing availabilities for all users on `%s` at `%s` (until `%s` at `%s`).',
-                date('d.m.Y', $requestedTimeFrom),
-                date('H:i', $requestedTimeFrom),
-                date('d.m.Y', $requestedTimeTo),
-                date('H:i', $requestedTimeTo)
+                date('d.m.Y', $requestedDateTimeFrom),
+                date('H:i', $requestedDateTimeFrom),
+                date('d.m.Y', $requestedDateTimeTo),
+                date('H:i', $requestedDateTimeTo)
             ),
         ];
 
@@ -79,10 +69,10 @@ class Availability extends Command
         $usersSkipped       = 0;
 
         foreach ($userAvailabilities as $userAvailability) {
-            $userAvailabilityTime       = $userAvailability->getUserAvailabilityforTime($requestedTimeFrom, $requestedTimeTo);
-            $userAvailabilityIsRelevant = $userAvailability->isRelevant($requestedTimeFrom);
-            $userIsAvailableFrom        = $userAvailabilityTime->getUserIsAvailableFrom($requestedTimeFrom);
-            $userIsAvailableTo          = $userAvailabilityTime->getUserIsAvailableTo($requestedTimeTo);
+            $userAvailabilityTime       = $userAvailability->getUserAvailabilityforTime($requestedDateTimeFrom, $requestedDateTimeTo);
+            $userAvailabilityIsRelevant = $userAvailability->isRelevant($requestedDateTimeFrom);
+            $userIsAvailableFrom        = $userAvailabilityTime->getUserIsAvailableFrom($requestedDateTimeFrom);
+            $userIsAvailableTo          = $userAvailabilityTime->getUserIsAvailableTo($requestedDateTimeTo);
             $userIsAvailable            = $userAvailabilityTime->getUserIsAvailable();
             $userIsAvailablePerDefault  = $userAvailabilityTime->getUserIsAvailablePerDefault();
 
@@ -94,18 +84,18 @@ class Availability extends Command
             $userIcon       = $userIsAvailable ? 'Y' : 'N';
             $userName       = $userAvailability->getUserName();
             $userStatus     = $userIsAvailable ? 'Available' : 'Unavailable';
-            $outputTimeFrom = max($requestedTimeFrom, $userAvailabilityTime->getUserAvailabilityTimeFrom());
-            $outputTimeTo   = min($requestedTimeTo, $userAvailabilityTime->getUserAvailabilityTimeTo());
+            $outputTimeFrom = max($requestedDateTimeFrom, $userAvailabilityTime->getUserAvailabilityTimeFrom());
+            $outputTimeTo   = min($requestedDateTimeTo, $userAvailabilityTime->getUserAvailabilityTimeTo());
             $userStatusFrom = date('H:i', $outputTimeFrom);
             $userStatusTo   = date('H:i', $outputTimeTo);
 
-            if ($userAvailabilityTime->getUserAvailabilityTimeFrom() < $requestedTimeFrom) {
+            if ($userAvailabilityTime->getUserAvailabilityTimeFrom() < $requestedDateTimeFrom) {
                 $requestedTimeIsLess = true;
 
                 $userStatusFrom = '<' . $userStatusFrom;
             }
 
-            if ($userAvailabilityTime->getUserAvailabilityTimeTo() > $requestedTimeTo) {
+            if ($userAvailabilityTime->getUserAvailabilityTimeTo() > $requestedDateTimeTo) {
                 $requestedTimeIsMore = true;
 
                 $userStatusTo = '>' . $userStatusTo;
@@ -129,8 +119,8 @@ class Availability extends Command
             if ($userIsAvailablePerDefault) {
                 $userIcon       = '-';
                 $userStatus    .= '*';
-                $userStatusFrom = \date('H:i', $requestedTimeFrom);
-                $userStatusTo   = \date('H:i', $requestedTimeTo);
+                $userStatusFrom = \date('H:i', $requestedDateTimeFrom);
+                $userStatusTo   = \date('H:i', $requestedDateTimeTo);
             }
 
             $messageTable[] = [
@@ -223,5 +213,21 @@ class Availability extends Command
                 true
             );
         }
+    }
+
+    private function getRequestedDateTime(Interaction $interaction): array
+    {
+        $requestedTimeTextFrom = $interaction->data->options['from']->value ?? '';
+        $requestedTimeTextTo   = $interaction->data->options['to']->value   ?? '';
+
+        $requestedDateTimeFrom = $requestedTimeTextFrom ? \strtotime($requestedTimeTextFrom) : \strtotime('today 00:00');
+        $requestedDateTimeTo   = $requestedTimeTextTo   ? \strtotime($requestedTimeTextTo)   : \strtotime('today 23:59');
+
+        $requestedDateTime = [
+            'from' =>  $requestedDateTimeFrom,
+            'to'   =>  $requestedDateTimeTo,
+        ];
+
+        return $requestedDateTime;
     }
 }

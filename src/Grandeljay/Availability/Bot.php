@@ -27,6 +27,8 @@ class Bot
     /**
      * Returns the unix timestamp from a user specified date/time.
      *
+     * @deprecated
+     *
      * @param string $message The user's date/time input.
      *
      * @return int|false The unix timestamp on success or `false`.
