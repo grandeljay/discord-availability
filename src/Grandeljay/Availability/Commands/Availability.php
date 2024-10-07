@@ -22,26 +22,26 @@ class Availability extends Command
     {
         $config = new Config();
 
-        $timeFromText = $interaction->data->options['from']->value ?? '';
-        $timeToText   = $interaction->data->options['to']->value   ?? '';
+        $requestedTimeTextFrom = $interaction->data->options['from']->value ?? '';
+        $requestedTimeTextTo   = $interaction->data->options['to']->value   ?? '';
 
-        if (empty($timeToText)) {
-            $timeFrom = Bot::getTimeFromString($timeFromText);
-            $timeTo   = $timeFrom + 3600 * 4;
-        } elseif (!empty($timeToText) && empty($timeFromText)) {
-            $timeTo   = Bot::getTimeFromString($timeToText);
-            $timeFrom = $timeTo - 3600 * 4;
+        if (empty($requestedTimeTextTo)) {
+            $requestedTimeFrom = Bot::getTimeFromString($requestedTimeTextFrom);
+            $requestedTimeTo   = $requestedTimeFrom + 3600 * 4;
+        } elseif (!empty($requestedTimeTextTo) && empty($requestedTimeTextFrom)) {
+            $requestedTimeTo   = Bot::getTimeFromString($requestedTimeTextTo);
+            $requestedTimeFrom = $requestedTimeTo - 3600 * 4;
         } else {
-            $timeFrom = Bot::getTimeFromString($timeFromText);
-            $timeTo   = Bot::getTimeFromString($timeToText);
+            $requestedTimeFrom = Bot::getTimeFromString($requestedTimeTextFrom);
+            $requestedTimeTo   = Bot::getTimeFromString($requestedTimeTextTo);
         }
 
-        $timeDefault   = Bot::getTimeFromString($config->getDefaultDateTime());
-        $timeIsDefault = $timeFrom === $timeDefault;
-        $timeIsMore    = false;
-        $timeIsLess    = false;
+        $availabilityTimeDefault = Bot::getTimeFromString($config->getDefaultDateTime());
+        $requestedTimeIsDefault  = $requestedTimeFrom === $availabilityTimeDefault;
+        $requestedTimeIsMore     = false;
+        $requestedTimeIsLess     = false;
 
-        if (false === $timeFrom || false === $timeTo) {
+        if (false === $requestedTimeFrom || false === $requestedTimeTo) {
             Bot::respondCouldNotParseTime($interaction);
 
             return;
@@ -50,10 +50,10 @@ class Availability extends Command
         $messageRows = [
             \sprintf(
                 'Showing availabilities for all users on `%s` at `%s` (until `%s` at `%s`).',
-                date('d.m.Y', $timeFrom),
-                date('H:i', $timeFrom),
-                date('d.m.Y', $timeTo),
-                date('H:i', $timeTo)
+                date('d.m.Y', $requestedTimeFrom),
+                date('H:i', $requestedTimeFrom),
+                date('d.m.Y', $requestedTimeTo),
+                date('H:i', $requestedTimeTo)
             ),
         ];
 
@@ -79,10 +79,10 @@ class Availability extends Command
         $usersSkipped       = 0;
 
         foreach ($userAvailabilities as $userAvailability) {
-            $userAvailabilityTime       = $userAvailability->getUserAvailabilityforTime($timeFrom, $timeTo);
-            $userAvailabilityIsRelevant = $userAvailability->isRelevant($timeFrom);
-            $userIsAvailableFrom        = $userAvailabilityTime->getUserIsAvailableFrom($timeFrom);
-            $userIsAvailableTo          = $userAvailabilityTime->getUserIsAvailableTo($timeTo);
+            $userAvailabilityTime       = $userAvailability->getUserAvailabilityforTime($requestedTimeFrom, $requestedTimeTo);
+            $userAvailabilityIsRelevant = $userAvailability->isRelevant($requestedTimeFrom);
+            $userIsAvailableFrom        = $userAvailabilityTime->getUserIsAvailableFrom($requestedTimeFrom);
+            $userIsAvailableTo          = $userAvailabilityTime->getUserIsAvailableTo($requestedTimeTo);
             $userIsAvailable            = $userAvailabilityTime->getUserIsAvailable();
             $userIsAvailablePerDefault  = $userAvailabilityTime->getUserIsAvailablePerDefault();
 
@@ -94,19 +94,19 @@ class Availability extends Command
             $userIcon       = $userIsAvailable ? 'Y' : 'N';
             $userName       = $userAvailability->getUserName();
             $userStatus     = $userIsAvailable ? 'Available' : 'Unavailable';
-            $outputTimeFrom = max($timeFrom, $userAvailabilityTime->getUserAvailabilityTimeFrom());
-            $outputTimeTo   = min($timeTo, $userAvailabilityTime->getUserAvailabilityTimeTo());
+            $outputTimeFrom = max($requestedTimeFrom, $userAvailabilityTime->getUserAvailabilityTimeFrom());
+            $outputTimeTo   = min($requestedTimeTo, $userAvailabilityTime->getUserAvailabilityTimeTo());
             $userStatusFrom = date('H:i', $outputTimeFrom);
             $userStatusTo   = date('H:i', $outputTimeTo);
 
-            if ($userAvailabilityTime->getUserAvailabilityTimeFrom() < $timeFrom) {
-                $timeIsLess = true;
+            if ($userAvailabilityTime->getUserAvailabilityTimeFrom() < $requestedTimeFrom) {
+                $requestedTimeIsLess = true;
 
                 $userStatusFrom = '<' . $userStatusFrom;
             }
 
-            if ($userAvailabilityTime->getUserAvailabilityTimeTo() > $timeTo) {
-                $timeIsMore = true;
+            if ($userAvailabilityTime->getUserAvailabilityTimeTo() > $requestedTimeTo) {
+                $requestedTimeIsMore = true;
 
                 $userStatusTo = '>' . $userStatusTo;
             }
@@ -129,8 +129,8 @@ class Availability extends Command
             if ($userIsAvailablePerDefault) {
                 $userIcon       = '-';
                 $userStatus    .= '*';
-                $userStatusFrom = \date('H:i', $timeFrom);
-                $userStatusTo   = \date('H:i', $timeTo);
+                $userStatusFrom = \date('H:i', $requestedTimeFrom);
+                $userStatusTo   = \date('H:i', $requestedTimeTo);
             }
 
             $messageTable[] = [
@@ -205,15 +205,15 @@ class Availability extends Command
 
             $messageRows[] = '```';
 
-            if ($timeIsDefault) {
+            if ($requestedTimeIsDefault) {
                 $messageRows[] = '`*` = The user is available per default and did not explicitly specify his availability.';
             }
 
-            if ($timeIsLess) {
+            if ($requestedTimeIsLess) {
                 $messageRows[] = '`<` = The user\'s _From_ availability starts earlier than displayed.';
             }
 
-            if ($timeIsMore) {
+            if ($requestedTimeIsMore) {
                 $messageRows[] = '`>` = The user\'s _To_ availability is later than displayed.';
             }
 
