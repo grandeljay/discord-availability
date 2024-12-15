@@ -1,6 +1,7 @@
 {
     "name": "grandeljay/discord-availability",
     "description": "Yet another reason to hate php.",
+    "license": "proprietary",
     "require": {
         "team-reflex/discord-php": "^7.3"
     }
