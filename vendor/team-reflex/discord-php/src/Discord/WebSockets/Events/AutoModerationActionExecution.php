@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -12,22 +14,25 @@
 namespace Discord\WebSockets\Events;
 
 use Discord\WebSockets\Event;
-use Discord\Helpers\Deferred;
 use Discord\Parts\WebSockets\AutoModerationActionExecution as ActionExecution;
 
 /**
- * @see https://discord.com/developers/docs/topics/gateway#auto-moderation-action-execution
+ * @link https://discord.com/developers/docs/topics/gateway-events#auto-moderation-action-execution
+ *
+ * @see \Discord\Parts\WebSockets\AutoModerationActionExecution
+ *
+ * @since 7.1.0
  */
 class AutoModerationActionExecution extends Event
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
-    public function handle(Deferred &$deferred, $data): void
+    public function handle($data)
     {
         /** @var ActionExecution */
-        $actionExecutionPart = $this->factory->create(ActionExecution::class, $data, true);
+        $actionExecutionPart = $this->factory->part(ActionExecution::class, (array) $data, true);
 
-        $deferred->resolve($actionExecutionPart);
+        return $actionExecutionPart;
     }
 }

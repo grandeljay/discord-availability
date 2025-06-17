@@ -18,26 +18,43 @@ class Endpoint
     // GET
     public const GATEWAY_BOT = self::GATEWAY.'/bot';
 
+    // GET
+    public const APPLICATION_SKUS = 'applications/:application_id/skus';
+    // GET, POST
+    public const APPLICATION_EMOJIS = 'applications/:application_id/emojis';
+    // GET, PATCH, DELETE
+    public const APPLICATION_EMOJI = 'applications/:application_id/emojis/:emoji_id';
+    // GET, POST
+    public const APPLICATION_ENTITLEMENTS = 'applications/:application_id/entitlements';
+    // DELETE
+    public const APPLICATION_ENTITLEMENT = self::APPLICATION_ENTITLEMENTS.'/:entitlement_id';
+    // POST
+    public const APPLICATION_ENTITLEMENT_CONSUME = self::APPLICATION_ENTITLEMENT.'/consume';
     // GET, POST, PUT
     public const GLOBAL_APPLICATION_COMMANDS = 'applications/:application_id/commands';
     // GET, PATCH, DELETE
-    public const GLOBAL_APPLICATION_COMMAND = 'applications/:application_id/commands/:command_id';
+    public const GLOBAL_APPLICATION_COMMAND = self::GLOBAL_APPLICATION_COMMANDS.'/:command_id';
     // GET, POST, PUT
     public const GUILD_APPLICATION_COMMANDS = 'applications/:application_id/guilds/:guild_id/commands';
     // GET, PUT
-    public const GUILD_APPLICATION_COMMANDS_PERMISSIONS = 'applications/:application_id/guilds/:guild_id/commands/permissions';
+    public const GUILD_APPLICATION_COMMANDS_PERMISSIONS = self::GUILD_APPLICATION_COMMANDS.'/permissions';
     // GET, PATCH, DELETE
-    public const GUILD_APPLICATION_COMMAND = 'applications/:application_id/guilds/:guild_id/commands/:command_id';
+    public const GUILD_APPLICATION_COMMAND = self::GUILD_APPLICATION_COMMANDS.'/:command_id';
     // GET, PUT
-    public const GUILD_APPLICATION_COMMAND_PERMISSIONS = 'applications/:application_id/guilds/:guild_id/commands/:command_id/permissions';
+    public const GUILD_APPLICATION_COMMAND_PERMISSIONS = self::GUILD_APPLICATION_COMMANDS.'/:command_id/permissions';
     // POST
     public const INTERACTION_RESPONSE = 'interactions/:interaction_id/:interaction_token/callback';
-    // PATCH, DELETE
-    public const ORIGINAL_INTERACTION_RESPONSE = 'webhooks/:application_id/:interaction_token/messages/@original';
     // POST
     public const CREATE_INTERACTION_FOLLOW_UP = 'webhooks/:application_id/:interaction_token';
     // PATCH, DELETE
-    public const INTERACTION_FOLLOW_UP = 'webhooks/:application_id/:interaction_token/messages/:message_id';
+    public const ORIGINAL_INTERACTION_RESPONSE = self::CREATE_INTERACTION_FOLLOW_UP.'/messages/@original';
+    // PATCH, DELETE
+    public const INTERACTION_FOLLOW_UP = self::CREATE_INTERACTION_FOLLOW_UP.'/messages/:message_id';
+
+    // GET
+    public const SKU_SUBSCRIPTIONS = '/skus/:sku_id/subscriptions';
+    // GET
+    public const SKU_SUBSCRIPTION = self::SKU_SUBSCRIPTIONS.'/:subscription_id';
 
     // GET
     public const AUDIT_LOG = 'guilds/:guild_id/audit-logs';
@@ -69,13 +86,13 @@ class Endpoint
     // POST
     public const CHANNEL_MESSAGE_THREADS = self::CHANNEL_MESSAGE.'/threads';
     // GET
-    public const CHANNEL_THREADS_ACTIVE = self::CHANNEL_THREADS.'/active';
-    // GET
     public const CHANNEL_THREADS_ARCHIVED_PUBLIC = self::CHANNEL_THREADS.'/archived/public';
     // GET
     public const CHANNEL_THREADS_ARCHIVED_PRIVATE = self::CHANNEL_THREADS.'/archived/private';
     // GET
     public const CHANNEL_THREADS_ARCHIVED_PRIVATE_ME = self::CHANNEL.'/users/@me/threads/archived/private';
+    // POST
+    public const CHANNEL_SEND_SOUNDBOARD_SOUND = self::CHANNEL . '/send-soundboard-sound';
 
     // GET, PATCH, DELETE
     public const THREAD = 'channels/:thread_id';
@@ -95,6 +112,13 @@ class Endpoint
     // DELETE
     public const USER_MESSAGE_REACTION = self::CHANNEL.'/messages/:message_id/reactions/:emoji/:user_id';
 
+    // GET
+    protected const MESSAGE_POLL = self::CHANNEL.'/polls/:message_id';
+    // GET
+    public const MESSAGE_POLL_ANSWER = self::MESSAGE_POLL.'/answers/:answer_id';
+    // POST
+    public const MESSAGE_POLL_EXPIRE = self::MESSAGE_POLL.'/expire';
+
     // GET, POST
     public const CHANNEL_WEBHOOKS = self::CHANNEL.'/webhooks';
 
@@ -104,6 +128,8 @@ class Endpoint
     public const GUILD = 'guilds/:guild_id';
     // GET, POST, PATCH
     public const GUILD_CHANNELS = self::GUILD.'/channels';
+    // GET
+    public const GUILD_THREADS_ACTIVE = self::GUILD.'/threads/active';
 
     // GET
     public const GUILD_MEMBERS = self::GUILD.'/members';
@@ -160,9 +186,11 @@ class Endpoint
     public const GUILD_WIDGET_IMAGE = self::GUILD.'/widget.png';
     // GET, PATCH
     public const GUILD_WELCOME_SCREEN = self::GUILD.'/welcome-screen';
-    // PATCH
+    // GET
+    public const GUILD_ONBOARDING = self::GUILD.'/onboarding';
+    // GET, PATCH
     public const GUILD_USER_CURRENT_VOICE_STATE = self::GUILD.'/voice-states/@me';
-    // PATCH
+    // GET, PATCH
     public const GUILD_USER_VOICE_STATE = self::GUILD.'/voice-states/:user_id';
     // GET
     public const GUILD_VANITY_URL = self::GUILD.'/vanity-url';
@@ -188,6 +216,11 @@ class Endpoint
     // GET
     public const GUILD_SCHEDULED_EVENT_USERS = self::GUILD.'/scheduled-events/:guild_scheduled_event_id/users';
 
+    // GET, POST
+    public const GUILD_SOUNDBOARD_SOUNDS = self::GUILD.'/soundboard-sounds';
+    // GET, PATCH, DELETE
+    public const GUILD_SOUNDBOARD_SOUND = self::GUILD.'/soundboard-sounds/:sound_id';
+
     // GET, DELETE
     public const INVITE = 'invites/:code';
 
@@ -208,6 +241,9 @@ class Endpoint
     // GET, PATCH, DELETE
     public const GUILD_AUTO_MODERATION_RULE = self::GUILD.'/auto-moderation/rules/:auto_moderation_rule_id';
 
+    // GET
+    public const SOUNDBOARD_DEFAULT_SOUNDS = 'soundboard-default-sounds';
+
     // GET, PATCH
     public const USER_CURRENT = 'users/@me';
     // GET
@@ -224,8 +260,10 @@ class Endpoint
     public const USER_CURRENT_CONNECTIONS = self::USER_CURRENT.'/connections';
     // GET, PUT
     public const USER_CURRENT_APPLICATION_ROLE_CONNECTION = self::USER_CURRENT.'/applications/:application_id/role-connection';
+    // GET, PATCH
+    public const APPLICATION_CURRENT = 'applications/@me';
     // GET
-    public const APPLICATION_CURRENT = 'oauth2/applications/@me';
+    public const APPLICATION_ACTIVITY_INSTANCE = 'applications/:application_id/activity-instances/:instance_id';
 
     // GET, PATCH, DELETE
     public const WEBHOOK = 'webhooks/:webhook_id';
@@ -295,7 +333,7 @@ class Endpoint
     public function __construct(string $endpoint)
     {
         $this->endpoint = $endpoint;
-    
+
         if (preg_match_all(self::REGEX, $endpoint, $vars)) {
             $this->vars = $vars[1] ?? [];
         }
@@ -343,7 +381,7 @@ class Endpoint
 
         $this->query[$key] = $value;
     }
-    
+
     /**
      * Converts the endpoint into the absolute endpoint with
      * placeholders replaced.
@@ -396,7 +434,7 @@ class Endpoint
     {
         $endpoint = new Endpoint($endpoint);
         $endpoint->bindArgs(...$args);
-        
+
         return $endpoint;
     }
 

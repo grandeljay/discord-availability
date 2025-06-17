@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -11,26 +13,37 @@
 
 namespace Discord\Builders;
 
+use Discord\Helpers\Collection;
+use Discord\Helpers\ExCollectionInterface;
 use Discord\Parts\Interactions\Command\Command;
 use Discord\Parts\Interactions\Command\Option;
+use Discord\Parts\Interactions\Interaction;
+use Discord\Parts\OAuth\Application;
 
 use function Discord\poly_strlen;
 
 /**
  * Application Command attributes.
  *
- * @see Discord\Builders\CommandBuilder
- * @see Discord\Parts\Interactions\Command\Command
+ * @see \Discord\Builders\CommandBuilder
+ * @see \Discord\Parts\Interactions\Command\Command
  *
- * @property int                      $type                       The type of the command, defaults 1 if not set.
- * @property string                   $name                       1-32 character name of the command.
- * @property ?string[]|null           $name_localizations         Localization dictionary for the name field. Values follow the same restrictions as name.
- * @property string                   $description                1-100 character description for CHAT_INPUT commands, empty string for USER and MESSAGE commands.
- * @property ?string[]|null           $description_localizations  Localization dictionary for the description field. Values follow the same restrictions as description.
- * @property Collection|Option[]|null $options                    The parameters for the command, max 25. Only for Slash command (CHAT_INPUT).
- * @property ?string                  $default_member_permissions Set of permissions represented as a bit set.
- * @property bool|null                $dm_permission              Indicates whether the command is available in DMs with the app, only for globally-scoped commands. By default, commands are visible.
- * @property ?bool                    $default_permission         Whether the command is enabled by default when the app is added to a guild. SOON DEPRECATED.
+ * @since 7.1.0
+ *
+ * @property int                                 $type                       The type of the command, defaults 1 if not set.
+ * @property string                              $name                       1-32 character name of the command.
+ * @property ?string[]|null                      $name_localizations         Localization dictionary for the name field. Values follow the same restrictions as name.
+ * @property ?string                             $description                1-100 character description for CHAT_INPUT commands, empty string for USER and MESSAGE commands.
+ * @property ?string[]|null                      $description_localizations  Localization dictionary for the description field. Values follow the same restrictions as description.
+ * @property ExCollectionInterface|Option[]|null $options                    The parameters for the command, max 25. Only for Slash command (CHAT_INPUT).
+ * @property ?string                             $default_member_permissions Set of permissions represented as a bit set.
+ * @property bool|null                           $dm_permission              Deprecated (use contexts instead); Indicates whether the command is available in DMs with the app, only for globally-scoped commands. By default, commands are visible.
+ * @property ?bool                               $default_permission         Whether the command is enabled by default when the app is added to a guild. SOON DEPRECATED.
+ * @property ?int                                $guild_id                   The optional guild ID this command is for. If not set, the command is global.
+ * @property bool|null                           $nsfw                       Indicates whether the command is age-restricted, defaults to `false`.
+ * @property ExCollectionInterface|null          $integration_types          Installation contexts where the command is available, only for globally-scoped commands. Defaults to your app's configured contexts
+ * @property ExCollectionInterface|null          $contexts                   Interaction context(s) where the command can be used, only for globally-scoped commands.
+ * @property int|null                            $handler                    Determines whether the interaction is handled by the app's interactions handler or by Discord
  */
 trait CommandAttributes
 {
@@ -41,7 +54,7 @@ trait CommandAttributes
      *
      * @throws \InvalidArgumentException `$type` is not 1-3.
      *
-     * @return self
+     * @return $this
      */
     public function setType(int $type): self
     {
@@ -62,7 +75,7 @@ trait CommandAttributes
      * @throws \LengthException `$name` is not 1-32 characters long.
      * @throws \DomainException `$name` contains invalid characters.
      *
-     * @return self
+     * @return $this
      */
     public function setName(string $name): self
     {
@@ -91,7 +104,7 @@ trait CommandAttributes
      * @throws \LengthException `$name` is not 1-32 characters long.
      * @throws \DomainException `$name` contains invalid characters.
      *
-     * @return self
+     * @return $this
      */
     public function setNameLocalization(string $locale, ?string $name): self
     {
@@ -122,7 +135,7 @@ trait CommandAttributes
      *
      * @throws \LengthException `$description` is not 1-100 characters long.
      *
-     * @return self
+     * @return $this
      */
     public function setDescription(string $description): self
     {
@@ -146,7 +159,7 @@ trait CommandAttributes
      *
      * @throws \LengthException `$description` is not 1-100 characters long.
      *
-     * @return self
+     * @return $this
      */
     public function setDescriptionLocalization(string $locale, ?string $description): self
     {
@@ -162,17 +175,62 @@ trait CommandAttributes
     }
 
     /**
-     * Sets the default permission of the command.
+     * Adds an option to the command.
      *
-     * @deprecated 7.1.0 See `CommandAttributes::setDefaultMemberPermissions()`.
+     * @param Option $option The option.
      *
-     * @param ?bool $permission Default permission of the command
+     * @throws \DomainException   Command type is not CHAT_INPUT (1).
+     * @throws \OverflowException Command exceeds maximum 25 options.
      *
-     * @return self
+     * @return $this
      */
-    public function setDefaultPermission(?bool $permission): self
+    public function addOption(Option $option): self
     {
-        $this->default_permission = $permission;
+        if (isset($this->type) && $this->type != Command::CHAT_INPUT) {
+            throw new \DomainException('Only CHAT_INPUT Command type can have option.');
+        }
+
+        if (isset($this->options) && count($this->options) >= 25) {
+            throw new \OverflowException('Command can only have a maximum of 25 options.');
+        }
+
+        $this->options ??= Collection::for(Option::class, 'name');
+
+        $this->options->push($option);
+
+        return $this;
+    }
+
+    /**
+     * Removes an option from the command.
+     *
+     * @param Option $option Option to remove.
+     *
+     * @throws \DomainException Command type is not CHAT_INPUT (1).
+     *
+     * @return $this
+     */
+    public function removeOption(Option $option): self
+    {
+        if (isset($this->type) && $this->type != Command::CHAT_INPUT) {
+            throw new \DomainException('Only CHAT_INPUT Command type can have option.');
+        }
+
+        if (isset($this->options) && ($idx = $this->options->search($option)) !== false) {
+            $this->options->splice($idx, 1);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Clear all options from the command.
+     *
+     * @return $this
+     */
+    public function clearOptions(): self
+    {
+        $this->options = Collection::for(Option::class, 'name');
 
         return $this;
     }
@@ -182,7 +240,7 @@ trait CommandAttributes
      *
      * @param string|int $permissions Default member permission bits of the command.
      *
-     * @return self
+     * @return $this
      */
     public function setDefaultMemberPermissions($permissions): self
     {
@@ -196,7 +254,7 @@ trait CommandAttributes
      *
      * @param bool $permission DM permission of the command.
      *
-     * @return self
+     * @return $this
      */
     public function setDmPermission(bool $permission): self
     {
@@ -206,62 +264,200 @@ trait CommandAttributes
     }
 
     /**
-     * Adds an option to the command.
+     * Sets the default permission of the command.
      *
-     * @param Option $option The option.
+     * @deprecated 7.1.0 See `CommandAttributes::setDefaultMemberPermissions()`.
      *
-     * @throws \DomainException   Command type is not CHAT_INPUT (1).
-     * @throws \OverflowException Command exceeds maximum 25 options.
+     * @param ?bool $permission Default permission of the command
      *
-     * @return self
+     * @return $this
      */
-    public function addOption(Option $option): self
+    public function setDefaultPermission(?bool $permission): self
     {
-        if (isset($this->type) && $this->type != Command::CHAT_INPUT) {
-            throw new \DomainException('Only CHAT_INPUT Command type can have option.');
-        }
+        $this->default_permission = $permission;
 
-        if (isset($this->options) && count($this->options) >= 25) {
-            throw new \OverflowException('Command can only have a maximum of 25 options.');
-        }
+        return $this;
+    }
 
-        $this->options ??= [];
 
-        $this->options[] = $option;
+    /**
+     * Sets the guild ID of the command.
+     *
+     * @param int $guildId Guild ID of the command.
+     *
+     * @return $this
+     */
+    public function setGuildId(int $guildId): self
+    {
+        $this->guild_id = $guildId;
 
         return $this;
     }
 
     /**
-     * Removes an option from the command.
+     * Sets the age restriction of the command.
      *
-     * @param Option $option Option to remove.
+     * @param bool $restricted Age restriction of the command.
      *
-     * @throws \DomainException Command type is not CHAT_INPUT (1).
-     *
-     * @return self
+     * @return $this
      */
-    public function removeOption(Option $option): self
+    public function setNsfw(bool $restricted): self
     {
-        if (isset($this->type) && $this->type != Command::CHAT_INPUT) {
-            throw new \DomainException('Only CHAT_INPUT Command type can have option.');
+        $this->nsfw = $restricted;
+
+        return $this;
+    }
+
+    /**
+     * Adds an integration type to the command. (Only for globally-scoped commands)
+     *
+     * @param int $integration_type The integration type to add. Must be one of GUILD_INSTALL (0) or USER_INSTALL (1).
+     *
+     * @throws \DomainException If the command is not globally-scoped or if an invalid integration type is provided.
+     *
+     * @return $this
+     */
+    public function addIntegrationType(int $integration_type): self
+    {
+        if (isset($this->guild_id)) {
+            throw new \DomainException('Only globally-scopped commands can have an integration type.');
         }
 
-        if (isset($this->options) && ($idx = array_search($option, $this->options)) !== false) {
-            array_splice($this->options, $idx, 1);
+        $allowed = [
+            Application::INTEGRATION_TYPE_GUILD_INSTALL,
+            Application::INTEGRATION_TYPE_USER_INSTALL,
+        ];
+
+        if (! in_array($integration_type, $allowed, true)) {
+            throw new \DomainException('Invalid integration type provided.');
+        }
+
+        $this->integration_type ??= new Collection();
+
+        $this->integration_type->push($integration_type);
+
+        return $this;
+    }
+
+    /**
+     * Removes an integration type from the command. (Only for globally-scoped commands)
+     *
+     * @param int $integration_type The integration type to remove.
+     *
+     * @throws \DomainException If the command is not globally-scoped.
+     *
+     * @return $this
+     */
+    public function removeIntegrationType($integration_type): self
+    {
+        if (isset($this->guild_id)) {
+            throw new \DomainException('Only globally-scopped commands can have an integration type.');
+        }
+
+        if (isset($this->integration_types) && ($idx = $this->integration_types->search($integration_type)) !== false) {
+            $this->integration_types->splice($idx, 1);
+        }
+
+        return $this;
+    }
+
+
+    /**
+     * Adds a context to the command. (Only for globally-scoped commands)
+     *
+     * @param int $context Context to add.
+     *
+     * @throws \DomainException If the command is not globally-scoped.
+     *
+     * @return $this
+     */
+    public function addContext(int $context): self
+    {
+        if (isset($this->guild_id)) {
+            throw new \DomainException('Only globally-scopped commands can have context.');
+        }
+
+        $allowed = [
+            Interaction::CONTEXT_TYPE_GUILD,
+            Interaction::CONTEXT_TYPE_BOT_DM,
+            Interaction::CONTEXT_TYPE_PRIVATE_CHANNEL,
+        ];
+
+        if (! in_array($context, $allowed, true)) {
+            throw new \DomainException('Invalid context provided.');
+        }
+
+        $this->contexts ??= new Collection();
+
+        $this->contexts->push($context);
+
+        return $this;
+    }
+
+    /**
+     * Removes a context from the command. (Only for globally-scoped commands)
+     *
+     * @param int $context Context to remove.
+     *
+     * @throws \DomainException If the command is not globally-scoped.
+     *
+     * @return $this
+     */
+    public function removeContext(int $context): self
+    {
+        if (isset($this->guild_id)) {
+            throw new \DomainException('Only globally-scopped commands can have context.');
+        }
+
+        if (isset($this->contexts) && ($idx = $this->contexts->search($context)) !== false) {
+            $this->contexts->splice($idx, 1);
         }
 
         return $this;
     }
 
     /**
-     * Clear all options from the command.
+     * Sets the contexts of the command. (Only for globally-scoped commands)
      *
-     * @return self
+     * @param array|null $contexts Interaction contexts where the command can be used.
+     *
+     * @throws \DomainException If the command is not globally-scoped.
+     *
+     * @return $this
      */
-    public function clearOptions(): self
+    public function setContextPermissions(?array $contexts): self
     {
-        $this->options = [];
+        if (isset($this->guild_id)) {
+            throw new \DomainException('Only globally-scopped commands can have contexts.');
+        }
+
+        $this->contexts = $contexts;
+
+        return $this;
+    }
+
+    /**
+     * Sets the handler for the command.
+     *
+     * @param int $handler Handler to set.
+     *
+     * @throws \DomainException Command type is not PRIMARY_ENTRY_POINT (4) or if the handler is not valid.
+     *
+     * @return $this
+     */
+    public function setHandler(?int $handler): self
+    {
+        if (isset($this->type) && $this->type !== Command::PRIMARY_ENTRY_POINT) {
+            throw new \DomainException('Only PRIMARY_ENTRY_POINT Command type can have handler.');
+        }
+
+        $allowed = [Command::APP_HANDLER, Command::DISCORD_LAUNCH_ACTIVITY];
+
+        if (is_int($handler) && ! in_array($handler, $allowed)) {
+            throw new \DomainException('Invalid handler provided.');
+        }
+
+        $this->handler = $handler;
 
         return $this;
     }

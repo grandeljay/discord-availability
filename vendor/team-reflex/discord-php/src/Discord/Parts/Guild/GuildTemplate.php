@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -15,31 +17,35 @@ use Carbon\Carbon;
 use Discord\Http\Endpoint;
 use Discord\Parts\Part;
 use Discord\Parts\User\User;
-use React\Promise\ExtendedPromiseInterface;
+use React\Promise\PromiseInterface;
+use Stringable;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * A Guild Template is a code that when used, creates a guild based on a snapshot of an existing guild.
+ * A Guild Template is a code that when used, creates a guild based on a
+ * snapshot of an existing guild.
  *
- * @see https://discord.com/developers/docs/resources/guild-template
+ * @link https://discord.com/developers/docs/resources/guild-template
  *
- * @property string      $code                    The template code (unique ID).
- * @property string      $name                    Template name.
- * @property string|null $description             The description for the template. Up to 120 characters.
- * @property int         $usage_count             Number of times this template has been used.
- * @property string      $creator_id              The ID of the user who created the template.
- * @property User        $creator                 The user who created the template.
- * @property Carbon      $created_at              A timestamp of when the template was created.
- * @property Carbon      $updated_at              When this template was last synced to the source guild.
- * @property string      $source_guild_id         The ID of the guild this template is based on.
- * @property Guild       $source_guild            The guild this template is based on.
- * @property object      $serialized_source_guild The guild snapshot this template contains.
- * @property bool        $is_dirty                Whether the template has unsynced changes.
+ * @since 7.0.0
+ *
+ * @property      string     $code                    The template code (unique ID).
+ * @property      string     $name                    Template name.
+ * @property      ?string    $description             The description for the template. Up to 120 characters.
+ * @property      int        $usage_count             Number of times this template has been used.
+ * @property      string     $creator_id              The ID of the user who created the template.
+ * @property      User       $creator                 The user who created the template.
+ * @property      Carbon     $created_at              A timestamp of when the template was created.
+ * @property      Carbon     $updated_at              When this template was last synced to the source guild.
+ * @property      string     $source_guild_id         The ID of the guild this template is based on.
+ * @property-read Guild|null $source_guild            The guild this template is based on.
+ * @property      object     $serialized_source_guild The guild snapshot this template contains.
+ * @property      ?bool      $is_dirty                Whether the template has unsynced changes.
  */
-class GuildTemplate extends Part
+class GuildTemplate extends Part implements Stringable
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $fillable = [
         'code',
@@ -72,11 +78,11 @@ class GuildTemplate extends Part
      */
     protected function getSourceGuildAttribute(): Guild
     {
-        if ($guild = $this->discord->guilds->offsetGet($this->source_guild_id)) {
+        if ($guild = $this->discord->guilds->get('id', $this->source_guild_id)) {
             return $guild;
         }
 
-        return $this->factory->part(Guild::class, (array) $this->attributes['serialized_source_guild'], true);
+        return $this->createOf(Guild::class, $this->attributes['serialized_source_guild']);
     }
 
     /**
@@ -84,9 +90,9 @@ class GuildTemplate extends Part
      *
      * @return User
      */
-    protected function getCreatorAttribute(): Part
+    protected function getCreatorAttribute(): User
     {
-        if ($creator = $this->discord->users->offsetGet($this->creator_id)) {
+        if ($creator = $this->discord->users->get('id', $this->creator_id)) {
             return $creator;
         }
 
@@ -118,17 +124,18 @@ class GuildTemplate extends Part
     }
 
     /**
-     * Creates a guild from this template. Can be used only by bots in less than 10 guilds.
+     * Creates a guild from this template. Can be used only by bots in less than
+     * 10 guilds.
      *
-     * @see https://discord.com/developers/docs/resources/guild-template#create-guild-from-guild-template
+     * @link https://discord.com/developers/docs/resources/guild-template#create-guild-from-guild-template
      *
      * @param array       $options         An array of options.
      * @param string      $options['name'] The name of the guild (2-100 characters).
      * @param string|null $options['icon'] The base64 128x128 image for the guild icon.
      *
-     * @return ExtendedPromiseInterface<Guild>
+     * @return PromiseInterface<Guild>
      */
-    public function createGuild($options = []): ExtendedPromiseInterface
+    public function createGuild($options = []): PromiseInterface
     {
         $resolver = new OptionsResolver();
         $resolver
@@ -150,22 +157,19 @@ class GuildTemplate extends Part
 
         return $this->http->post(Endpoint::bind(Endpoint::GUILDS_TEMPLATE, $this->code), $options)
             ->then(function ($response) use ($roles, $channels) {
-                if (! $guild = $this->discord->guilds->offsetGet($response->id)) {
+                /** @var ?Guild */
+                if (! $guildPart = $this->discord->guilds->get('id', $response->id)) {
                     /** @var Guild */
-                    $guild = $this->factory->create(Guild::class, $response, true);
-
-                    foreach ($roles as $role) {
-                        $guild->roles->pushItem($guild->roles->create($role, true));
-                    }
+                    $guildPart = $this->discord->guilds->create((array) $response + ['roles' => $roles], true);
 
                     foreach ($channels as $channel) {
-                        $guild->channels->pushItem($guild->channels->create($channel, true));
+                        $guildPart->channels->pushItem($guildPart->channels->create($channel, true));
                     }
 
-                    $this->discord->guilds->pushItem($guild);
+                    $this->discord->guilds->pushItem($guildPart);
                 }
 
-                return $guild;
+                return $guildPart;
             });
     }
 
@@ -176,33 +180,38 @@ class GuildTemplate extends Part
      */
     public function __toString(): string
     {
-        return "https://discord.new/{$this->code}";
+        return 'https://discord.new/'.$this->code;
     }
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
+     *
+     * @link https://discord.com/developers/docs/resources/guild-template#create-guild-template-json-params
      */
     public function getCreatableAttributes(): array
     {
         return [
             'name' => $this->name,
+        ] + $this->makeOptionalAttributes([
             'description' => $this->description,
-        ];
+        ]);
     }
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
+     *
+     * @link https://discord.com/developers/docs/resources/guild-template#modify-guild-template-json-params
      */
     public function getUpdatableAttributes(): array
     {
-        return [
+        return $this->makeOptionalAttributes([
             'name' => $this->name,
             'description' => $this->description,
-        ];
+        ]);
     }
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     public function getRepositoryAttributes(): array
     {

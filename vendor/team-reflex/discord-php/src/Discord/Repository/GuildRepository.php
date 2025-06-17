@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -13,22 +15,25 @@ namespace Discord\Repository;
 
 use Discord\Http\Endpoint;
 use Discord\Parts\Guild\Guild;
-use React\Promise\ExtendedPromiseInterface;
+use React\Promise\PromiseInterface;
 
 /**
- * Contains guilds that the user is in.
+ * Contains guilds that the client is in.
  *
- * @see \Discord\Parts\Guild\Guild
+ * @see Guild
  *
- * @method Guild|null get(string $discrim, $key)  Gets an item from the collection.
- * @method Guild|null first()                     Returns the first element of the collection.
- * @method Guild|null pull($key, $default = null) Pulls an item from the repository, removing and returning the item.
- * @method Guild|null find(callable $callback)    Runs a filter callback over the repository.
+ * @since 4.0.0
+ *
+ * @method Guild|null get(string $discrim, $key)
+ * @method Guild|null pull(string|int $key, $default = null)
+ * @method Guild|null first()
+ * @method Guild|null last()
+ * @method Guild|null find(callable $callback)
  */
 class GuildRepository extends AbstractRepository
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $endpoints = [
         'all' => Endpoint::USER_CURRENT_GUILDS,
@@ -40,29 +45,27 @@ class GuildRepository extends AbstractRepository
     ];
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $class = Guild::class;
 
     /**
      * Causes the client to leave a guild.
      *
-     * @see https://discord.com/developers/docs/resources/user#leave-guild
+     * @link https://discord.com/developers/docs/resources/user#leave-guild
      *
-     * @param Guild|snowflake $guild
+     * @param Guild|string $guild
      *
-     * @return ExtendedPromiseInterface
+     * @return PromiseInterface<self>
      */
-    public function leave($guild): ExtendedPromiseInterface
+    public function leave($guild): PromiseInterface
     {
         if ($guild instanceof Guild) {
             $guild = $guild->id;
         }
 
-        return $this->http->delete(Endpoint::bind(Endpoint::USER_CURRENT_GUILD, $guild))->then(function () use ($guild) {
-            $this->pull('id', $guild);
-
-            return $this;
-        });
+        return $this->http
+            ->delete(Endpoint::bind(Endpoint::USER_CURRENT_GUILD, $guild))
+            ->then(fn () => $this->cache->delete($guild)->then(fn ($success) => $this));
     }
 }

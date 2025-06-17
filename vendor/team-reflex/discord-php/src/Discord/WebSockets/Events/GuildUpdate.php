@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -12,30 +14,33 @@
 namespace Discord\WebSockets\Events;
 
 use Discord\WebSockets\Event;
-use Discord\Helpers\Deferred;
 use Discord\Parts\Guild\Guild;
 
 /**
- * @see https://discord.com/developers/docs/topics/gateway#guild-update
+ * @link https://discord.com/developers/docs/topics/gateway-events#guild-update
+ *
+ * @since 2.1.3
  */
 class GuildUpdate extends Event
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
-    public function handle(Deferred &$deferred, $data): void
+    public function handle($data)
     {
         $oldGuild = null;
 
-        if ($guildPart = $this->discord->guilds->get('id', $data->id)) {
+        /** @var ?Guild */
+        if ($guildPart = yield $this->discord->guilds->cacheGet($data->id)) {
             $oldGuild = clone $guildPart;
             $guildPart->fill((array) $data);
         } else {
             /** @var Guild */
-            $guildPart = $this->factory->create(Guild::class, $data, true);
-            $this->discord->guilds->pushItem($guildPart);
+            $guildPart = $this->discord->guilds->create($data, true);
         }
 
-        $deferred->resolve([$guildPart, $oldGuild]);
+        $this->discord->guilds->set($data->id, $guildPart);
+
+        return [$guildPart, $oldGuild];
     }
 }

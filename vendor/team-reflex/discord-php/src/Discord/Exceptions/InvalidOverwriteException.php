@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -11,6 +13,9 @@
 
 namespace Discord\Exceptions;
 
+/**
+ * @since 5.0.0
+ */
 class InvalidOverwriteException extends \Exception
 {
 }

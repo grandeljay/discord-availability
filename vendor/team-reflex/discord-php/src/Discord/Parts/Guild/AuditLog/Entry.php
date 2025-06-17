@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -12,22 +14,25 @@
 namespace Discord\Parts\Guild\AuditLog;
 
 use Discord\Helpers\Collection;
+use Discord\Helpers\ExCollectionInterface;
 use Discord\Parts\Part;
 use Discord\Parts\User\User;
 
 /**
  * Represents an entry in the audit log.
  *
- * @see https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object
+ * @since 5.1.0
  *
- * @property string       $target_id   Id of the affected entity (webhook, user, role, etc.).
- * @property Collection   $changes     Changes made to the target_id.
- * @property string|null  $user_id     The user who made the changes.
- * @property User|null    $user
- * @property string       $id          Id of the entry.
- * @property int          $action_type Type of action that occurred.
- * @property Options|null $options     Additional info for certain action types.
- * @property string|null  $reason      The reason for the change (0-512 characters).
+ * @link https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object
+ *
+ * @property      ?string              $target_id   ID of the affected entity (webhook, user, role, etc.).
+ * @property      CollectionInterface  $changes     Changes made to the target_id.
+ * @property      ?string              $user_id     The user who made the changes.
+ * @property-read User|null            $user
+ * @property      string               $id          ID of the entry.
+ * @property      int                  $action_type Type of action that occurred.
+ * @property      Options|null         $options     Additional info for certain action types.
+ * @property      string|null          $reason      The reason for the change (0-512 characters).
  */
 class Entry extends Part
 {
@@ -84,11 +89,15 @@ class Entry extends Part
     public const AUTO_MODERATION_RULE_UPDATE = 141;
     public const AUTO_MODERATION_RULE_DELETE = 142;
     public const AUTO_MODERATION_BLOCK_MESSAGE = 143;
+    public const AUTO_MODERATION_FLAG_TO_CHANNEL = 144;
+    public const AUTO_MODERATION_USER_COMMUNICATION_DISABLED = 145;
+    public const CREATOR_MONETIZATION_REQUEST_CREATED = 150;
+    public const CREATOR_MONETIZATION_TERMS_ACCEPTED = 151;
 
     // AUDIT LOG ENTRY TYPES
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $fillable = [
         'target_id',
@@ -103,7 +112,7 @@ class Entry extends Part
     /**
      * Returns the user who made the changes.
      *
-     * @return User
+     * @return User|null
      */
     protected function getUserAttribute(): ?User
     {
@@ -113,11 +122,11 @@ class Entry extends Part
     /**
      * Returns a collection of changes.
      *
-     * @see https://discord.com/developers/docs/resources/audit-log#audit-log-change-object
+     * @link https://discord.com/developers/docs/resources/audit-log#audit-log-change-object
      *
-     * @return Collection
+     * @return ExCollectionInterface
      */
-    protected function getChangesAttribute(): Collection
+    protected function getChangesAttribute(): ExCollectionInterface
     {
         return new Collection($this->attributes['changes'] ?? [], 'key', null);
     }
@@ -129,6 +138,6 @@ class Entry extends Part
      */
     protected function getOptionsAttribute(): Options
     {
-        return $this->factory->create(Options::class, $this->attributes['options'] ?? [], true);
+        return $this->createOf(Options::class, $this->attributes['options'] ?? []);
     }
 }

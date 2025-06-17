@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -13,22 +15,26 @@ namespace Discord\WebSockets\Events;
 
 use Discord\Parts\User\Member;
 use Discord\WebSockets\Event;
-use Discord\Helpers\Deferred;
+use Discord\Parts\Guild\Guild;
 
 /**
- * @see https://discord.com/developers/docs/topics/gateway#guild-member-update
+ * @link https://discord.com/developers/docs/topics/gateway-events#guild-member-update
+ *
+ * @since 2.1.3
  */
 class GuildMemberUpdate extends Event
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
-    public function handle(Deferred &$deferred, $data): void
+    public function handle($data)
     {
         $memberPart = $oldMember = null;
 
-        if ($guild = $this->discord->guilds->get('id', $data->guild_id)) {
-            if ($oldMember = $guild->members->get('id', $data->user->id)) {
+        /** @var ?Guild */
+        if ($guild = yield $this->discord->guilds->cacheGet($data->guild_id)) {
+            /** @var ?Member */
+            if ($oldMember = yield $guild->members->cacheGet($data->user->id)) {
                 // Swap
                 $memberPart = $oldMember;
                 $oldMember = clone $oldMember;
@@ -37,16 +43,15 @@ class GuildMemberUpdate extends Event
             }
         }
 
-        if (! $memberPart) {
+        if ($memberPart === null) {
             /** @var Member */
-            $memberPart = $this->factory->create(Member::class, $data, true);
-            if ($guild = $memberPart->guild) {
-                $guild->members->pushItem($memberPart);
-            }
+            $memberPart = $this->factory->part(Member::class, (array) $data, true);
         }
+
+        $guild?->members->set($data->user->id, $memberPart);
 
         $this->cacheUser($data->user);
 
-        $deferred->resolve([$memberPart, $oldMember]);
+        return [$memberPart, $oldMember];
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -16,20 +18,23 @@ use Discord\Parts\Channel\Invite;
 use Discord\Repository\AbstractRepository;
 
 /**
- * Contains invites to guilds.
+ * Contains invites to a guild.
  *
- * @see \Discord\Parts\Guild\Invite
+ * @since 4.0.0
+ *
+ * @see Invite
  * @see \Discord\Parts\Guild\Guild
  *
- * @method Invite|null get(string $discrim, $key)  Gets an item from the collection.
- * @method Invite|null first()                     Returns the first element of the collection.
- * @method Invite|null pull($key, $default = null) Pulls an item from the repository, removing and returning the item.
- * @method Invite|null find(callable $callback)    Runs a filter callback over the repository.
+ * @method Invite|null get(string $discrim, $key)
+ * @method Invite|null pull(string|int $key, $default = null)
+ * @method Invite|null first()
+ * @method Invite|null last()
+ * @method Invite|null find(callable $callback)
  */
 class InviteRepository extends AbstractRepository
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $endpoints = [
         'all' => Endpoint::GUILD_INVITES,
@@ -38,7 +43,7 @@ class InviteRepository extends AbstractRepository
     ];
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $class = Invite::class;
 }

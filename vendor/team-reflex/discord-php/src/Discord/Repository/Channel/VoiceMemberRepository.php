@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -17,28 +19,31 @@ use Discord\Repository\AbstractRepository;
 /**
  * Contains voice states for users in the voice channel.
  *
- * @see \Discord\Parts\WebSockets\VoiceStateUpdate
+ * @see VoiceStateUpdate
  * @see \Discord\Parts\Channel\Channel
  *
- * @method VoiceStateUpdate|null get(string $discrim, $key)  Gets an item from the collection.
- * @method VoiceStateUpdate|null first()                     Returns the first element of the collection.
- * @method VoiceStateUpdate|null pull($key, $default = null) Pulls an item from the repository, removing and returning the item.
- * @method VoiceStateUpdate|null find(callable $callback)    Runs a filter callback over the repository.
+ * @since 4.0.0
+ *
+ * @method VoiceStateUpdate|null get(string $discrim, $key)
+ * @method VoiceStateUpdate|null pull(string|int $key, $default = null)
+ * @method VoiceStateUpdate|null first()
+ * @method VoiceStateUpdate|null last()
+ * @method VoiceStateUpdate|null find(callable $callback)
  */
 class VoiceMemberRepository extends AbstractRepository
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $discrim = 'user_id';
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $endpoints = [];
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $class = VoiceStateUpdate::class;
 }

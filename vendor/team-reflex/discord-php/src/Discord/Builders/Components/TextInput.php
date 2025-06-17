@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -16,19 +18,23 @@ use function Discord\poly_strlen;
 /**
  * Text inputs are an interactive component that render on modals. They can be used to collect short-form or long-form text.
  *
- * @see https://discord.com/developers/docs/interactions/message-components#text-inputs
+ * @link https://discord.com/developers/docs/interactions/message-components#text-inputs
+ *
+ * @since 7.0.0
  */
-class TextInput extends Component
+class TextInput extends Interactive
 {
+    public const USAGE = ['Message', 'Modal'];
+
     public const STYLE_SHORT = 1;
     public const STYLE_PARAGRAPH = 2;
 
     /**
-     * Custom ID to identify the text input.
+     * Component type.
      *
-     * @var string
+     * @var int
      */
-    private $custom_id;
+    protected $type = Component::TYPE_TEXT_INPUT;
 
     /**
      * Style of text input.
@@ -84,13 +90,13 @@ class TextInput extends Component
      *
      * @param string      $label     The label of the text input.
      * @param int         $style     The style of the text input.
-     * @param string|null $custom_id The custom ID of the text input. If not given, an UUID will be used
+     * @param string|null $custom_id The custom ID of the text input. If not given, a UUID will be used
      */
     public function __construct(string $label, int $style, ?string $custom_id = null)
     {
         $this->setLabel($label);
         $this->setStyle($style);
-        $this->setCustomId($custom_id ?? $this->generateUuid());
+        $this->setCustomId($custom_id ?? self::generateUuid());
     }
 
     /**
@@ -114,7 +120,7 @@ class TextInput extends Component
      *
      * @throws \LengthException
      *
-     * @return self
+     * @return $this
      */
     public function setCustomId($custom_id): self
     {
@@ -134,7 +140,7 @@ class TextInput extends Component
      *
      * @throws \InvalidArgumentException
      *
-     * @return self
+     * @return $this
      */
     public function setStyle(int $style): self
     {
@@ -154,7 +160,7 @@ class TextInput extends Component
      *
      * @throws \LengthException
      *
-     * @return self
+     * @return $this
      */
     public function setLabel(string $label): self
     {
@@ -169,13 +175,12 @@ class TextInput extends Component
 
     /**
      * Sets the minimum input length for a text input.
-     * Minimum 0 and maximum 4000. Null to set as default.
      *
-     * @param int|null $min_length
+     * @param int|null $min_length Minimum `0` and maximum `4000`. `null` to set as default.
      *
      * @throws \LengthException
      *
-     * @return self
+     * @return $this
      */
     public function setMinLength(?int $min_length): self
     {
@@ -190,13 +195,12 @@ class TextInput extends Component
 
     /**
      * Sets the maximum input length for a text input.
-     * Minimum 1 and maximum 4000. Null to set as default.
      *
-     * @param int|null $max_length
+     * @param int|null $max_length Minimum `1` and maximum `4000`. `null` to set as default.
      *
      * @throws \LengthException
      *
-     * @return self
+     * @return $this
      */
     public function setMaxLength(?int $max_length): self
     {
@@ -211,13 +215,12 @@ class TextInput extends Component
 
     /**
      * Sets the placeholder string to display if text input is empty.
-     * Maximum 100 characters. Null to clear placeholder.
      *
-     * @param string|null $placeholder
+     * @param string|null $placeholder Maximum 100 characters. `null` to clear placeholder.
      *
      * @throws \LengthException
      *
-     * @return self
+     * @return $this
      */
     public function setPlaceholder(?string $placeholder): self
     {
@@ -235,7 +238,7 @@ class TextInput extends Component
      *
      * @param bool $required
      *
-     * @return self
+     * @return $this
      */
     public function setRequired(bool $required): self
     {
@@ -251,7 +254,7 @@ class TextInput extends Component
      *
      * @throws \LengthException
      *
-     * @return self
+     * @return $this
      */
     public function setValue(?string $value): self
     {
@@ -305,7 +308,7 @@ class TextInput extends Component
     }
 
     /**
-     * Returns wether the text input is disabled.
+     * Returns whether the text input is disabled.
      *
      * @return bool|null
      */
@@ -315,12 +318,12 @@ class TextInput extends Component
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function jsonSerialize(): array
     {
         $content = [
-            'type' => Component::TYPE_TEXT_INPUT,
+            'type' => $this->type,
             'custom_id' => $this->custom_id,
             'style' => $this->style,
             'label' => $this->label,
@@ -332,7 +335,7 @@ class TextInput extends Component
 
         if (isset($this->max_length)) {
             if (isset($this->min_length) && $this->min_length > $this->max_length) {
-                throw new \OutOfBoundsException('Minimum length cannot be higher than maximum length');
+                throw new \OutOfRangeException('Minimum length cannot be higher than maximum length');
             }
 
             $content['max_length'] = $this->max_length;

@@ -63,7 +63,7 @@ $channel->setPermissions($member, [
     'attach_files',
 ], [
     'add_reactions',
-])->done(function () {
+])->then(function () {
     // ...
 });
 ```
@@ -96,7 +96,7 @@ $overwrite = $channel->overwrites->create([
 
 // Member can send messages and attach files,
 // but can't add reactions to message.
-$channel->setOverwrite($member, $overwrite)->done(function () {
+$channel->setOverwrite($member, $overwrite)->then(function () {
     // ...
 });
 ```
@@ -112,13 +112,13 @@ Moves a member to a voice channel if the member is already in one. Takes a [Memb
 | member | [Member](#member) or string | The member to move | required |
 
 ```php
-$channel->moveMember($member)->done(function () {
+$channel->moveMember($member)->then(function () {
     // ...
 });
 
 // or
 
-$channel->moveMember('123213123123213')->done(function () {
+$channel->moveMember('123213123123213')->then(function () {
     // ...
 });
 ```
@@ -135,12 +135,12 @@ Mutes or unmutes a member in the voice channel. Takes a [Member](#member) object
 
 ```php
 // muting a member with a member object
-$channel->muteMember($member)->done(function () {
+$channel->muteMember($member)->then(function () {
     // ...
 });
 
 // unmuting a member with a member ID
-$channel->unmuteMember('123213123123213')->done(function () {
+$channel->unmuteMember('123213123123213')->then(function () {
     // ...
 });
 ```
@@ -167,7 +167,7 @@ Parameters are in an array.
 $channel->createInvite([
     'max_age' => 60, // 1 minute
     'max_uses' => 5, // 5 uses
-])->done(function (Invite $invite) {
+])->then(function (Invite $invite) {
     // ...
 });
 ```
@@ -190,7 +190,7 @@ $channel->deleteMessages([
     $message3,
     'my_message4_id',
     'my_message5_id',
-])->done(function () {
+])->then(function () {
     // ...
 });
 ```
@@ -211,7 +211,7 @@ Retrieves message history with an array of options. Returns a collection of mess
 ```php
 $channel->getMessageHistory([
     'limit' => 5,
-])->done(function (Collection $messages) {
+])->then(function (Collection $messages) {
     foreach ($messages as $message) {
         // ...
     }
@@ -232,7 +232,7 @@ Deletes a number of messages, in order from the last one sent. Takes an integer 
 
 ```php
 // deletes the last 15 messages
-$channel->limitDelete(15)->done(function () {
+$channel->limitDelete(15)->then(function () {
     // ...
 });
 ```
@@ -250,12 +250,12 @@ Pins or unpins a message from the channel pinboard. Takes a message object and r
 
 ```php
 // to pin
-$channel->pinMessage($message)->done(function (Message $message) {
+$channel->pinMessage($message)->then(function (Message $message) {
     // ...
 });
 
 // to unpin
-$channel->unpinMessage($message)->done(function (Message $message) {
+$channel->unpinMessage($message)->then(function (Message $message) {
     // ...
 });
 ```
@@ -265,7 +265,7 @@ $channel->unpinMessage($message)->done(function (Message $message) {
 Gets the channels invites. Returns a collection of invites in a promise.
 
 ```php
-$channel->getInvites()->done(function (Collection $invites) {
+$channel->getInvites()->then(function (Collection $invites) {
     foreach ($invites as $invite) {
         // ...
     }
@@ -288,7 +288,7 @@ $message = MessageBuilder::new()
     ->addEmbed($embed)
     ->setTts(true);
 
-$channel->sendMessage($message)->done(function (Message $message) {
+$channel->sendMessage($message)->then(function (Message $message) {
     // ...
 });
 ```
@@ -304,7 +304,7 @@ Sends an embed to the channel. Takes an embed and returns the sent message in a 
 | embed | [Embed](#embed) | The embed to send | required |
 
 ```php
-$channel->sendEmbed($embed)->done(function (Message $message) {
+$channel->sendEmbed($embed)->then(function (Message $message) {
     // ...
 });
 ```
@@ -314,7 +314,7 @@ $channel->sendEmbed($embed)->done(function (Message $message) {
 Broadcasts to the channel that the bot is typing. Genreally, bots should _not_ use this route, but if a bot takes a while to process a request it could be useful. Returns nothing in a promise.
 
 ```php
-$channel->broadcastTyping()->done(function () {
+$channel->broadcastTyping()->then(function () {
     // ...
 });
 ```
@@ -334,7 +334,7 @@ Creates a message collector, which calls a filter function on each message recei
 // Collects 5 messages containing hello
 $channel->createMessageCollector(fn ($message) => strpos($message->content, 'hello') !== false, [
     'limit' => 5,
-])->done(function (Collection $messages) {
+])->then(function (Collection $messages) {
     foreach ($messages as $message) {
         // ...
     }
@@ -355,7 +355,7 @@ One of `time` or `limit` is required, or the collector will not resolve.
 Returns the messages pinned in the channel. Only applicable for text channels. Returns a collection of messages in a promise.
 
 ```php
-$channel->getPinnedMessages()->done(function (Collection $messages) {
+$channel->getPinnedMessages()->then(function (Collection $messages) {
     foreach ($messages as $message) {
         // $message->...
     }

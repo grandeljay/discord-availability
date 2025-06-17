@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -15,7 +17,9 @@ use Discord\DiscordCommandClient;
 use Discord\Parts\Channel\Message;
 
 /**
- * A command that the Command Client will listen for.
+ * A message based command that the Command Client will listen for.
+ *
+ * @since 4.0.0
  */
 class Command
 {
@@ -62,6 +66,13 @@ class Command
     protected $cooldownMessage;
 
     /**
+     * Help visibility.
+     *
+     * @var bool whether visible in help or not.
+     */
+    protected $showHelp;
+
+    /**
      * An array of cooldowns for commands.
      *
      * @var array Cooldowns.
@@ -101,6 +112,7 @@ class Command
      * @param string               $usage           The usage of the command.
      * @param int                  $cooldown        The cooldown of the command in milliseconds.
      * @param string               $cooldownMessage The cooldown message to show when a cooldown is in effect.
+     * @param bool                 $showHelp        The visibility in help of the command.
      */
     public function __construct(
         DiscordCommandClient $client,
@@ -110,7 +122,8 @@ class Command
         string $longDescription,
         string $usage,
         int $cooldown,
-        string $cooldownMessage
+        string $cooldownMessage,
+        bool $showHelp = true
     ) {
         $this->client = $client;
         $this->command = $command;
@@ -120,13 +133,14 @@ class Command
         $this->usage = $usage;
         $this->cooldown = $cooldown;
         $this->cooldownMessage = $cooldownMessage;
+        $this->showHelp = $showHelp;
     }
 
     /**
      * Attempts to get a sub command.
      *
      * @param string $command The command to get.
-     * @param bool   $aliases WHether to search aliases as well.
+     * @param bool   $aliases Whether to search aliases as well.
      *
      * @return Command|null
      */
@@ -240,7 +254,7 @@ class Command
             return $this->subCommands[$this->subCommandAliases[$subCommand]]->handle($message, $args);
         }
 
-        if (! is_null($subCommand)) {
+        if (null !== $subCommand) {
             array_unshift($args, $originalSubCommand);
         }
 
@@ -267,10 +281,16 @@ class Command
      */
     public function getHelp(string $prefix): array
     {
+        if (! $this->showHelp) {
+            return [];
+        }
+
         $subCommandsHelp = [];
 
         foreach ($this->subCommands as $command) {
-            $subCommandsHelp[] = $command->getHelp($prefix.$this->command.' ');
+            if ($command->showHelp) {
+                $subCommandsHelp[] = $command->getHelp($prefix.$this->command.' ');
+            }
         }
 
         return [
@@ -287,11 +307,11 @@ class Command
      *
      * @param string $variable The variable to get.
      *
-     * @return string|int|false The value.
+     * @return mixed The value.
      */
     public function __get(string $variable)
     {
-        $allowed = ['command', 'description', 'longDescription', 'usage', 'cooldown', 'cooldownMessage'];
+        $allowed = ['command', 'description', 'longDescription', 'usage', 'cooldown', 'cooldownMessage', 'showHelp'];
 
         if (in_array($variable, $allowed)) {
             return $this->{$variable};

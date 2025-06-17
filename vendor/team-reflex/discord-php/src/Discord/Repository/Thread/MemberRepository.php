@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -11,6 +13,7 @@
 
 namespace Discord\Repository\Thread;
 
+use Discord\Discord;
 use Discord\Http\Endpoint;
 use Discord\Parts\Thread\Member;
 use Discord\Repository\AbstractRepository;
@@ -18,20 +21,26 @@ use Discord\Repository\AbstractRepository;
 /**
  * Contains members of a thread.
  *
- * @method Member|null get(string $discrim, $key)  Gets an item from the collection.
- * @method Member|null first()                     Returns the first element of the collection.
- * @method Member|null pull($key, $default = null) Pulls an item from the repository, removing and returning the item.
- * @method Member|null find(callable $callback)    Runs a filter callback over the repository.
+ * @see Member
+ * @see \Discord\Parts\Thread\Thread
+ *
+ * @since 7.0.0
+ *
+ * @method Member|null get(string $discrim, $key)
+ * @method Member|null pull(string|int $key, $default = null)
+ * @method Member|null first()
+ * @method Member|null last()
+ * @method Member|null find(callable $callback)
  */
 class MemberRepository extends AbstractRepository
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $discrim = 'user_id';
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $endpoints = [
         'all' => Endpoint::THREAD_MEMBERS,
@@ -39,7 +48,16 @@ class MemberRepository extends AbstractRepository
     ];
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $class = Member::class;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function __construct(Discord $discord, array $vars = [])
+    {
+        unset($vars['channel_id']); // For thread
+        parent::__construct($discord, $vars);
+    }
 }

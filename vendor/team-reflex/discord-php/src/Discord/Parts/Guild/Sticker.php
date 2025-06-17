@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -12,26 +14,31 @@
 namespace Discord\Parts\Guild;
 
 use Discord\Parts\Part;
+use Discord\Parts\User\User;
+use Stringable;
 
 /**
  * A sticker that can be sent in a Discord message.
  *
- * @see https://discord.com/developers/docs/resources/sticker#sticker-object-sticker-structure
+ * @link https://discord.com/developers/docs/resources/sticker#sticker-object-sticker-structure
  *
- * @property string      $id          The identifier for the sticker.
- * @property string|null $pack_id     For standard stickers, id of the pack the sticker is from.
- * @property string      $name        The name of the sticker.
- * @property string      $description The description of the sticker.
- * @property array       $tags        Autocomplete/suggestion tags for the sticker (max 200 characters).
- * @property int         $type        The type of sticker.
- * @property int         $format_type The type of sticker format.
- * @property bool|null   $available   Whether this guild sticker can be used, may be false due to loss of Server Boosts.
- * @property string|null $guild_id    The identifier of the guild that owns the sticker.
- * @property Guild|null  $guild       The guild that owns the sticker.
- * @property User|null   $user        The user that uploaded the guild sticker.
- * @property int|null    $sort_value  The standard sticker's sort order within its pack.
+ * @since 7.0.0 Namespace moved from Channel to Guild
+ * @since 6.0.0
+ *
+ * @property      string      $id          The identifier for the sticker.
+ * @property      string|null $pack_id     For standard stickers, id of the pack the sticker is from.
+ * @property      string      $name        The name of the sticker.
+ * @property      ?string     $description The description of the sticker.
+ * @property      array       $tags        Autocomplete/suggestion tags for the sticker (max 200 characters).
+ * @property      int         $type        The type of sticker.
+ * @property      int         $format_type The type of sticker format.
+ * @property      bool|null   $available   Whether this guild sticker can be used, may be false due to loss of Server Boosts.
+ * @property      string|null $guild_id    The identifier of the guild that owns the sticker.
+ * @property-read Guild|null  $guild       The guild that owns the sticker.
+ * @property      User|null   $user        The user that uploaded the guild sticker.
+ * @property      int|null    $sort_value  The standard sticker's sort order within its pack.
  */
-class Sticker extends Part
+class Sticker extends Part implements Stringable
 {
     public const TYPE_STANDARD = 1;
     public const TYPE_GUILD = 2;
@@ -39,15 +46,15 @@ class Sticker extends Part
     public const FORMAT_TYPE_PNG = 1;
     public const FORMAT_TYPE_APNG = 2;
     public const FORMAT_TYPE_LOTTIE = 3;
+    public const FORMAT_TYPE_GIF = 4;
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $fillable = [
         'id',
         'name',
         'tags',
-        'asset',
         'type',
         'format_type',
         'description',
@@ -59,7 +66,7 @@ class Sticker extends Part
     ];
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     public function isPartial(): bool
     {
@@ -91,7 +98,7 @@ class Sticker extends Part
      *
      * @return User|null
      */
-    protected function getUserAttribute(): ?Part
+    protected function getUserAttribute(): ?User
     {
         if (! isset($this->attributes['user'])) {
             return null;
@@ -101,7 +108,7 @@ class Sticker extends Part
             return $user;
         }
 
-        return $this->factory->part(User::class, $this->attributes['user'], true);
+        return $this->factory->part(User::class, (array) $this->attributes['user'], true);
     }
 
     /**
@@ -127,34 +134,41 @@ class Sticker extends Part
     {
         $format = 'png';
 
-        if ($this->attributes['format_type'] == self::FORMAT_TYPE_LOTTIE) {
-            $format = 'lottie';
+        switch ($this->attributes['format_type']) {
+            case self::FORMAT_TYPE_LOTTIE:
+                $format = 'lottie';
+                break;
+            case self::FORMAT_TYPE_GIF:
+                $format = 'gif';
+                break;
         }
 
         return "https://cdn.discordapp.com/stickers/{$this->id}.{$format}";
     }
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
+     *
+     * @link https://discord.com/developers/docs/resources/sticker#modify-guild-sticker-json-params
      */
     public function getUpdatableAttributes(): array
     {
-        return [
+        return $this->makeOptionalAttributes([
             'name' => $this->name,
-            'description' => $this->description ?? null,
+            'description' => $this->description,
             'tags' => $this->attributes['tags'],
-        ];
+        ]);
     }
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     public function getRepositoryAttributes(): array
     {
         if ($this->type == self::TYPE_GUILD) {
             return [
-                'sticker_id' => $this->id,
                 'guild_id' => $this->guild_id,
+                'sticker_id' => $this->id,
             ];
         }
 

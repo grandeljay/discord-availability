@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -16,6 +18,8 @@ use TrafficCophp\ByteBuffer\Buffer as BaseBuffer;
 
 /**
  * A Byte Buffer similar to Buffer in NodeJS.
+ *
+ * @since 3.2.0
  */
 class Buffer extends BaseBuffer implements ArrayAccess
 {

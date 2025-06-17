@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -12,9 +14,11 @@
 namespace Discord\Parts\Guild\AuditLog;
 
 use Discord\Helpers\Collection;
+use Discord\Helpers\ExCollectionInterface;
 use Discord\Parts\Channel\Webhook;
 use Discord\Parts\Guild\AutoModeration\Rule;
 use Discord\Parts\Guild\Guild;
+use Discord\Parts\Guild\Integration;
 use Discord\Parts\Guild\ScheduledEvent;
 use Discord\Parts\Interactions\Command\Command;
 use Discord\Parts\Part;
@@ -25,23 +29,26 @@ use ReflectionClass;
 /**
  * Represents an audit log query from a guild.
  *
- * @see https://discord.com/developers/docs/resources/audit-log#audit-log-object
+ * @link https://discord.com/developers/docs/resources/audit-log#audit-log-object
  *
- * @property Collection|Command               $application_commands   List of application commands referenced in the audit log.
- * @property Collection|Entry[]               $audit_log_entries      List of audit log entries.
- * @property Collection|Rule[]                $auto_moderation_rules  List of auto moderation rules referenced in the audit log.
- * @property Collection|GuildScheduledEvent[] $guild_scheduled_events List of guild scheduled events referenced in the audit log.
- * @property Collection                       $integrations           List of partial integration objects.
- * @property Collection|Threads[]             $threads                List of threads referenced in the audit log.
- * @property Collection|User[]                $users                  List of users referenced in the audit log.
- * @property Collection|Webhook[]             $webhooks               List of webhooks referenced in the audit log.
- * @property string                           $guild_id
- * @property Guild                            $guild
+ * @since 5.1.0
+ *
+ * @property ExCollectionInterface|Command[]        $application_commands   List of application commands referenced in the audit log.
+ * @property ExCollectionInterface|Entry[]          $audit_log_entries      List of audit log entries.
+ * @property ExCollectionInterface|Rule[]           $auto_moderation_rules  List of auto moderation rules referenced in the audit log.
+ * @property ExCollectionInterface|ScheduledEvent[] $guild_scheduled_events List of guild scheduled events referenced in the audit log.
+ * @property ExCollectionInterface|Integration[]    $integrations           List of partial integration objects.
+ * @property ExCollectionInterface|Thread[]         $threads                List of threads referenced in the audit log.
+ * @property ExCollectionInterface|User[]           $users                  List of users referenced in the audit log.
+ * @property ExCollectionInterface|Webhook[]        $webhooks               List of webhooks referenced in the audit log.
+ *
+ * @property      string     $guild_id
+ * @property-read Guild|null $guild
  */
 class AuditLog extends Part
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $fillable = [
         'application_commands',
@@ -53,7 +60,7 @@ class AuditLog extends Part
         'integrations',
         'threads',
 
-        // Internal
+        // @internal
         'guild_id',
     ];
 
@@ -70,66 +77,14 @@ class AuditLog extends Part
     /**
      * Returns a collection of application commands found in the audit log.
      *
-     * @return Collection|Command[]
+     * @return ExCollectionInterface|Command[]
      */
-    protected function getApplicationCommandsAttribute(): Collection
+    protected function getApplicationCommandsAttribute(): ExCollectionInterface
     {
         $collection = Collection::for(Command::class);
 
         foreach ($this->attributes['application_commands'] ?? [] as $application_commands) {
-            $collection->pushItem($this->factory->create(Command::class, $application_commands, true));
-        }
-
-        return $collection;
-    }
-
-    /**
-     * Returns a collection of webhooks found in the audit log.
-     *
-     * @return Collection|Webhook[]
-     */
-    protected function getWebhooksAttribute(): Collection
-    {
-        $collection = Collection::for(Webhook::class);
-
-        foreach ($this->attributes['webhooks'] ?? [] as $webhook) {
-            $collection->pushItem($this->factory->create(Webhook::class, $webhook, true));
-        }
-
-        return $collection;
-    }
-
-    /**
-     * Returns a collection of guild scheduled events found in the audit log.
-     *
-     * @return Collection|ScheduledEvent[]
-     */
-    protected function getGuildScheduledEventsAttribute(): Collection
-    {
-        $collection = Collection::for(ScheduledEvent::class);
-
-        foreach ($this->attributes['guild_scheduled_events'] ?? [] as $scheduled_event) {
-            $collection->pushItem($this->factory->create(ScheduledEvent::class, $scheduled_event, true));
-        }
-
-        return $collection;
-    }
-
-    /**
-     * Returns a collection of users found in the audit log.
-     *
-     * @return Collection|User[]
-     */
-    protected function getUsersAttribute(): Collection
-    {
-        $collection = Collection::for(User::class);
-
-        foreach ($this->attributes['users'] ?? [] as $user) {
-            if (! $cache_user = $this->discord->users->get('id', $user->id)) {
-                $cache_user = $this->factory->create(User::class, $user, true);
-            }
-
-            $collection->pushItem($cache_user);
+            $collection->pushItem($this->factory->part(Command::class, (array) $application_commands, true));
         }
 
         return $collection;
@@ -138,14 +93,14 @@ class AuditLog extends Part
     /**
      * Returns a collection of audit log entries.
      *
-     * @return Collection|Entry[]
+     * @return ExCollectionInterface|Entry[]
      */
-    protected function getAuditLogEntriesAttribute(): Collection
+    protected function getAuditLogEntriesAttribute(): ExCollectionInterface
     {
         $collection = Collection::for(Entry::class);
 
         foreach ($this->attributes['audit_log_entries'] ?? [] as $entry) {
-            $collection->pushItem($this->factory->create(Entry::class, $entry, true));
+            $collection->pushItem($this->createOf(Entry::class, $entry));
         }
 
         return $collection;
@@ -154,40 +109,96 @@ class AuditLog extends Part
     /**
      * Returns a collection of auto moderation rules found in the audit log.
      *
-     * @return Collection|Rule[]
+     * @return ExCollectionInterface|Rule[]
      */
-    protected function getAutoModerationRulesAttribute(): Collection
+    protected function getAutoModerationRulesAttribute(): ExCollectionInterface
     {
         $collection = Collection::for(Rule::class);
 
         foreach ($this->attributes['auto_moderation_rules'] ?? [] as $rule) {
-            $collection->pushItem($this->factory->create(Rule::class, $rule, true));
+            $collection->pushItem($this->factory->part(Rule::class, (array) $rule, true));
         }
 
         return $collection;
     }
 
     /**
-     * Returns a collection of integrations found in the audit log.
+     * Returns a collection of guild scheduled events found in the audit log.
      *
-     * @return Collection
+     * @return ExCollectionInterface|ScheduledEvent[]
      */
-    protected function getIntegrationsAttribute(): Collection
+    protected function getGuildScheduledEventsAttribute(): ExCollectionInterface
     {
-        return new Collection($this->attributes['integrations'] ?? []);
+        $collection = Collection::for(ScheduledEvent::class);
+
+        foreach ($this->attributes['guild_scheduled_events'] ?? [] as $scheduled_event) {
+            $collection->pushItem($this->factory->part(ScheduledEvent::class, (array) $scheduled_event, true));
+        }
+
+        return $collection;
+    }
+
+    /**
+     * Returns a collection of partial integrations found in the audit log.
+     *
+     * @link https://discord.com/developers/docs/resources/audit-log#audit-log-object-example-partial-integration-object
+     *
+     * @return ExCollectionInterface|Integration[]
+     */
+    protected function getIntegrationsAttribute(): ExCollectionInterface
+    {
+        $collection = Collection::for(Integration::class);
+
+        foreach ($this->attributes['integrations'] ?? [] as $integration) {
+            $collection->pushItem($this->factory->part(Integration::class, (array) $integration, true));
+        }
+
+        return $collection;
     }
 
     /**
      * Returns a collection of threads found in the audit log.
      *
-     * @return Collection|Thread[]
+     * @return ExCollectionInterface|Thread[]
      */
-    protected function getThreadsAttribute(): Collection
+    protected function getThreadsAttribute(): ExCollectionInterface
     {
         $collection = Collection::for(Thread::class);
 
         foreach ($this->attributes['threads'] ?? [] as $thread) {
-            $collection->pushItem($this->factory->create(Thread::class, $thread, true));
+            $collection->pushItem($this->factory->part(Thread::class, (array) $thread, true));
+        }
+
+        return $collection;
+    }
+
+    /**
+     * Returns a collection of users found in the audit log.
+     *
+     * @return ExCollectionInterface|User[]
+     */
+    protected function getUsersAttribute(): ExCollectionInterface
+    {
+        $collection = Collection::for(User::class);
+
+        foreach ($this->attributes['users'] ?? [] as $user) {
+            $collection->pushItem($this->discord->users->get('id', $user->id) ?: $this->factory->part(User::class, (array) $user, true));
+        }
+
+        return $collection;
+    }
+
+    /**
+     * Returns a collection of webhooks found in the audit log.
+     *
+     * @return ExCollectionInterface|Webhook[]
+     */
+    protected function getWebhooksAttribute(): ExCollectionInterface
+    {
+        $collection = Collection::for(Webhook::class);
+
+        foreach ($this->attributes['webhooks'] ?? [] as $webhook) {
+            $collection->pushItem($this->factory->part(Webhook::class, (array) $webhook, true));
         }
 
         return $collection;
@@ -200,9 +211,9 @@ class AuditLog extends Part
      *
      * @throws \InvalidArgumentException
      *
-     * @return Collection|Entry[]
+     * @return ExCollectionInterface|Entry[]
      */
-    public function searchByType(int $action_type): Collection
+    public function searchByType(int $action_type): ExCollectionInterface
     {
         $types = array_values((new ReflectionClass(Entry::class))->getConstants());
 

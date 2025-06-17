@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -13,11 +15,15 @@ namespace Discord\Helpers;
 
 use Discord\Discord;
 use Discord\Parts\Interactions\Interaction;
+use Discord\Parts\Interactions\Request\Option;
 
 /**
- * RegisteredCommand represents a command that has been registered
- * with the Discord servers and has a handler to handle when the
- * command is triggered.
+ * RegisteredCommand represents a command that has been registered with the
+ * Discord servers and has a handler to handle when the command is triggered.
+ *
+ * https://discord.com/developers/docs/interactions/application-commands
+ *
+ * @since 7.0.0
  *
  * @author David Cole <david.cole1340@gmail.com>
  */
@@ -59,15 +65,15 @@ class RegisteredCommand
     private $subCommands;
 
     /**
-     * RegisteredCommand represents a command that has been registered
-     * with the Discord servers and has a handler to handle when the
-     * command is triggered.
+     * RegisteredCommand represents a command that has been registered with the
+     * Discord servers and has a handler to handle when the command is triggered.
      *
-     * @param Discord  $discord
-     * @param string   $name
-     * @param callable $callback
+     * @param Discord       $discord
+     * @param string        $name
+     * @param callable|null $callback
+     * @param callable|null $autocomplete_callback Callback returning list of auto complete suggestions
      */
-    public function __construct(Discord $discord, string $name, callable $callback = null, ?callable $autocomplete_callback = null)
+    public function __construct(Discord $discord, string $name, ?callable $callback = null, ?callable $autocomplete_callback = null)
     {
         $this->discord = $discord;
         $this->name = $name;
@@ -76,8 +82,8 @@ class RegisteredCommand
     }
 
     /**
-     * Executes the command. Will search for a sub-command if given,
-     * otherwise executes the callback, if given.
+     * Executes the command. Will search for a sub-command if given, otherwise
+     * executes the callback, if given.
      *
      * @param array       $options
      * @param Interaction $interaction
@@ -86,16 +92,19 @@ class RegisteredCommand
      */
     public function execute(array $options, Interaction $interaction): bool
     {
+        $params = Collection::for(Option::class, 'name');
+
         foreach ($options as $option) {
             if (isset($this->subCommands[$option->name])) {
                 if ($this->subCommands[$option->name]->execute($option->options ?? [], $interaction)) {
                     return true;
                 }
             }
+            $params->pushItem($this->discord->getFactory()->part(Option::class, (array) $option, true));
         }
 
         if (isset($this->callback)) {
-            ($this->callback)($interaction);
+            ($this->callback)($interaction, $params);
 
             return true;
         }
@@ -104,8 +113,8 @@ class RegisteredCommand
     }
 
     /**
-     * Executes the command. Will search for a sub-command if given,
-     * otherwise executes the callback, if given.
+     * Executes the command. Will search for a sub-command if given, otherwise
+     * executes the callback, if given.
      *
      * @param Interaction $interaction
      *
@@ -130,7 +139,7 @@ class RegisteredCommand
      *
      * @param callable $callback
      */
-    public function setCallback(callable $callback)
+    public function setCallback(callable $callback): void
     {
         $this->callback = $callback;
     }
@@ -138,9 +147,9 @@ class RegisteredCommand
     /**
      * Sets the callback for the auto complete suggestion.
      *
-     * @param callable $callback
+     * @param callable $autocomplete_callback
      */
-    public function setAutoCompleteCallback(callable $autocomplete_callback)
+    public function setAutoCompleteCallback(callable $autocomplete_callback): void
     {
         $this->autocomplete_callback = $autocomplete_callback;
     }
@@ -161,14 +170,14 @@ class RegisteredCommand
      * Adds a sub-command to the command.
      *
      * @param string|array  $name
-     * @param callable      $callback
+     * @param callable|null $callback
      * @param callable|null $autocomplete_callback
      *
      * @throws \LogicException
      *
-     * @return RegisteredCommand
+     * @return static
      */
-    public function addSubCommand($name, callable $callback = null, ?callable $autocomplete_callback = null): RegisteredCommand
+    public function addSubCommand($name, ?callable $callback = null, ?callable $autocomplete_callback = null): RegisteredCommand
     {
         if (is_array($name) && count($name) == 1) {
             $name = array_shift($name);
@@ -206,7 +215,7 @@ class RegisteredCommand
      *
      * @return RegisteredCommand[]|null
      */
-    public function getSubCommands()
+    public function getSubCommands(): ?array
     {
         return $this->subCommands;
     }

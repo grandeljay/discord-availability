@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -12,32 +14,58 @@
 namespace Discord\WebSockets\Events;
 
 use Discord\WebSockets\Event;
-use Discord\Helpers\Deferred;
+use Discord\Parts\Channel\Channel;
+use Discord\Parts\Channel\Message;
+use Discord\Parts\Guild\Guild;
+use Discord\Parts\Thread\Thread;
 
 /**
- * @see https://discord.com/developers/docs/topics/gateway#message-delete
+ * @link https://discord.com/developers/docs/topics/gateway-events#message-delete
+ *
+ * @since 2.1.3
  */
 class MessageDelete extends Event
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
-    public function handle(Deferred &$deferred, $data): void
+    public function handle($data)
     {
         $messagePart = null;
 
         if (! isset($data->guild_id)) {
-            if ($channel = $this->discord->private_channels->get('id', $data->channel_id)) {
-                $messagePart = $channel->messages->pull($data->id);
+            /** @var ?Channel */
+            if ($channel = yield $this->discord->private_channels->cacheGet($data->channel_id)) {
+                /** @var ?Message */
+                $messagePart = yield $channel->messages->cachePull($data->id);
             }
         } else {
-            if ($guild = $this->discord->guilds->get('id', $data->guild_id)) {
-                if ($channel = $guild->channels->get('id', $data->channel_id)) {
-                    $messagePart = $channel->messages->pull($data->id);
+            /** @var ?Guild */
+            if ($guild = yield $this->discord->guilds->cacheGet($data->guild_id)) {
+                /** @var ?Channel */
+                if (! $channel = yield $guild->channels->cacheGet($data->channel_id)) {
+                    /** @var Channel */
+                    foreach ($guild->channels as $parent) {
+                        /** @var ?Thread */
+                        if ($thread = yield $parent->threads->cacheGet($data->channel_id)) {
+                            $channel = $thread;
+                            break;
+                        }
+                    }
+                }
+
+                if (isset($channel)) {
+                    /** @var ?Message */
+                    $messagePart = yield $channel->messages->cachePull($data->id);
+                    if ($channel instanceof Thread) {
+                        $channel->message_count--;
+                    }
                 }
             }
         }
 
-        $deferred->resolve(is_null($messagePart) ? $data : $messagePart);
+        $messagePart?->reactions->cache->clear();
+
+        return $messagePart ?? $data;
     }
 }

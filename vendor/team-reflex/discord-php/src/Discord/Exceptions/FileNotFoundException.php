@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -12,8 +14,9 @@
 namespace Discord\Exceptions;
 
 /**
- * Thrown when the client cannot find the file that
- * was specified.
+ * Thrown when the client cannot find the file that was specified.
+ *
+ * @since 3.0.3
  */
 class FileNotFoundException extends \Exception
 {

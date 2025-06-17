@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -13,6 +15,8 @@ namespace Discord\Exceptions;
 
 /**
  * Thrown when libsodium or libsodium-php cannot be found.
+ *
+ * @since 3.2.1
  */
 class LibSodiumNotFoundException extends \Exception
 {

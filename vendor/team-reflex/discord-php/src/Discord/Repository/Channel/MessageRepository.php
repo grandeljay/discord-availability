@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -11,25 +13,29 @@
 
 namespace Discord\Repository\Channel;
 
+use Discord\Discord;
 use Discord\Http\Endpoint;
 use Discord\Parts\Channel\Message;
 use Discord\Repository\AbstractRepository;
 
 /**
- * Contains messages sent to channels.
+ * Contains messages sent to a channel.
  *
- * @see \Discord\Parts\Channel\Message
+ * @see Message
  * @see \Discord\Parts\Channel\Channel
  *
- * @method Message|null get(string $discrim, $key)  Gets an item from the collection.
- * @method Message|null first()                     Returns the first element of the collection.
- * @method Message|null pull($key, $default = null) Pulls an item from the repository, removing and returning the item.
- * @method Message|null find(callable $callback)    Runs a filter callback over the repository.
+ * @since 4.0.0
+ *
+ * @method Message|null get(string $discrim, $key)
+ * @method Message|null pull(string|int $key, $default = null)
+ * @method Message|null first()
+ * @method Message|null last()
+ * @method Message|null find(callable $callback)
  */
 class MessageRepository extends AbstractRepository
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $endpoints = [
         'get' => Endpoint::CHANNEL_MESSAGE,
@@ -38,7 +44,16 @@ class MessageRepository extends AbstractRepository
     ];
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $class = Message::class;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function __construct(Discord $discord, array $vars = [])
+    {
+        unset($vars['thread_id']); // For thread
+        parent::__construct($discord, $vars);
+    }
 }

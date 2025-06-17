@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -16,15 +18,17 @@ use Discord\Parts\Part;
 /**
  * An action which will execute whenever a rule is triggered.
  *
- * @see https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object
+ * @link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object
  *
- * @property int         $type     The type of action.
- * @property object|null $metadata Additional metadata needed during execution for this specific action type (may contain `channel_id` and `duration_seconds`).
+ * @since 7.1.0
+ *
+ * @property int                 $type     The type of action.
+ * @property ActionMetadata|null $metadata Additional metadata needed during execution for this specific action type.
  */
 class Action extends Part
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $fillable = [
         'type',
@@ -34,20 +38,31 @@ class Action extends Part
     public const TYPE_BLOCK_MESSAGE = 1;
     public const TYPE_SEND_ALERT_MESSAGE = 2;
     public const TYPE_TIMEOUT = 3;
+    public const TYPE_BLOCK_MEMBER_INTERACTION = 4;
 
     /**
-     * @inheritdoc
+     * Get the Metadata Attributes.
+     *
+     * @return ?ActionMetadata
+     */
+    public function getMetadataAttribute(): ?ActionMetadata
+    {
+        if (! isset($this->attributes['metadata'])) {
+            return null;
+        }
+
+        return $this->createOf(ActionMetadata::class, $this->attributes['metadata']);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @see Rule::getCreatableAttributes()
      */
     public function getCreatableAttributes(): array
     {
-        $attr = [
+        return [
             'type' => $this->type,
-        ];
-
-        if (isset($this->attributes['metadata'])) {
-            $attr['metadata'] = $this->metadata;
-        }
-
-        return $attr;
+        ] + $this->makeOptionalAttributes(['metadata']);
     }
 }

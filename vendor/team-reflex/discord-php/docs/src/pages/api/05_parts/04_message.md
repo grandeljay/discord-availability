@@ -43,7 +43,7 @@ Messages are present in channels and can be anything from a cross post to a repl
 | flags                                  | int                                      | message flags, see below 5 properties                                                              |
 | crossposted                            | bool                                     | whether the message has been crossposted                                                           |
 | is_crosspost                           | bool                                     | whether the message is a crosspost                                                                 |
-| suppress_embeds                         | bool                                     | whether embeds have been supressed                                                                 |
+| suppress_emeds                         | bool                                     | whether embeds have been supressed                                                                 |
 | source_message_deleted                 | bool                                     | whether the source message has been deleted e.g. crosspost                                         |
 | urgent                                 | bool                                     | whether message is urgent                                                                          |
 | has_thread                             | bool                                     | whether this message has an associated thread, with the same id as the message                     |
@@ -62,7 +62,7 @@ Sends a "reply" to the message. Returns the new message in a promise.
 | text | string | text to send in the message |
 
 ```php
-$message->reply('hello!')->done(function (Message $message) {
+$message->reply('hello!')->then(function (Message $message) {
     // ...
 });
 ```
@@ -72,7 +72,7 @@ $message->reply('hello!')->done(function (Message $message) {
 Crossposts a message to any channels that are following the channel the message was sent in. Returns the crossposted message in a promise.
 
 ```php
-$message->crosspost()->done(function (Message $message) {
+$message->crosspost()->then(function (Message $message) {
     // ...
 });
 ```
@@ -90,7 +90,7 @@ Similar to replying to a message, also takes a `delay` parameter in which the re
 
 ```php
 // <@message_author_id>, hello! after 1.5 seconds
-$message->delayedReply('hello!', 1500)->done(function (Message $message) {
+$message->delayedReply('hello!', 1500)->then(function (Message $message) {
     // ...
 });
 ```
@@ -106,19 +106,19 @@ Adds a reaction to a message. Takes an [Emoji](#emoji) object, a custom emoji st
 | emoticon | [Emoji](#emoji) or string | the emoji to react with |
 
 ```php
-$message->react($emoji)->done(function () {
+$message->react($emoji)->then(function () {
     // ...
 });
 
 // or
 
-$message->react(':michael:251127796439449631')->done(function () {
+$message->react(':michael:251127796439449631')->then(function () {
     // ...
 });
 
 // or
 
-$message->react('😀')->done(function () {
+$message->react('😀')->then(function () {
     // ...
 });
 ```
@@ -138,7 +138,7 @@ Deletes reaction(s) from a message. Has four methods of operation, described bel
 #### Delete all reactions
 
 ```php
-$message->deleteReaction(Message::REACT_DELETE_ALL)->done(function () {
+$message->deleteReaction(Message::REACT_DELETE_ALL)->then(function () {
     // ...
 });
 ```
@@ -146,7 +146,7 @@ $message->deleteReaction(Message::REACT_DELETE_ALL)->done(function () {
 #### Delete reaction by current user
 
 ```php
-$message->deleteReaction(Message::REACT_DELETE_ME, $emoji)->done(function () {
+$message->deleteReaction(Message::REACT_DELETE_ME, $emoji)->then(function () {
     // ...
 });
 ```
@@ -154,7 +154,7 @@ $message->deleteReaction(Message::REACT_DELETE_ME, $emoji)->done(function () {
 #### Delete reaction by another user
 
 ```php
-$message->deleteReaction(Message::REACT_DELETE_ID, $emoji, 'member_id')->done(function () {
+$message->deleteReaction(Message::REACT_DELETE_ID, $emoji, 'member_id')->then(function () {
     // ...
 });
 ```
@@ -162,7 +162,7 @@ $message->deleteReaction(Message::REACT_DELETE_ID, $emoji, 'member_id')->done(fu
 #### Delete all reactions of one emoji
 
 ```php
-$message->deleteReaction(Message::REACT_DELETE_EMOJI, $emoji)->done(function () {
+$message->deleteReaction(Message::REACT_DELETE_EMOJI, $emoji)->then(function () {
     // ...
 });
 ```
@@ -172,7 +172,7 @@ $message->deleteReaction(Message::REACT_DELETE_EMOJI, $emoji)->done(function () 
 Deletes the message. Returns nothing in a promise.
 
 ```php
-$message->delete()->done(function () {
+$message->delete()->then(function () {
     // ...
 });
 ```
@@ -183,7 +183,7 @@ Updates the message. Takes a message builder. Returns the updated message in a p
 
 ```php
 $message->edit(MessageBuilder::new()
-    ->setContent('new content'))->done(function (Message $message) {
+    ->setContent('new content'))->then(function (Message $message) {
         // ...
     });
 ```
@@ -211,7 +211,7 @@ $message->createReactionCollector(function (MessageReaction $reaction) {
     // will resolve after 1.5 seconds or 2 reactions
     'time' => 1500,
     'limit' => 2,
-])->done(function (Collection $reactions) {
+])->then(function (Collection $reactions) {
     foreach ($reactions as $reaction) {
         // ...
     }
@@ -229,7 +229,7 @@ Adds an embed to a message. Takes an embed object. Will overwrite the old embed 
 | embed | [Embed](#embed) | the embed to add |
 
 ```php
-$message->addEmbed($embed)->done(function (Message $message) {
+$message->addEmbed($embed)->then(function (Message $message) {
     // ...
 });
 ```

@@ -55,7 +55,7 @@ Gets the private direct message channel for the user. Returns a `Channel <#chann
 
 .. code:: php
 
-   $user->getPrivateChannel()->done(function (Channel $channel) {
+   $user->getPrivateChannel()->then(function (Channel $channel) {
        // ...
    });
 
@@ -77,7 +77,7 @@ embed   Embed  embed to send in the message
 
 .. code:: php
 
-   $user->sendMessage('Hello, world!', false, $embed)->done(function (Message $message) {
+   $user->sendMessage('Hello, world!', false, $embed)->then(function (Message $message) {
        // ...
    });
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -12,19 +14,20 @@
 namespace Discord\WebSockets\Events;
 
 use Discord\WebSockets\Event;
-use Discord\Helpers\Deferred;
 
 /**
- * @see https://discord.com/developers/docs/topics/gateway#channel-pins-update
+ * @link https://discord.com/developers/docs/topics/gateway-events#channel-pins-update
+ *
+ * @since 4.0.4
  */
 class ChannelPinsUpdate extends Event
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
-    public function handle(Deferred &$deferred, $data): void
+    public function handle($data)
     {
         // TODO
-        $deferred->resolve($data);
+        return $data;
     }
 }

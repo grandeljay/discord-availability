@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -16,7 +18,9 @@ use Discord\Parts\Part;
 /**
  * Application Command Permissions Class.
  *
- * @see https://discord.com/developers/docs/interactions/application-commands#application-command-permissions-object-application-command-permissions-structure
+ * @link https://discord.com/developers/docs/interactions/application-commands#application-command-permissions-object-application-command-permissions-structure
+ *
+ * @since 7.0.0
  *
  * @property string $id         The id of the role / user / channel
  * @property int    $type       Role / user / channel
@@ -29,7 +33,11 @@ class Permission extends Part
     public const TYPE_CHANNEL = 3;
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
-    protected $fillable = ['id', 'type', 'permission'];
+    protected $fillable = [
+        'id',
+        'type',
+        'permission',
+    ];
 }

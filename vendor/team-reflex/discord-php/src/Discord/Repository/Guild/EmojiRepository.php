@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -16,20 +18,23 @@ use Discord\Parts\Guild\Emoji;
 use Discord\Repository\AbstractRepository;
 
 /**
- * Contains emojis that belong to guilds.
+ * Contains emojis of a guild.
  *
- * @see \Discord\Parts\Guild\Emoji
+ * @see Emoji
  * @see \Discord\Parts\Guild\Guild
  *
- * @method Emoji|null get(string $discrim, $key)  Gets an item from the collection.
- * @method Emoji|null first()                     Returns the first element of the collection.
- * @method Emoji|null pull($key, $default = null) Pulls an item from the repository, removing and returning the item.
- * @method Emoji|null find(callable $callback)    Runs a filter callback over the repository.
+ * @since 4.0.2
+ *
+ * @method Emoji|null get(string $discrim, $key)
+ * @method Emoji|null pull(string|int $key, $default = null)
+ * @method Emoji|null first()
+ * @method Emoji|null last()
+ * @method Emoji|null find(callable $callback)
  */
 class EmojiRepository extends AbstractRepository
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $endpoints = [
         'all' => Endpoint::GUILD_EMOJIS,
@@ -40,7 +45,7 @@ class EmojiRepository extends AbstractRepository
     ];
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $class = Emoji::class;
 }

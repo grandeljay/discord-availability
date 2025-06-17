@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -14,36 +16,54 @@ namespace Discord\Parts\User;
 use Carbon\Carbon;
 use Discord\Parts\Guild\Emoji;
 use Discord\Parts\Part;
+use Stringable;
 
 /**
  * The Activity part describes activities the member is undertaking.
  *
- * @see https://discord.com/developers/docs/topics/gateway#activity-object
+ * @link https://discord.com/developers/docs/topics/gateway-events#activity-object
  *
- * @property string        $name
- * @property int           $type
- * @property ?string|null  $url
- * @property Carbon|null   $created_at
- * @property object|null   $timestamps
- * @property string|null   $application_id
- * @property ?string|null  $details
- * @property ?string|null  $state
- * @property Emoji|null    $emoji
- * @property object|null   $party
- * @property object|null   $assets
- * @property object|null   $secrets
- * @property bool|null     $instance
- * @property int|null      $flags
- * @property object[]|null $buttons
+ * @since 5.0.0 Renamed from Game to Activity
+ * @since 3.2.2
+ *
+ * @property string        $name           The activity's name.
+ * @property int           $type           Activity type.
+ * @property ?string|null  $url            Stream url, is validated when type is 1.
+ * @property Carbon|null   $created_at     Timestamp of when the activity was added to the user's session.
+ * @property object|null   $timestamps     Unix timestamps for start and/or end of the game.
+ * @property string|null   $application_id Application id for the game.
+ * @property ?string|null  $details        What the player is currently doing.
+ * @property ?string|null  $state          The user's current party status, or text used for a custom status.
+ * @property Emoji|null    $emoji          The emoji used for a custom status.
+ * @property object|null   $party          Information for the current party of the player.
+ * @property object|null   $assets         Images for the presence and their hover texts.
+ * @property object|null   $secrets        Secrets for Rich Presence joining and spectating.
+ * @property bool|null     $instance       Whether or not the activity is an instanced game session.
+ * @property int|null      $flags          Activity flags `OR`d together, describes what the payload includes.
+ * @property object[]|null $buttons        The custom buttons shown in the Rich Presence (max 2).
  */
-class Activity extends Part
+class Activity extends Part implements Stringable
 {
-    public const TYPE_PLAYING = 0; // Playing {$this->name}
-    public const TYPE_STREAMING = 1; // Streaming {$this->details}
-    public const TYPE_LISTENING = 2; // Listening to {$this->name}
-    public const TYPE_WATCHING = 3; // Watching {$this->name}
-    public const TYPE_CUSTOM = 4; // {$this->emoji} {$this->name}
-    public const TYPE_COMPETING = 5; // Competing in {$this->name}
+    /** Playing {name} */
+    public const TYPE_GAME = 0;
+
+    /** Streaming {details} */
+    public const TYPE_STREAMING = 1;
+
+    /** Listening to {name} */
+    public const TYPE_LISTENING = 2;
+
+    /** Watching {name} */
+    public const TYPE_WATCHING = 3;
+
+    /** {emoji} {name} */
+    public const TYPE_CUSTOM = 4;
+
+    /** Competing in {name} */
+    public const TYPE_COMPETING = 5;
+
+    /** @deprecated 10.0.0 Use `Activity::TYPE_GAME` */
+    public const TYPE_PLAYING = self::TYPE_GAME;
 
     public const FLAG_INSTANCE = (1 << 0);
     public const FLAG_JOIN = (1 << 1);
@@ -61,7 +81,7 @@ class Activity extends Part
     public const STATUS_INVISIBLE = 'invisible';
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $fillable = [
         'name',
@@ -85,14 +105,16 @@ class Activity extends Part
      * Gets the created at timestamp.
      *
      * @return Carbon|null
+     *
+     * @throws \Exception
      */
     protected function getCreatedAtAttribute(): ?Carbon
     {
-        if (isset($this->attributes['created_at'])) {
-            return Carbon::createFromTimestamp($this->attributes['created_at']);
+        if (! isset($this->attributes['created_at'])) {
+            return null;
         }
 
-        return null;
+        return Carbon::createFromTimestamp($this->attributes['created_at']);
     }
 
     /**
@@ -102,11 +124,11 @@ class Activity extends Part
      */
     protected function getEmojiAttribute(): ?Emoji
     {
-        if (isset($this->attributes['emoji'])) {
-            return $this->factory->create(Emoji::class, $this->attributes['emoji'], true);
+        if (! isset($this->attributes['emoji'])) {
+            return null;
         }
 
-        return null;
+        return $this->factory->part(Emoji::class, (array) $this->attributes['emoji'], true);
     }
 
     /**
@@ -114,27 +136,16 @@ class Activity extends Part
      *
      * @return string
      */
-    public function __toString()
+    public function __toString(): string
     {
-        switch ($this->type) {
-            case self::TYPE_PLAYING:
-                return "Playing {$this->name}";
-                break;
-            case self::TYPE_STREAMING:
-                return "Streaming {$this->details}";
-                break;
-            case self::TYPE_LISTENING:
-                return "Listening to {$this->name}";
-                break;
-            case self::TYPE_WATCHING:
-                return "Watching {$this->name}";
-                break;
-            case self::TYPE_CUSTOM:
-                return "{$this->emoji} {$this->name}";
-                break;
-            case self::TYPE_COMPETING:
-                return "Competing in {$this->name}";
-                break;
-        }
+        return match ($this->type) {
+            self::TYPE_GAME => 'Playing ' . $this->name,
+            self::TYPE_STREAMING => 'Streaming ' . $this->details,
+            self::TYPE_LISTENING => 'Listening to ' . $this->name,
+            self::TYPE_WATCHING => 'Watching ' . $this->name,
+            self::TYPE_CUSTOM => "{$this->emoji} {$this->state}",
+            self::TYPE_COMPETING => 'Competing in ' . $this->name,
+            default => $this->name,
+        };
     }
 }

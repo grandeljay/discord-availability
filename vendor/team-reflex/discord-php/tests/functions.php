@@ -11,9 +11,12 @@ declare(strict_types=1);
  * with this source code in the LICENSE.md file.
  */
 
+use Discord\Discord;
+use Psr\Log\NullLogger;
+
 const TIMEOUT = 10;
 
-function wait(callable $callback, float $timeout = TIMEOUT, callable $timeoutFn = null)
+function wait(callable $callback, float $timeout = TIMEOUT, ?callable $timeoutFn = null)
 {
     $discord = DiscordSingleton::get();
 
@@ -59,4 +62,9 @@ function wait(callable $callback, float $timeout = TIMEOUT, callable $timeoutFn 
     }
 
     return $result;
+}
+
+function getMockDiscord(): Discord
+{
+    return new Discord(['token' => '', 'logger' => new NullLogger()]);
 }

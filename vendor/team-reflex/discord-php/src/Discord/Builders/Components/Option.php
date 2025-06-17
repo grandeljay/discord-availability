@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -18,7 +20,9 @@ use function Discord\poly_strlen;
 /**
  * Option for select menu component.
  *
- * @see https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-option-structure
+ * @link https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-option-structure
+ *
+ * @since 7.0.0
  */
 class Option extends Component
 {
@@ -76,7 +80,7 @@ class Option extends Component
         }
 
         $this->label = $label;
-        $this->value = $value ?? $this->generateUuid();
+        $this->value = $value ?? self::generateUuid();
     }
 
     /**
@@ -93,13 +97,13 @@ class Option extends Component
     }
 
     /**
-     * Sets the description of the option. Null to clear.
+     * Sets the description of the option.
      *
-     * @param string|null $description Description of the option. Maximum 100 characters.
+     * @param string|null $description Description of the option. Maximum 100 characters. `null` to clear.
      *
      * @throws \LengthException
      *
-     * @return self
+     * @return $this
      */
     public function setDescription(?string $description): self
     {
@@ -113,11 +117,11 @@ class Option extends Component
     }
 
     /**
-     * Sets the emoji of the option. Null to clear.
+     * Sets the emoji of the option.
      *
-     * @param Emoji|string|null $emoji Emoji to set.
+     * @param Emoji|string|null $emoji Emoji to set. `null` to clear.
      *
-     * @return self
+     * @return $this
      */
     public function setEmoji($emoji): self
     {
@@ -161,7 +165,7 @@ class Option extends Component
      *
      * @param bool $default
      *
-     * @return self
+     * @return $this
      */
     public function setDefault(bool $default = true): self
     {
@@ -221,7 +225,7 @@ class Option extends Component
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function jsonSerialize(): array
     {

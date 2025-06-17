@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -12,29 +14,32 @@
 namespace Discord;
 
 use ArrayIterator;
-use Discord\Helpers\Deferred;
 use Discord\Parts\Channel\Channel;
 use Discord\Parts\Channel\Message;
 use Discord\Parts\Guild\Role;
 use Discord\Parts\Part;
 use Discord\Parts\User\Member;
 use Discord\Parts\User\User;
+use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
-use React\Promise\ExtendedPromiseInterface;
+use React\Promise\Deferred;
 use React\Promise\Promise;
+use React\Promise\PromiseInterface;
 use Symfony\Component\OptionsResolver\Options;
 
 /**
  * The HTML Color Table.
  *
- * @array HTML Color Table.
+ * @var array HTML Color Table.
+ *
+ * @since 5.0.12
  */
 const COLORTABLE = [
     'indianred' => 0xcd5c5c, 'lightcoral' => 0xf08080, 'salmon' => 0xfa8072, 'darksalmon' => 0xe9967a,
     'lightsalmon' => 0xffa07a, 'crimson' => 0xdc143c, 'red' => 0xff0000, 'firebrick' => 0xb22222,
     'darkred' => 0x8b0000, 'pink' => 0xffc0cb, 'lightpink' => 0xffb6c1, 'hotpink' => 0xff69b4,
     'deeppink' => 0xff1493, 'mediumvioletred' => 0xc71585, 'palevioletred' => 0xdb7093,
-    'lightsalmon' => 0xffa07a, 'coral' => 0xff7f50, 'tomato' => 0xff6347, 'orangered' => 0xff4500,
+    'coral' => 0xff7f50, 'tomato' => 0xff6347, 'orangered' => 0xff4500,
     'darkorange' => 0xff8c00, 'orange' => 0xffa500, 'gold' => 0xffd700, 'yellow' => 0xffff00,
     'lightyellow' => 0xffffe0, 'lemonchiffon' => 0xfffacd, 'lightgoldenrodyellow' => 0xfafad2,
     'papayawhip' => 0xffefd5, 'moccasin' => 0xffe4b5, 'peachpuff' => 0xffdab9, 'palegoldenrod' => 0xeee8aa,
@@ -54,7 +59,7 @@ const COLORTABLE = [
     'darkturquoise' => 0x00ced1, 'cadetblue' => 0x5f9ea0, 'steelblue' => 0x4682b4, 'lightsteelblue' => 0xb0c4de,
     'powderblue' => 0xb0e0e6, 'lightblue' => 0xadd8e6, 'skyblue' => 0x87ceeb, 'lightskyblue' => 0x87cefa,
     'deepskyblue' => 0x00bfff, 'dodgerblue' => 0x1e90ff, 'cornflowerblue' => 0x6495ed,
-    'mediumslateblue' => 0x7b68ee, 'royalblue' => 0x4169e1, 'blue' => 0x0000ff, 'mediumblue' => 0x0000cd,
+    'royalblue' => 0x4169e1, 'blue' => 0x0000ff, 'mediumblue' => 0x0000cd,
     'darkblue' => 0x00008b, 'navy' => 0x000080, 'midnightblue' => 0x191970, 'cornsilk' => 0xfff8dc,
     'blanchedalmond' => 0xffebcd, 'bisque' => 0xffe4c4, 'navajowhite' => 0xffdead, 'wheat' => 0xf5deb3,
     'burlywood' => 0xdeb887, 'tan' => 0xd2b48c, 'rosybrown' => 0xbc8f8f, 'sandybrown' => 0xf4a460,
@@ -76,18 +81,17 @@ const COLORTABLE = [
  * @param Message     $message The message to check.
  *
  * @return bool Whether the part was mentioned.
+ *
+ * @since 4.0.0
  */
-function mentioned($part, Message $message): bool
+function mentioned(Part|string $part, Message $message): bool
 {
-    if ($part instanceof User || $part instanceof Member) {
-        return $message->mentions->has($part->id);
-    } elseif ($part instanceof Role) {
-        return $message->mention_roles->has($part->id);
-    } elseif ($part instanceof Channel) {
-        return strpos($message->content, "<#{$part->id}>") !== false;
-    }
-
-    return strpos($message->content, $part) !== false;
+    return match (true) {
+        $part instanceof User, $part instanceof Member => $message->mentions->has($part->id),
+        $part instanceof Role => $message->mention_roles->has($part->id),
+        $part instanceof Channel => str_contains($message->content, "<#{$part->id}>"),
+        default => str_contains($message->content, $part),
+    };
 }
 
 /**
@@ -96,18 +100,18 @@ function mentioned($part, Message $message): bool
  * @param int|string $color The color's int, hexcode or htmlname.
  *
  * @return int color
+ *
+ * @since 5.0.12
  */
-function getColor($color = 0): int
+function getColor(int|string $color = 0): int
 {
-    if (is_integer($color)) {
+    if (is_int($color)) {
         return $color;
     }
 
     if (preg_match('/^([a-z]+)$/ui', $color, $match)) {
         $colorName = strtolower($match[1]);
-        if (isset(COLORTABLE[$colorName])) {
-            return COLORTABLE[$colorName];
-        }
+        return COLORTABLE[$colorName] ?? 0;
     }
 
     if (preg_match('/^(#|0x|)([0-9a-f]{6})$/ui', $color, $match)) {
@@ -124,16 +128,12 @@ function getColor($color = 0): int
  * @param array  $matches Array containing one or more phrases to match.
  *
  * @return bool
+ *
+ * @since 5.0.12
  */
 function contains(string $string, array $matches): bool
 {
-    foreach ($matches as $match) {
-        if (strpos($string, $match) !== false) {
-            return true;
-        }
-    }
-
-    return false;
+    return array_reduce($matches, fn ($carry, $match) => $carry || str_contains($string, $match), false);
 }
 
 /**
@@ -142,17 +142,12 @@ function contains(string $string, array $matches): bool
  * @param string $string The string to convert.
  *
  * @return string
+ *
+ * @since 5.0.12
  */
 function studly(string $string): string
 {
-    $ret = '';
-    preg_match_all('/([a-z0-9]+)/ui', $string, $matches);
-
-    foreach ($matches[0] as $match) {
-        $ret .= ucfirst(strtolower($match));
-    }
-
-    return $ret;
+    return implode('', array_map('ucfirst', array_map('strtolower', preg_split('/[^a-z0-9]+/i', $string))));
 }
 
 /**
@@ -161,15 +156,14 @@ function studly(string $string): string
  * @param string $str
  *
  * @return int
+ *
+ * @since 5.0.12
  */
-function poly_strlen($str)
+function poly_strlen(string $str): int
 {
-    // If mbstring is installed, use it.
-    if (function_exists('mb_strlen')) {
-        return mb_strlen($str);
-    }
-
-    return strlen($str);
+    return function_exists('mb_strlen')
+        ? mb_strlen($str)
+        : strlen($str);
 }
 
 /**
@@ -178,6 +172,8 @@ function poly_strlen($str)
  * @param string $filepath
  *
  * @return string
+ *
+ * @since 5.1.0
  */
 function imageToBase64(string $filepath): string
 {
@@ -198,17 +194,18 @@ function imageToBase64(string $filepath): string
 }
 
 /**
- * Takes a snowflake and calculates the time that the snowflake
- * was generated.
+ * Takes a snowflake and calculates the time that the snowflake was generated.
  *
  * @param string|float $snowflake
  *
- * @return float
+ * @return ?float
+ *
+ * @since 5.1.1
  */
 function getSnowflakeTimestamp(string $snowflake)
 {
     if (\PHP_INT_SIZE === 4) { //x86
-        $binary = \str_pad(\base_convert($snowflake, 10, 2), 64, 0, \STR_PAD_LEFT);
+        $binary = \str_pad(\base_convert($snowflake, 10, 2), 64, '0', \STR_PAD_LEFT);
         $time = \base_convert(\substr($binary, 0, 42), 2, 10);
         $timestamp = (float) ((((int) \substr($time, 0, -3)) + 1420070400).'.'.\substr($time, -3));
         $workerID = (int) \base_convert(\substr($binary, 42, 5), 2, 10);
@@ -231,23 +228,21 @@ function getSnowflakeTimestamp(string $snowflake)
 
 /**
  * For use with the Symfony options resolver.
- * For an option that takes a snowflake or part,
- * returns the snowflake or the value of `id_field`
- * on the part.
+ * For an option that takes a snowflake or part, returns the snowflake or the value of `id_field` on the part.
  *
  * @param string $id_field
  *
+ * @return \Closure
+ *
+ * @since 6.0.0
+ *
  * @internal
  */
-function normalizePartId($id_field = 'id')
+function normalizePartId(string $id_field = 'id'): \Closure
 {
-    return static function (Options $options, $part) use ($id_field) {
-        if ($part instanceof Part) {
-            return $part->{$id_field};
-        }
-
-        return $part;
-    };
+    return static fn (Options $options, $part) => $part instanceof Part
+        ? $part->{$id_field}
+        : $part;
 }
 
 /**
@@ -255,9 +250,11 @@ function normalizePartId($id_field = 'id')
  * _Italics_, **Bold**, __Underline__, ~~Strikethrough~~, ||spoiler||
  * `Code`, ```Code block```, > Quotes, >>> Block quotes
  * #Channel @User
- * A backslash will be added before the each formatting symbol.
+ * A backslash will be added before each formatting symbol.
  *
  * @return string the escaped string unformatted as plain text
+ *
+ * @since 6.0.2
  */
 function escapeMarkdown(string $text): string
 {
@@ -267,32 +264,36 @@ function escapeMarkdown(string $text): string
 /**
  * Run a deferred search in array.
  *
- * @param array|object  $array     Traversable, use $collection->getIterator() if searching in Collection
- * @param callable      $callback  The filter function to run
- * @param LoopInterface $loop      Loop interface, use $discord->getLoop()
- * @param callable      $canceller Deprecated, use `cancel()` from the returned promise
+ * @param array|object   $array    Traversable, use $collection->getIterator() if searching in Collection
+ * @param callable       $callback The filter function to run
+ * @param ?LoopInterface $loop     Loop interface, use $discord->getLoop()
  *
  * @return Promise
+ *
+ * @since 10.0.0 Handle `$canceller` internally, use `cancel()` from the returned promise.
+ * @since 7.1.0
  */
-function deferFind($array, callable $callback, $loop, ?callable $canceller = null): ExtendedPromiseInterface
+function deferFind($array, callable $callback, $loop = null): PromiseInterface
 {
     $cancelled = false;
-    $canceller ??= function () use (&$cancelled) {
+    $deferred = new Deferred(function () use (&$cancelled) {
         $cancelled = true;
-    };
-    $deferred = new Deferred($canceller);
+    });
     $iterator = new ArrayIterator($array);
+
+    $loop ??= Loop::get();
 
     $loop->addPeriodicTimer(0.001, function ($timer) use ($loop, $deferred, $iterator, $callback, &$cancelled) {
         if ($cancelled) {
             $loop->cancelTimer($timer);
+            $deferred->reject(new \RuntimeException('deferFind() cancelled'));
 
             return;
         }
 
         if (! $iterator->valid()) {
             $loop->cancelTimer($timer);
-            $deferred->reject();
+            $deferred->resolve(null);
 
             return;
         }
@@ -310,3 +311,33 @@ function deferFind($array, callable $callback, $loop, ?callable $canceller = nul
 
     return $deferred->promise();
 }
+
+/**
+ * Attempts to return a resolved value from a synchronous promise.
+ * Like await() but only for resolvable blocking promise without touching the loop.
+ *
+ * @param PromiseInterface $promiseInterface The synchronous promise.
+ *
+ * @return mixed null if failed to return.
+ *
+ * @see \React\Async\await() for asynchronous promise.
+ *
+ * @since 10.0.0
+ */
+function nowait(PromiseInterface $promiseInterface)
+{
+    $resolved = null;
+
+    $promiseInterface->then(static function ($value) use (&$resolved) {
+        return $resolved = $value;
+    });
+
+    return $resolved;
+}
+
+/**
+ * File namespaces that were changed in new versions are aliased.
+ */
+class_alias(\Discord\Repository\Channel\StageInstanceRepository::class, '\Discord\Repository\Guild\StageInstanceRepository'); // @since 10.0.0
+class_alias(\Discord\Parts\Guild\CommandPermissions::class, '\Discord\Parts\Interactions\Command\Overwrite'); // @since 10.0.0
+class_alias(\Discord\Repository\Guild\CommandPermissionsRepository::class, '\Discord\Repository\Guild\OverwriteRepository'); // @since 10.0.0

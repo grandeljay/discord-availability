@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -12,19 +14,20 @@
 namespace Discord\WebSockets\Events;
 
 use Discord\WebSockets\Event;
-use Discord\Helpers\Deferred;
 
 /**
- * @see https://discord.com/developers/docs/topics/gateway#guild-scheduled-event-user-remove
+ * @link https://discord.com/developers/docs/topics/gateway-events#guild-scheduled-event-user-remove
+ *
+ * @since 7.0.0
  */
 class GuildScheduledEventUserRemove extends Event
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
-    public function handle(Deferred &$deferred, $data): void
+    public function handle($data)
     {
         // TODO: Create WebSockets Event Part
-        $deferred->resolve($data);
+        return $data;
     }
 }

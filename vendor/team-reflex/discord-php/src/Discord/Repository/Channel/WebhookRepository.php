@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -16,17 +18,22 @@ use Discord\Parts\Channel\Webhook;
 use Discord\Repository\AbstractRepository;
 
 /**
- * @inheritdoc
+ * Contains webhooks for a channel.
  *
- * @method Webhook|null get(string $discrim, $key)  Gets an item from the collection.
- * @method Webhook|null first()                     Returns the first element of the collection.
- * @method Webhook|null pull($key, $default = null) Pulls an item from the repository, removing and returning the item.
- * @method Webhook|null find(callable $callback)    Runs a filter callback over the repository.
+ * @see Webhook
+ *
+ * @since 5.0.0
+ *
+ * @method Webhook|null get(string $discrim, $key)
+ * @method Webhook|null pull(string|int $key, $default = null)
+ * @method Webhook|null first()
+ * @method Webhook|null last()
+ * @method Webhook|null find(callable $callback)
  */
 class WebhookRepository extends AbstractRepository
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $endpoints = [
         'all' => Endpoint::CHANNEL_WEBHOOKS,
@@ -37,7 +44,7 @@ class WebhookRepository extends AbstractRepository
     ];
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $class = Webhook::class;
 }

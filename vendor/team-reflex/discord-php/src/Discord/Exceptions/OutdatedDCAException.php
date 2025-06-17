@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -13,6 +15,8 @@ namespace Discord\Exceptions;
 
 /**
  * Thrown when the installed DCA version is outdated.
+ *
+ * @since 3.2.0
  */
 class OutdatedDCAException extends \Exception
 {

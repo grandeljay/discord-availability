@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -12,6 +14,7 @@
 namespace Discord\Parts\Interactions\Command;
 
 use Discord\Helpers\Collection;
+use Discord\Helpers\ExCollectionInterface;
 use Discord\Parts\Part;
 
 use function Discord\poly_strlen;
@@ -19,7 +22,9 @@ use function Discord\poly_strlen;
 /**
  * Option represents an array of options that can be given to a command.
  *
- * @see https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure
+ * @link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure
+ *
+ * @since 7.0.0
  *
  * @property int                      $type                      Type of the option.
  * @property string                   $name                      Name of the option.
@@ -27,8 +32,8 @@ use function Discord\poly_strlen;
  * @property string                   $description               1-100 character description.
  * @property ?string[]|null           $description_localizations Localization dictionary for the description field. Values follow the same restrictions as description.
  * @property bool|null                $required                  If the parameter is required or optional--default false.
- * @property Collection|Choice[]|null $choices                   Choices for STRING, INTEGER, and NUMBER types for the user to pick from, max 25. Only for slash commands.
- * @property Collection|Option[]      $options                   Sub-options if applicable.
+ * @property ExCollectionInterface|Choice[]|null $choices                   Choices for STRING, INTEGER, and NUMBER types for the user to pick from, max 25. Only for slash commands.
+ * @property ExCollectionInterface|Option[]      $options                   Sub-options if applicable.
  * @property array|null               $channel_types             If the option is a channel type, the channels shown will be restricted to these types.
  * @property int|float|null           $min_value                 If the option is an INTEGER or NUMBER type, the minimum value permitted.
  * @property int|float|null           $max_value                 If the option is an INTEGER or NUMBER type, the maximum value permitted.
@@ -51,7 +56,7 @@ class Option extends Part
     public const ATTACHMENT = 11;
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $fillable = [
         'type',
@@ -73,18 +78,18 @@ class Option extends Part
     /**
      * Gets the choices attribute.
      *
-     * @return Collection|Choice[]|null A collection of choices.
+     * @return ExCollectionInterface|Choice[]|null A collection of choices.
      */
-    protected function getChoicesAttribute(): ?Collection
+    protected function getChoicesAttribute(): ?ExCollectionInterface
     {
-        if (! isset($this->attributes['choices'])) {
+        if (! isset($this->attributes['choices']) && ! in_array($this->type, [self::STRING, self::INTEGER, self::NUMBER])) {
             return null;
         }
 
         $choices = Collection::for(Choice::class, null);
 
-        foreach ($this->attributes['choices'] as $choice) {
-            $choices->pushItem($this->factory->create(Choice::class, $choice, true));
+        foreach ($this->attributes['choices'] ?? [] as $choice) {
+            $choices->pushItem($this->createOf(Choice::class, $choice));
         }
 
         return $choices;
@@ -93,14 +98,14 @@ class Option extends Part
     /**
      * Gets the options attribute.
      *
-     * @return Collection|Option[] A collection of options.
+     * @return ExCollectionInterface|Option[] A collection of options.
      */
-    protected function getOptionsAttribute(): Collection
+    protected function getOptionsAttribute(): ExCollectionInterface
     {
         $options = Collection::for(Option::class, null);
 
         foreach ($this->attributes['options'] ?? [] as $option) {
-            $options->pushItem($this->factory->create(Option::class, $option, true));
+            $options->pushItem($this->createOf(Option::class, $option));
         }
 
         return $options;
@@ -113,7 +118,7 @@ class Option extends Part
      *
      * @throws \InvalidArgumentException `$type` is not 1-11.
      *
-     * @return self
+     * @return $this
      */
     public function setType(int $type): self
     {
@@ -136,7 +141,7 @@ class Option extends Part
      *
      * @throws \LengthException `$name` is more than 32 characters.
      *
-     * @return self
+     * @return $this
      */
     public function setName(string $name): self
     {
@@ -160,7 +165,7 @@ class Option extends Part
      *
      * @throws \LengthException `$name` is more than 32 characters.
      *
-     * @return self
+     * @return $this
      */
     public function setNameLocalization(string $locale, ?string $name): self
     {
@@ -180,7 +185,7 @@ class Option extends Part
      *
      * @throws \LengthException `$description` is more than 100 characters.
      *
-     * @return self
+     * @return $this
      */
     public function setDescription(string $description): self
     {
@@ -201,7 +206,7 @@ class Option extends Part
      *
      * @throws \LengthException `$description` is more than 100 characters.
      *
-     * @return self
+     * @return $this
      */
     public function setDescriptionLocalization(string $locale, ?string $description): self
     {
@@ -219,7 +224,7 @@ class Option extends Part
      *
      * @param bool $required requirement of the option (default false)
      *
-     * @return self
+     * @return $this
      */
     public function setRequired(bool $required = false): self
     {
@@ -233,7 +238,7 @@ class Option extends Part
      *
      * @param array|null $types types of the channel.
      *
-     * @return self
+     * @return $this
      */
     public function setChannelTypes(?array $types): self
     {
@@ -249,7 +254,7 @@ class Option extends Part
      *
      * @throws \OverflowException Command exceeds maximum 25 sub options.
      *
-     * @return self
+     * @return $this
      */
     public function addOption(Option $option): self
     {
@@ -269,7 +274,7 @@ class Option extends Part
      *
      * @throws \OverflowException Command exceeds maximum 25 choices.
      *
-     * @return self
+     * @return $this
      */
     public function addChoice(Choice $choice): self
     {
@@ -287,7 +292,7 @@ class Option extends Part
      *
      * @param string|Option $option Option object or name to remove.
      *
-     * @return self
+     * @return $this
      */
     public function removeOption($option): self
     {
@@ -295,12 +300,10 @@ class Option extends Part
             $option = $option->name;
         }
 
-        if (! empty($this->attributes['options'])) {
-            foreach ($this->attributes['options'] as $idx => $opt) {
-                if ($opt['name'] == $option) {
-                    unset($this->attributes['options'][$idx]);
-                    break;
-                }
+        foreach ($this->attributes['options'] ?? [] as $idx => $opt) {
+            if ($opt['name'] == $option) {
+                unset($this->attributes['options'][$idx]);
+                break;
             }
         }
 
@@ -312,7 +315,7 @@ class Option extends Part
      *
      * @param string|Choice $choice Choice object or name to remove.
      *
-     * @return self
+     * @return $this
      */
     public function removeChoice($choice): self
     {
@@ -320,12 +323,10 @@ class Option extends Part
             $choice = $choice->name;
         }
 
-        if (! empty($this->attributes['choices'])) {
-            foreach ($this->attributes['choices'] as $idx => $cho) {
-                if ($cho['name'] == $choice) {
-                    unset($this->attributes['choices'][$idx]);
-                    break;
-                }
+        foreach ($this->attributes['choices'] ?? [] as $idx => $cho) {
+            if ($cho['name'] == $choice) {
+                unset($this->attributes['choices'][$idx]);
+                break;
             }
         }
 
@@ -337,7 +338,7 @@ class Option extends Part
      *
      * @param int|float|null $min_value integer for INTEGER options, double for NUMBER options.
      *
-     * @return self
+     * @return $this
      */
     public function setMinValue($min_value): self
     {
@@ -351,7 +352,7 @@ class Option extends Part
      *
      * @param int|float|null $max_value integer for INTEGER options, double for NUMBER options
      *
-     * @return self
+     * @return $this
      */
     public function setMaxValue($max_value): self
     {
@@ -368,7 +369,7 @@ class Option extends Part
      * @throws \LogicException
      * @throws \LengthException
      *
-     * @return self
+     * @return $this
      */
     public function setMinLength(?int $min_length): self
     {
@@ -393,7 +394,7 @@ class Option extends Part
      * @throws \LogicException
      * @throws \LengthException
      *
-     * @return self
+     * @return $this
      */
     public function setMaxLength(?int $max_length): self
     {
@@ -415,19 +416,19 @@ class Option extends Part
      *
      * @param bool|null $autocomplete enable autocomplete interactions for this option.
      *
-     * @throws \InvalidArgumentException Command option type is not string/integer/number.
+     * @throws \DomainException Command option type is not string/integer/number.
      *
-     * @return self
+     * @return $this
      */
     public function setAutoComplete(?bool $autocomplete): self
     {
         if ($autocomplete) {
             if (! empty($this->attributes['choices'])) {
-                throw new \InvalidArgumentException('Autocomplete may not be set to true if choices are present.');
+                throw new \DomainException('Autocomplete may not be set to true if choices are present.');
             }
 
             if (! in_array($this->type, [self::STRING, self::INTEGER, self::NUMBER])) {
-                throw new \InvalidArgumentException('Autocomplete may be only set to true if option type is STRING, INTEGER, or NUMBER.');
+                throw new \DomainException('Autocomplete may be only set to true if option type is STRING, INTEGER, or NUMBER.');
             }
         }
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -16,38 +18,54 @@ use Discord\Http\Endpoint;
 use Discord\Parts\Guild\Emoji;
 use Discord\Parts\Guild\Guild;
 use Discord\Parts\Part;
+use Discord\Parts\Thread\Thread;
 use Discord\Parts\User\User;
-use React\Promise\ExtendedPromiseInterface;
+use React\Promise\PromiseInterface;
+use stdClass;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 use function Discord\normalizePartId;
 use function React\Promise\resolve;
 
 /**
- * Represents a reaction to a message by members(s).
+ * Represents a reaction emoji to a message by members(s).
  *
- * @see https://discord.com/developers/docs/resources/channel#reaction-object
+ * @link https://discord.com/developers/docs/resources/channel#reaction-object
  *
- * @property int            $count      Number of reactions.
- * @property bool           $me         Whether the current bot has reacted.
- * @property Emoji          $emoji      The emoji that was reacted with.
- * @property string         $id         The identifier of the reaction.
- * @property string         $message_id The message ID the reaction is for.
- * @property Message|null   $message    The message the reaction is for.
- * @property string         $channel_id The channel ID that the message belongs in.
- * @property Channel|Thread $channel    The channel that the message belongs to.
- * @property string|null    $guild_id   The guild ID of the guild that owns the channel the message belongs in.
- * @property Guild|null     $guild      The guild that owns the channel the message belongs in.
+ * @since 5.0.0
+ *
+ * @property int   $count Number of reactions.
+ * @property bool  $me    Whether the current bot has reacted.
+ * @property Emoji $emoji The emoji that was reacted with.
+ *
+ * @property      string         $channel_id The channel ID that the message belongs in.
+ * @property-read Channel|Thread $channel    The channel that the message belongs to.
+ * @property      string         $message_id The message ID the reaction is for.
+ * @property      Message|null   $message    The message the reaction is for.
+ * @property      string|null    $guild_id   The guild ID of the guild that owns the channel the message belongs in.
+ * @property-read Guild|null     $guild      The guild that owns the channel the message belongs in.
+ *
+ * @property-read string $id The identifier of the reaction.
  */
 class Reaction extends Part
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
-    protected $fillable = ['count', 'me', 'emoji', 'message_id', 'channel_id', 'guild_id'];
+    protected $fillable = [
+        'id', // internal
+        'count',
+        'me',
+        'emoji',
+
+        // events only
+        'channel_id',
+        'message_id',
+        'guild_id',
+    ];
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     public function isPartial(): bool
     {
@@ -55,54 +73,87 @@ class Reaction extends Part
     }
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
-    public function fetch(): ExtendedPromiseInterface
+    public function fetch(): PromiseInterface
     {
         return $this->http->get(Endpoint::bind(Endpoint::CHANNEL_MESSAGE, $this->channel_id, $this->message_id))
             ->then(function ($message) {
-                $this->attributes['message'] = $this->factory->create(Message::class, $message, true);
+                $this->message = $this->factory->part(Message::class, (array) $message + ['guild_id' => $this->guild_id], true);
 
                 return $this;
             });
     }
 
     /**
-     * Gets the emoji identifier, combination of `id` and `name`.
+     * Sets the emoji identifier.
+     *
+     * @internal Used for ReactionRepository::fetch()
+     *
+     * @param string $value name:id or the character of standard emoji
+     *
+     *
+     * @since 10.0.0
+     */
+    protected function setIdAttribute(string $value): void
+    {
+        if (! isset($this->attributes['emoji'])) {
+            $this->attributes['emoji'] = new stdClass();
+        }
+
+        $colonDelimiter = explode(':', $value);
+        $delimitedCount = count($colonDelimiter);
+        $emojiId = $emojiAnimated = null;
+
+        if ($delimitedCount == 2) { // Custom emoji name:id
+            [$emojiName, $emojiId] = $colonDelimiter;
+        } elseif ($delimitedCount == 3) { // Custom animated emoji a:name:id
+            [$emojiAnimated, $emojiName, $emojiId] = $colonDelimiter;
+        } else { // Standard emoji (or just have abnormal colon count)
+            $emojiName = $value;
+        }
+
+        $this->attributes['emoji']->id = $emojiId;
+        $this->attributes['emoji']->name = $emojiName;
+        if ($emojiAnimated == 'a') {
+            $this->attributes['emoji']->animated = true;
+        }
+    }
+
+    /**
+     * Gets the emoji identifier.
      *
      * @return string
+     *
+     * @since 10.0.0 Changed to only return custom emoji id or unicode emoji name.
      */
     protected function getIdAttribute(): string
     {
-        if ($this->emoji->id === null) {
-            return $this->emoji->name;
-        }
-
-        return ":{$this->emoji->name}:{$this->emoji->id}";
+        return $this->emoji->id ?? $this->emoji->name;
     }
 
     /**
      * Gets the users that have used the reaction.
      *
-     * @see https://discord.com/developers/docs/resources/channel#get-reactions
-
-     * @param array $options See https://discord.com/developers/docs/resources/channel#get-reactions
+     * @param array       $options          An array of options. All fields are optional.
+     * @param string|null $options['after'] Get users after this user ID.
+     * @param int|null    $options['limit'] Max number of users to return (1-100).
      *
-     * @return ExtendedPromiseInterface<Collection|Users[]>
+     * @link https://discord.com/developers/docs/resources/channel#get-reactions
+     *
+     * @return PromiseInterface<Collection|User[]>
      */
-    public function getUsers(array $options = []): ExtendedPromiseInterface
+    public function getUsers(array $options = []): PromiseInterface
     {
-        $query = Endpoint::bind(Endpoint::MESSAGE_REACTION_EMOJI, $this->channel_id, $this->message_id, urlencode($this->id));
+        $query = Endpoint::bind(Endpoint::MESSAGE_REACTION_EMOJI, $this->channel_id, $this->message_id, urlencode($this->emoji->id === null ? $this->emoji->name : "{$this->emoji->name}:{$this->emoji->id}"));
 
         $resolver = new OptionsResolver();
         $resolver
-            ->setDefined(['before', 'after', 'limit'])
-            ->setAllowedTypes('before', ['int', 'string', User::class])
+            ->setDefined(['after', 'limit'])
             ->setAllowedTypes('after', ['int', 'string', User::class])
             ->setAllowedTypes('limit', 'int')
-            ->setNormalizer('before', normalizePartId())
             ->setNormalizer('after', normalizePartId())
-            ->setAllowedValues('limit', range(1, 100));
+            ->setAllowedValues('limit', fn ($value) => ($value >= 1 && $value <= 100));
 
         $options = $resolver->resolve($options);
 
@@ -112,11 +163,11 @@ class Reaction extends Part
 
         return $this->http->get($query)
         ->then(function ($response) {
-            $users = new Collection([], 'id', User::class);
+            $users = Collection::for(User::class);
 
             foreach ((array) $response as $user) {
                 if (! $part = $this->discord->users->get('id', $user->id)) {
-                    $part = new User($this->discord, (array) $user, true);
+                    $part = $this->discord->users->create($user, true);
                     $this->discord->users->pushItem($part);
                 }
 
@@ -133,9 +184,9 @@ class Reaction extends Part
      *
      * @see Message::getUsers()
      *
-     * @return ExtendedPromiseInterface<Collection|Users[]>
+     * @return PromiseInterface<Collection|User[]>
      */
-    public function getAllUsers(): ExtendedPromiseInterface
+    public function getAllUsers(): PromiseInterface
     {
         $response = Collection::for(User::class);
         $getUsers = function ($after = null) use (&$getUsers, $response) {
@@ -169,11 +220,11 @@ class Reaction extends Part
      */
     protected function getEmojiAttribute(): ?Emoji
     {
-        if (isset($this->attributes['emoji'])) {
-            return $this->factory->create(Emoji::class, $this->attributes['emoji'], true);
+        if (! isset($this->attributes['emoji'])) {
+            return null;
         }
 
-        return null;
+        return $this->factory->part(Emoji::class, (array) $this->attributes['emoji'] + ['guild_id' => $this->guild_id], true);
     }
 
     /**
@@ -184,7 +235,7 @@ class Reaction extends Part
     protected function getMessageAttribute(): ?Message
     {
         if ($channel = $this->channel) {
-            return $channel->messages->offsetGet($this->message_id);
+            return $channel->messages->get('id', $this->message_id);
         }
 
         return $this->attributes['message'] ?? null;
@@ -195,24 +246,29 @@ class Reaction extends Part
      *
      * @return Channel|Thread
      */
-    protected function getChannelAttribute()
+    protected function getChannelAttribute(): Part
     {
-        if ($channel = $this->discord->getChannel($this->channel_id)) {
-            return $channel;
-        }
-
-        if ($this->guild) {
-            foreach ($this->guild->channels as $channel) {
-                if ($thread = $channel->threads->get('id', $this->channel_id)) {
+        if ($guild = $this->guild) {
+            $channels = $guild->channels;
+            if ($channel = $channels->get('id', $this->channel_id)) {
+                return $channel;
+            }
+            foreach ($channels as $parent) {
+                if ($thread = $parent->threads->get('id', $this->channel_id)) {
                     return $thread;
                 }
             }
         }
 
-        return $this->factory->create(Channel::class, [
+        // @todo potentially slow
+        if ($channel = $this->discord->getChannel($this->channel_id)) {
+            return $channel;
+        }
+
+        return $this->factory->part(Channel::class, [
             'id' => $this->channel_id,
             'type' => Channel::TYPE_DM,
-        ]);
+        ], true);
     }
 
     /**
@@ -222,10 +278,20 @@ class Reaction extends Part
      */
     protected function getGuildAttribute(): ?Guild
     {
-        if ($this->guild_id) {
-            return $this->discord->guilds->get('id', $this->guild_id);
+        if (! isset($this->guild_id)) {
+            return null;
         }
 
-        return null;
+        return $this->discord->guilds->get('id', $this->guild_id);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getRepositoryAttributes(): array
+    {
+        return [
+            'emoji' => isset($this->attributes['emoji']->id) ? $this->attributes['emoji']->name.':'.$this->attributes['emoji']->id : urlencode($this->attributes['emoji']->name),
+        ];
     }
 }

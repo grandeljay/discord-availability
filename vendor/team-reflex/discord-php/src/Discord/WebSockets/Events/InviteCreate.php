@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -12,24 +14,33 @@
 namespace Discord\WebSockets\Events;
 
 use Discord\WebSockets\Event;
-use Discord\Helpers\Deferred;
+use Discord\Parts\Channel\Channel;
 use Discord\Parts\Channel\Invite;
+use Discord\Parts\Guild\Guild;
 
 /**
- * @see https://discord.com/developers/docs/topics/gateway#invite-create
+ * @link https://discord.com/developers/docs/topics/gateway-events#invite-create
+ *
+ * @since 5.0.0
  */
 class InviteCreate extends Event
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
-    public function handle(Deferred &$deferred, $data): void
+    public function handle($data)
     {
         /** @var Invite */
-        $invite = $this->factory->create(Invite::class, $data, true);
+        $invitePart = $this->factory->part(Invite::class, (array) $data, true);
 
-        if ($channel = $invite->channel) {
-            $channel->invites->pushItem($invite);
+        /** @var ?Guild */
+        if ($guild = yield $this->discord->guilds->cacheGet($data->guild_id)) {
+            /** @var ?Channel */
+            if ($channel = yield $guild->channels->cacheGet($data->channel_id)) {
+                $channel->invites->set($data->code, $invitePart);
+            }
+
+            $guild->invites->set($data->code, $invitePart);
         }
 
         if (isset($data->inviter)) {
@@ -42,6 +53,6 @@ class InviteCreate extends Event
             $this->cacheUser($data->target_user);
         }
 
-        $deferred->resolve($invite);
+        return $invitePart;
     }
 }

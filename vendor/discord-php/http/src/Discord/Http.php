@@ -11,20 +11,22 @@
 
 namespace Discord\Http;
 
+use Composer\InstalledVersions;
+use Discord\Http\Exceptions\BadRequestException;
 use Discord\Http\Exceptions\ContentTooLongException;
 use Discord\Http\Exceptions\InvalidTokenException;
+use Discord\Http\Exceptions\MethodNotAllowedException;
 use Discord\Http\Exceptions\NoPermissionsException;
 use Discord\Http\Exceptions\NotFoundException;
+use Discord\Http\Exceptions\RateLimitException;
 use Discord\Http\Exceptions\RequestFailedException;
-use Exception;
+use Discord\Http\Multipart\MultipartBody;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
-use React\Promise\ExtendedPromiseInterface;
-use RuntimeException;
+use React\Promise\PromiseInterface;
 use SplQueue;
-use Throwable;
 
 /**
  * Discord HTTP client.
@@ -38,14 +40,14 @@ class Http
      *
      * @var string
      */
-    public const VERSION = 'v9.1.9';
+    public const VERSION = 'v10.3.0';
 
     /**
      * Current Discord HTTP API version.
      *
      * @var string
      */
-    public const HTTP_API_VERSION = 9;
+    public const HTTP_API_VERSION = 10;
 
     /**
      * Discord API base URL.
@@ -120,11 +122,25 @@ class Http
     protected $queue;
 
     /**
+     * Request queue to prevent API
+     * overload.
+     *
+     * @var SplQueue
+     */
+    protected $interactionQueue;
+
+    /**
      * Number of requests that are waiting for a response.
      *
      * @var int
      */
     protected $waiting = 0;
+
+
+    /**
+     * Whether react/promise v3 is used, if false, using v2
+     */
+    protected $promiseV3 = true;
 
     /**
      * Http wrapper constructor.
@@ -133,13 +149,16 @@ class Http
      * @param LoopInterface        $loop
      * @param DriverInterface|null $driver
      */
-    public function __construct(string $token, LoopInterface $loop, LoggerInterface $logger, DriverInterface $driver = null)
+    public function __construct(string $token, LoopInterface $loop, LoggerInterface $logger, ?DriverInterface $driver = null)
     {
         $this->token = $token;
         $this->loop = $loop;
         $this->logger = $logger;
         $this->driver = $driver;
         $this->queue = new SplQueue;
+        $this->interactionQueue = new SplQueue;
+
+        $this->promiseV3 = str_starts_with(InstalledVersions::getVersion('react/promise'), '3.');
     }
 
     /**
@@ -159,9 +178,9 @@ class Http
      * @param mixed           $content
      * @param array           $headers
      *
-     * @return ExtendedPromiseInterface
+     * @return PromiseInterface
      */
-    public function get($url, $content = null, array $headers = []): ExtendedPromiseInterface
+    public function get($url, $content = null, array $headers = []): PromiseInterface
     {
         if (! ($url instanceof Endpoint)) {
             $url = Endpoint::bind($url);
@@ -177,9 +196,9 @@ class Http
      * @param mixed           $content
      * @param array           $headers
      *
-     * @return ExtendedPromiseInterface
+     * @return PromiseInterface
      */
-    public function post($url, $content = null, array $headers = []): ExtendedPromiseInterface
+    public function post($url, $content = null, array $headers = []): PromiseInterface
     {
         if (! ($url instanceof Endpoint)) {
             $url = Endpoint::bind($url);
@@ -195,9 +214,9 @@ class Http
      * @param mixed           $content
      * @param array           $headers
      *
-     * @return ExtendedPromiseInterface
+     * @return PromiseInterface
      */
-    public function put($url, $content = null, array $headers = []): ExtendedPromiseInterface
+    public function put($url, $content = null, array $headers = []): PromiseInterface
     {
         if (! ($url instanceof Endpoint)) {
             $url = Endpoint::bind($url);
@@ -213,9 +232,9 @@ class Http
      * @param mixed           $content
      * @param array           $headers
      *
-     * @return ExtendedPromiseInterface
+     * @return PromiseInterface
      */
-    public function patch($url, $content = null, array $headers = []): ExtendedPromiseInterface
+    public function patch($url, $content = null, array $headers = []): PromiseInterface
     {
         if (! ($url instanceof Endpoint)) {
             $url = Endpoint::bind($url);
@@ -231,9 +250,9 @@ class Http
      * @param mixed           $content
      * @param array           $headers
      *
-     * @return ExtendedPromiseInterface
+     * @return PromiseInterface
      */
-    public function delete($url, $content = null, array $headers = []): ExtendedPromiseInterface
+    public function delete($url, $content = null, array $headers = []): PromiseInterface
     {
         if (! ($url instanceof Endpoint)) {
             $url = Endpoint::bind($url);
@@ -250,9 +269,9 @@ class Http
      * @param mixed    $content
      * @param array    $headers
      *
-     * @return ExtendedPromiseInterface
+     * @return PromiseInterface
      */
-    public function queueRequest(string $method, Endpoint $url, $content, array $headers = []): ExtendedPromiseInterface
+    public function queueRequest(string $method, Endpoint $url, $content, array $headers = []): PromiseInterface
     {
         $deferred = new Deferred();
 
@@ -274,13 +293,11 @@ class Http
             'X-Ratelimit-Precision' => 'millisecond',
         ];
 
-        // If there is content and Content-Type is not set,
-        // assume it is JSON.
         if (! is_null($content) && ! isset($headers['Content-Type'])) {
-            $content = json_encode($content);
-
-            $baseHeaders['Content-Type'] = 'application/json';
-            $baseHeaders['Content-Length'] = strlen($content);
+            $baseHeaders = array_merge(
+                $baseHeaders,
+                $this->guessContent($content)
+            );
         }
 
         $headers = array_merge($baseHeaders, $headers);
@@ -292,14 +309,36 @@ class Http
     }
 
     /**
+     * Guesses the headers and transforms the content of a request.
+     *
+     * @param mixed $content
+     */
+    protected function guessContent(&$content)
+    {
+        if ($content instanceof MultipartBody) {
+            $headers = $content->getHeaders();
+            $content = (string) $content;
+
+            return $headers;
+        }
+
+        $content = json_encode($content);
+
+        return [
+            'Content-Type' => 'application/json',
+            'Content-Length' => strlen($content),
+        ];
+    }
+
+    /**
      * Executes a request.
      *
      * @param Request  $request
-     * @param Deferred $deferred
+     * @param Deferred|null $deferred
      *
-     * @return ExtendedPromiseInterface
+     * @return PromiseInterface
      */
-    protected function executeRequest(Request $request, Deferred $deferred = null): ExtendedPromiseInterface
+    protected function executeRequest(Request $request, ?Deferred $deferred = null): PromiseInterface
     {
         if ($deferred === null) {
             $deferred = new Deferred();
@@ -311,7 +350,8 @@ class Http
             return $deferred->promise();
         }
 
-        $this->driver->runRequest($request)->done(function (ResponseInterface $response) use ($request, $deferred) {
+        // Promises v3 changed `->then` to behave as `->done` and removed `->then`. We still need the behaviour of `->done` in projects using v2
+        $this->driver->runRequest($request)->{$this->promiseV3 ? 'then' : 'done'}(function (ResponseInterface $response) use ($request, $deferred) {
             $data = json_decode((string) $response->getBody());
             $statusCode = $response->getStatusCode();
 
@@ -322,10 +362,11 @@ class Http
                         $data->global = $response->getHeader('X-RateLimit-Global')[0] == 'true';
                     } else {
                         // Some other 429
-                        $this->logger->error($request. ' does not contain global rate-limit value');
-                        $rateLimitError = new RuntimeException('No rate limit global response', $statusCode);
+                        $this->logger->error($request.' does not contain global rate-limit value');
+                        $rateLimitError = new RateLimitException('No rate limit global response', $statusCode);
                         $deferred->reject($rateLimitError);
                         $request->getDeferred()->reject($rateLimitError);
+
                         return;
                     }
                 }
@@ -335,10 +376,11 @@ class Http
                         $data->retry_after = $response->getHeader('Retry-After')[0];
                     } else {
                         // Some other 429
-                        $this->logger->error($request. ' does not contain retry after rate-limit value');
-                        $rateLimitError = new RuntimeException('No rate limit retry after response', $statusCode);
+                        $this->logger->error($request.' does not contain retry after rate-limit value');
+                        $rateLimitError = new RateLimitException('No rate limit retry after response', $statusCode);
                         $deferred->reject($rateLimitError);
                         $request->getDeferred()->reject($rateLimitError);
+
                         return;
                     }
                 }
@@ -385,7 +427,7 @@ class Http
                 $deferred->resolve($response);
                 $request->getDeferred()->resolve($data);
             }
-        }, function (Exception $e) use ($request, $deferred) {
+        }, function (\Exception $e) use ($request, $deferred) {
             $this->logger->warning($request.' failed: '.$e->getMessage());
 
             $deferred->reject($e);
@@ -418,7 +460,9 @@ class Http
         if (! isset($this->buckets[$key])) {
             $bucket = new Bucket($key, $this->loop, $this->logger, function (Request $request) {
                 $deferred = new Deferred();
-                $this->queue->enqueue([$request, $deferred]);
+                self::isInteractionEndpoint($request)
+                    ? $this->interactionQueue->enqueue([$request, $deferred])
+                    : $this->queue->enqueue([$request, $deferred]);
                 $this->checkQueue();
 
                 return $deferred->promise();
@@ -434,10 +478,15 @@ class Http
      * Checks the request queue to see if more requests can be
      * sent out.
      */
-    protected function checkQueue(): void
+    protected function checkQueue(bool $check_interactions = true): void
     {
+        if ($check_interactions) {
+            $this->checkInteractionQueue();
+        }
+
         if ($this->waiting >= static::CONCURRENT_REQUESTS || $this->queue->isEmpty()) {
-            $this->logger->debug('http not checking', ['waiting' => $this->waiting, 'empty' => $this->queue->isEmpty()]);
+            $this->logger->debug('http not checking queue', ['waiting' => $this->waiting, 'empty' => $this->queue->isEmpty()]);
+
             return;
         }
 
@@ -450,13 +499,53 @@ class Http
 
         $this->executeRequest($request)->then(function ($result) use ($deferred) {
             --$this->waiting;
-            $this->checkQueue();
+            $this->checkQueue(false);
             $deferred->resolve($result);
         }, function ($e) use ($deferred) {
             --$this->waiting;
+            $this->checkQueue(false);
+            $deferred->reject($e);
+        });
+    }
+
+    /**
+     * Checks the interaction queue to see if more requests can be
+     * sent out.
+     */
+    protected function checkInteractionQueue(): void
+    {
+        if ($this->interactionQueue->isEmpty()) {
+            $this->logger->debug('http not checking interaction queue', ['waiting' => $this->waiting, 'empty' => $this->interactionQueue->isEmpty()]);
+
+            return;
+        }
+
+        /**
+         * @var Request  $request
+         * @var Deferred $deferred
+         */
+        [$request, $deferred] = $this->interactionQueue->dequeue();
+
+        $this->executeRequest($request)->then(function ($result) use ($deferred) {
+            $this->checkQueue();
+            $deferred->resolve($result);
+        }, function ($e) use ($deferred) {
             $this->checkQueue();
             $deferred->reject($e);
         });
+    }
+
+    /**
+     * Checks if the request is for an interaction endpoint.
+     * 
+     * @link https://discord.com/developers/docs/interactions/receiving-and-responding#endpoints
+     *
+     * @param Request $request
+     * @return bool
+     */
+    public static function isInteractionEndpoint(Request $request): bool
+    {
+        return strpos($request->getUrl(), '/interactions') === 0;
     }
 
     /**
@@ -464,9 +553,9 @@ class Http
      *
      * @param ResponseInterface $response
      *
-     * @return Throwable
+     * @return \Throwable
      */
-    public function handleError(ResponseInterface $response): Throwable
+    public function handleError(ResponseInterface $response): \Throwable
     {
         $reason = $response->getReasonPhrase().' - ';
 
@@ -475,7 +564,7 @@ class Http
 
         // attempt to prettyify the response content
         if (($content = json_decode($errorBody)) !== null) {
-            if (isset($content->code)) {
+            if (! empty($content->code)) {
                 $errorCode = $content->code;
             }
             $reason .= json_encode($content, JSON_PRETTY_PRINT);
@@ -484,12 +573,16 @@ class Http
         }
 
         switch ($response->getStatusCode()) {
+            case 400:
+                return new BadRequestException($reason, $errorCode);
             case 401:
                 return new InvalidTokenException($reason, $errorCode);
             case 403:
                 return new NoPermissionsException($reason, $errorCode);
             case 404:
                 return new NotFoundException($reason, $errorCode);
+            case 405:
+                return new MethodNotAllowedException($reason, $errorCode);
             case 500:
                 if (strpos(strtolower($errorBody), 'longer than 2000 characters') !== false ||
                     strpos(strtolower($errorBody), 'string value is too long') !== false) {

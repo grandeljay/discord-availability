@@ -29,7 +29,7 @@ $discord = new Discord([
 ```
 
 `intents` can be an array of valid intents _or_ an integer representing the intents. Default is all intents minus any privileged intents.
-At the moment this means all intents minus `GUILD_MEMBERS` and `GUILD_PRESENCES`. To enable these intents you must first enable them in your
+At the moment this means all intents minus `GUILD_MEMBERS`, `GUILD_PRESENCES`, and `MESSAGE_CONTENT`. To enable these intents you must first enable them in your
 Discord developer portal.
 
 ```php
@@ -60,12 +60,6 @@ This requires the `GUILD_MEMBERS` intent to be enabled in DiscordPHP. See above 
 
 ```php
     'retrieveBans' => false,
-```
-
-`pmChannels` is a boolean whether PM channels should be stored on bot load. Default is false.
-
-```php
-    'pmChannels' => false,
 ```
 
 `disabledEvents` is an array of events that will be disabled. By default all events are enabled.

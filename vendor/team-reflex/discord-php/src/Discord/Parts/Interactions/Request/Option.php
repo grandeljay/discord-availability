@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -11,48 +13,59 @@
 
 namespace Discord\Parts\Interactions\Request;
 
+use Discord\Helpers\Collection;
+use Discord\Helpers\ExCollectionInterface;
+use Discord\Parts\Interactions\Command\Option as CommandOption;
 use Discord\Parts\Part;
-use Discord\Repository\Interaction\OptionRepository;
 
 /**
  * Represents an option received with an interaction.
  *
- * @see https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-interaction-data-option-structure
+ * @link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-interaction-data-option-structure
  *
- * @property string           $name    Name of the option.
- * @property int              $type    Type of the option.
- * @property mixed            $value   Value of the option.
- * @property OptionRepository $options Sub-options if applicable.
- * @property bool             $focused Whether this option is the currently focused option for autocomplete.
+ * @since 7.0.0
+ *
+ * @property string                              $name    Name of the parameter.
+ * @property int                                 $type    Type of the option.
+ * @property string|int|float|bool|null          $value   Value of the option resulting from user input.
+ * @property ExCollectionInterface|Option[]|null $options Present if this option is a group or subcommand.
+ * @property bool|null                           $focused `true` if this option is the currently focused option for autocomplete.
  */
 class Option extends Part
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
-    protected $fillable = ['name', 'type', 'value', 'options', 'focused'];
-
-    /**
-     * @inheritdoc
-     */
-    protected $repositories = [
-        'options' => OptionRepository::class,
+    protected $fillable = [
+        'name',
+        'type',
+        'value',
+        'options',
+        'focused',
     ];
 
     /**
-     * Sets the sub-options of the option.
+     * Gets the options of the interaction.
      *
-     * @param array $options
+     * @return ExCollectionInterface|Option[]|null $options
      */
-    protected function setOptionsAttribute($options)
+    protected function getOptionsAttribute(): ?ExCollectionInterface
     {
-        foreach ($options as $option) {
-            $this->options->pushItem($this->factory->create(Option::class, $option, true));
+        if (! isset($this->attributes['options']) && ! in_array($this->type, [CommandOption::SUB_COMMAND, CommandOption::SUB_COMMAND_GROUP])) {
+            return null;
         }
+
+        $options = Collection::for(Option::class, 'name');
+
+        foreach ($this->attributes['options'] ?? [] as $option) {
+            $options->pushItem($this->createOf(Option::class, $option));
+        }
+
+        return $options;
     }
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     public function getRepositoryAttributes(): array
     {

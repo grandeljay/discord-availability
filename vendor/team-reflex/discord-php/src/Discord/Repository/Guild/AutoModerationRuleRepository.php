@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -16,20 +18,23 @@ use Discord\Parts\Guild\AutoModeration\Rule;
 use Discord\Repository\AbstractRepository;
 
 /**
- * Contains auto moderation rules that belong to guilds.
+ * Contains auto moderation rules for a guild.
  *
- * @see \Discord\Parts\Guild\AutoModeration\Rule
+ * @see Rule
  * @see \Discord\Parts\Guild\Guild
  *
- * @method Rule|null get(string $discrim, $key)  Gets an item from the collection.
- * @method Rule|null first()                     Returns the first element of the collection.
- * @method Rule|null pull($key, $default = null) Pulls an item from the repository, removing and returning the item.
- * @method Rule|null find(callable $callback)    Runs a filter callback over the repository.
+ * @since 7.1.0
+ *
+ * @method Rule|null get(string $discrim, $key)
+ * @method Rule|null pull(string|int $key, $default = null)
+ * @method Rule|null first()
+ * @method Rule|null last()
+ * @method Rule|null find(callable $callback)
  */
 class AutoModerationRuleRepository extends AbstractRepository
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $endpoints = [
         'all' => Endpoint::GUILD_AUTO_MODERATION_RULES,
@@ -40,7 +45,7 @@ class AutoModerationRuleRepository extends AbstractRepository
     ];
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $class = Rule::class;
 }

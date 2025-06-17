@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -11,6 +13,7 @@
 
 namespace Discord\Builders;
 
+use Discord\Helpers\ExCollectionInterface;
 use Discord\Parts\Interactions\Command\Command;
 use Discord\Parts\Interactions\Command\Option;
 use JsonSerializable;
@@ -18,9 +21,11 @@ use JsonSerializable;
 /**
  * Helper class used to build application commands.
  *
+ * @since 7.0.0
+ *
  * @author Mark `PeanutNL` Versluis
  */
-class CommandBuilder implements JsonSerializable
+class CommandBuilder extends Builder implements JsonSerializable
 {
     use CommandAttributes;
 
@@ -32,6 +37,20 @@ class CommandBuilder implements JsonSerializable
     protected $type = Command::CHAT_INPUT;
 
     /**
+     * Name of the command.
+     *
+     * @var string
+     */
+    protected string $name;
+
+    /**
+     * Description of the command. should be empty if the type is not CHAT_INPUT.
+     *
+     * @var string|null
+     */
+    protected ?string $description = null;
+
+    /**
      * The default permission of the command. If true the command is enabled when the app is added to the guild.
      *
      * @var bool
@@ -39,9 +58,16 @@ class CommandBuilder implements JsonSerializable
     protected $default_permission = true;
 
     /**
+     * The parameters for the command, max 25. Only for Slash command (CHAT_INPUT).
+     *
+     * @var ExCollectionInterface<Option|Option[]|null
+     */
+    protected $options = null;
+
+    /**
      * Creates a new command builder.
      *
-     * @return self
+     * @return static
      */
     public static function new(): self
     {
@@ -51,9 +77,9 @@ class CommandBuilder implements JsonSerializable
     /**
      * Returns all the options in the command.
      *
-     * @return Option[]|null
+     * @return ExCollectionInterface<Option>|Option[]|null
      */
-    public function getOptions(): ?array
+    public function getOptions()
     {
         return $this->options ?? null;
     }
@@ -78,7 +104,13 @@ class CommandBuilder implements JsonSerializable
             'name_localizations',
             'description_localizations',
             'default_member_permissions',
+            'dm_permission',
             'default_permission',
+            'guild_id',
+            'nsfw',
+            'integration_types',
+            'contexts',
+            'handler'
         ];
 
         foreach ($optionals as $optional) {
@@ -95,7 +127,7 @@ class CommandBuilder implements JsonSerializable
     }
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     public function jsonSerialize(): array
     {

@@ -1,5 +1,68 @@
 # Changelog
 
+## 1.10.0 (2024-09-06)
+
+*   Feature: Improve PHP 8.4+ support by avoiding implicitly nullable type declarations.
+    (#59 by @clue)
+
+*   Feature: Full PHP 8.3 compatibility.
+    (#57 by @clue)
+
+## 1.9.0 (2022-12-05)
+
+*   Feature: Add support for PHP 8.1 and PHP 8.2.
+    (#44 by @SimonFrings and #51 by @WyriHaximus)
+
+*   Feature: Forward compatibility with upcoming Promise v3.
+    (#33 by @WyriHaximus)
+
+*   Feature / Fix: Improve error reporting when custom error handler is used.
+    (#49 by @clue)
+
+*   Feature: Avoid dependency on `ext-filter`.
+    (#45 by @clue)
+
+*   Improve documentation and examples and update to use new reactphp/async package.
+    (#50 by @nhedger, #53 by @dinooo13 and #47, #54 and #56 by @SimonFrings)
+
+*   Improve test suite and report failed assertions.
+    (#48 by @SimonFrings and #55 by @clue)
+
+## 1.8.0 (2021-07-11)
+
+A major new feature release, see [**release announcement**](https://clue.engineering/2021/announcing-reactphp-default-loop).
+
+*   Feature: Simplify usage by supporting new [default loop](https://reactphp.org/event-loop/#loop).
+    (#42 by @clue)
+
+    ```php
+    // old (still supported)
+    $factory = new React\Datagram\Factory($loop);
+
+    // new (using default loop)
+    $factory = new React\Datagram\Factory();
+    ```
+
+## 1.7.0 (2021-06-25)
+
+*   Feature: Support falling back to multiple DNS servers from DNS config.
+    (#41 by @clue)
+
+    When using the `Factory`, it will now use all DNS servers configured on your
+    system. If you have multiple DNS servers configured and connectivity to the
+    primary DNS server is broken, it will now fall back to your other DNS
+    servers, thus providing improved connectivity and redundancy for broken DNS
+    configurations.
+
+## 1.6.0 (2021-02-12)
+
+*   Feature: Support PHP 8 (socket address of closed socket should be null).
+    (#39 by @clue)
+
+*   Improve test suite and add `.gitattributes` to exclude dev files from exports.
+    Run tests on PHPUnit 9, switch to GitHub actions and clean up test suite.
+    (#30, #31 and #38 by @clue, #34 by @reedy, #35 by @WyriHaximus and #37 by @SimonFrings)
+
 ## 1.5.0 (2019-07-10)
 
 *   Feature: Forward compatibility with upcoming stable DNS component.

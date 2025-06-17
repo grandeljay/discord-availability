@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -13,27 +15,30 @@ namespace Discord\WebSockets\Events;
 
 use Discord\Parts\Guild\Ban;
 use Discord\WebSockets\Event;
-use Discord\Helpers\Deferred;
+use Discord\Parts\Guild\Guild;
 
 /**
- * @see https://discord.com/developers/docs/topics/gateway#guild-ban-add
+ * @link https://discord.com/developers/docs/topics/gateway-events#guild-ban-add
+ *
+ * @since 2.1.3
  */
 class GuildBanAdd extends Event
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
-    public function handle(Deferred &$deferred, $data): void
+    public function handle($data)
     {
         /** @var Ban */
-        $banPart = $this->factory->create(Ban::class, $data, true);
+        $banPart = $this->factory->part(Ban::class, (array) $data, true);
 
-        if ($guild = $banPart->guild) {
-            $guild->bans->pushItem($banPart);
+        /** @var ?Guild */
+        if ($guild = yield $this->discord->guilds->cacheGet($data->guild_id)) {
+            $guild->bans->set($data->user->id, $banPart);
         }
 
         $this->cacheUser($data->user);
 
-        $deferred->resolve($banPart);
+        return $banPart;
     }
 }

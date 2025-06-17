@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -11,27 +13,29 @@
 
 namespace Discord\Repository\Guild;
 
+use Discord\Discord;
 use Discord\Http\Endpoint;
 use Discord\Parts\Interactions\Command\Command;
-use Discord\Parts\Interactions\Command\Overwrite;
 use Discord\Repository\AbstractRepository;
-use React\Promise\ExtendedPromiseInterface;
 
 /**
  * Contains application guild commands.
  *
- * @see \Discord\Parts\Interactions\Command\Command
+ * @see Command
  * @see \Discord\Parts\Guild\Guild
  *
- * @method Command|null get(string $discrim, $key)  Gets an item from the collection.
- * @method Command|null first()                     Returns the first element of the collection.
- * @method Command|null pull($key, $default = null) Pulls an item from the repository, removing and returning the item.
- * @method Command|null find(callable $callback)    Runs a filter callback over the repository.
+ * @since 7.0.0
+ *
+ * @method Command|null get(string $discrim, $key)
+ * @method Command|null pull(string|int $key, $default = null)
+ * @method Command|null first()
+ * @method Command|null last()
+ * @method Command|null find(callable $callback)
  */
 class GuildCommandRepository extends AbstractRepository
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $endpoints = [
         'all' => Endpoint::GUILD_APPLICATION_COMMANDS,
@@ -42,23 +46,17 @@ class GuildCommandRepository extends AbstractRepository
     ];
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $class = Command::class;
 
     /**
-     * Sets overwrite to all application commands in the guild.
-     *
-     * @see https://discord.com/developers/docs/interactions/application-commands#batch-edit-application-command-permissions
-     *
-     * @param Overwrite $overwrite An overwrite object.
-     *
-     * @deprecated 7.1.0 Removed on Permissions v2
-     *
-     * @return ExtendedPromiseInterface
+     * {@inheritDoc}
      */
-    public function setOverwrite(Overwrite $overwrite): ExtendedPromiseInterface
+    public function __construct(Discord $discord, array $vars = [])
     {
-        return \React\Promise\reject(new \RuntimeException('This function is no longer usable by Bots'));
+        $vars['application_id'] = $discord->application->id; // For the bot's Application Guild Commands
+
+        parent::__construct($discord, $vars);
     }
 }

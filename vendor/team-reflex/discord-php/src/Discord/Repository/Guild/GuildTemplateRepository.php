@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -14,28 +16,31 @@ namespace Discord\Repository\Guild;
 use Discord\Http\Endpoint;
 use Discord\Parts\Guild\GuildTemplate;
 use Discord\Repository\AbstractRepository;
-use React\Promise\ExtendedPromiseInterface;
+use React\Promise\PromiseInterface;
 
 /**
- * Contains guildtemplates to guilds.
+ * Contains guild templates of a guild.
  *
- * @see \Discord\Parts\Guild\GuildTemplate
+ * @see GuildTemplate
  * @see \Discord\Parts\Guild\Guild
  *
- * @method GuildTemplate|null get(string $discrim, $key)  Gets an item from the collection.
- * @method GuildTemplate|null first()                     Returns the first element of the collection.
- * @method GuildTemplate|null pull($key, $default = null) Pulls an item from the repository, removing and returning the item.
- * @method GuildTemplate|null find(callable $callback)    Runs a filter callback over the repository.
+ * @since 7.0.0
+ *
+ * @method GuildTemplate|null get(string $discrim, $key)
+ * @method GuildTemplate|null pull(string|int $key, $default = null)
+ * @method GuildTemplate|null first()
+ * @method GuildTemplate|null last()
+ * @method GuildTemplate|null find(callable $callback)
  */
 class GuildTemplateRepository extends AbstractRepository
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $discrim = 'code';
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $endpoints = [
         'all' => Endpoint::GUILD_TEMPLATES,
@@ -46,26 +51,31 @@ class GuildTemplateRepository extends AbstractRepository
     ];
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $class = GuildTemplate::class;
 
     /**
      * Syncs the template to the guild's current state. Requires the MANAGE_GUILD permission.
      *
+     * @link https://discord.com/developers/docs/resources/guild-template#sync-guild-template
+     *
      * @param string $template_code The guild template code.
      *
-     * @return ExtendedPromiseInterface
+     * @return PromiseInterface<GuildTemplate>
      */
-    public function sync(string $template_code): ExtendedPromiseInterface
+    public function sync(string $template_code): PromiseInterface
     {
         return $this->http->put(Endpoint::bind(Endpoint::GUILD_TEMPLATE, $this->vars['guild_id'], $template_code))->then(function ($guild_template) use ($template_code) {
-            if ($this->offsetExists($template_code)) {
-                $guild_template = $this->factory->create(GuildTemplate::class, $guild_template, true);
-                $this->offsetSet($template_code, $guild_template);
-            }
+            return $this->cache->get($template_code)->then(function ($guildTemplate) use ($guild_template, $template_code) {
+                if ($guildTemplate === null) {
+                    $guildTemplate = $this->factory->part(GuildTemplate::class, (array) $guild_template, true);
+                } else {
+                    $guildTemplate->fill($guild_template);
+                }
 
-            return $guild_template;
+                return $this->cache->set($template_code, $guildTemplate)->then(fn ($success) => $guildTemplate);
+            });
         });
     }
 }

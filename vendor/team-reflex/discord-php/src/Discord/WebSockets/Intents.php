@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -11,10 +13,17 @@
 
 namespace Discord\WebSockets;
 
+/**
+ * Contains constants used in intents.
+ *
+ * @link https://discord.com/developers/docs/topics/gateway#gateway-intents
+ *
+ * @since 5.0.0
+ */
 class Intents
 {
     /**
-     * Guilds intent:.
+     * Guilds events.
      *
      * - GUILD_CREATE
      * - GUILD_UPDATE
@@ -33,7 +42,7 @@ class Intents
     public const GUILDS = (1 << 0);
 
     /**
-     * Guild member events:.
+     * Guild member events (Privileged).
      *
      * - GUILD_MEMBER_ADD
      * - GUILD_MEMBER_UPDATE
@@ -42,15 +51,15 @@ class Intents
     public const GUILD_MEMBERS = (1 << 1);
 
     /**
-     * Guild ban events:.
-     *
+     * Guild moderation events.
+     * - GUILD_AUDIT_LOG_ENTRY_CREATE
      * - GUILD_BAN_ADD
-     * - GUILD_BAN_REMOVE
+     * - GUILD_BAN_REMOVE.
      */
-    public const GUILD_BANS = (1 << 2);
+    public const GUILD_MODERATION = (1 << 2);
 
     /**
-     * Guild emoji and sticker events:.
+     * Guild emoji and sticker events.
      *
      * - GUILD_EMOJIS_UPDATE
      * - GUILD_STICKERS_UPDATE
@@ -58,7 +67,7 @@ class Intents
     public const GUILD_EMOJIS_AND_STICKERS = (1 << 3);
 
     /**
-     * Guild integration events:.
+     * Guild integration events.
      *
      * - GUILD_INTEGRATIONS_UPDATE
      * - INTEGRATION_CREATE
@@ -75,7 +84,7 @@ class Intents
     public const GUILD_WEBHOOKS = (1 << 5);
 
     /**
-     * Guild invite events:.
+     * Guild invite events.
      *
      * - INVITE_CREATE
      * - INVITE_DELETE
@@ -83,21 +92,21 @@ class Intents
     public const GUILD_INVITES = (1 << 6);
 
     /**
-     * Guild voice state events:.
+     * Guild voice state events.
      *
      * - VOICE_STATE_UPDATE
      */
     public const GUILD_VOICE_STATES = (1 << 7);
 
     /**
-     * Guild presence events:.
+     * Guild presence events (Privileged).
      *
      * - PRESENCE_UPDATE
      */
     public const GUILD_PRESENCES = (1 << 8);
 
     /**
-     * Guild message events:.
+     * Guild message events.
      *
      * - MESSAGE_CREATE
      * - MESSAGE_UPDATE
@@ -107,7 +116,7 @@ class Intents
     public const GUILD_MESSAGES = (1 << 9);
 
     /**
-     * Guild message reaction events:.
+     * Guild message reaction events.
      *
      * - MESSAGE_REACTION_ADD
      * - MESSAGE_REACTION_REMOVE
@@ -117,14 +126,14 @@ class Intents
     public const GUILD_MESSAGE_REACTIONS = (1 << 10);
 
     /**
-     * Guild typing events:.
+     * Guild typing events.
      *
      * - TYPING_START
      */
     public const GUILD_MESSAGE_TYPING = (1 << 11);
 
     /**
-     * Direct message events:.
+     * Direct message events.
      *
      * - CHANNEL_CREATE
      * - MESSAGE_CREATE
@@ -135,7 +144,7 @@ class Intents
     public const DIRECT_MESSAGES = (1 << 12);
 
     /**
-     * Direct message reaction events:.
+     * Direct message reaction events.
      *
      * - MESSAGE_REACTION_ADD
      * - MESSAGE_REACTION_REMOVE
@@ -145,16 +154,24 @@ class Intents
     public const DIRECT_MESSAGE_REACTIONS = (1 << 13);
 
     /**
-     * Direct message typing events:.
+     * Direct message typing events.
      *
      * - TYPING_START
      */
     public const DIRECT_MESSAGE_TYPING = (1 << 14);
 
+    /**
+     * Message content intent (Privileged).
+     *
+     * @link https://discord.com/developers/docs/topics/gateway#message-content-intent
+     * @link https://dis.gd/mcfaq
+     *
+     * @since 7.3.0
+     */
     public const MESSAGE_CONTENT = (1 << 15);
 
     /**
-     * Guild scheduled events events:.
+     * Guild scheduled events events.
      *
      * - GUILD_SCHEDULED_EVENT_CREATE
      * - GUILD_SCHEDULED_EVENT_UPDATE
@@ -165,7 +182,7 @@ class Intents
     public const GUILD_SCHEDULED_EVENTS = (1 << 16);
 
     /**
-     * Auto moderation rule events:.
+     * Auto moderation rule events.
      *
      * - AUTO_MODERATION_RULE_CREATE
      * - AUTO_MODERATION_RULE_UPDATE
@@ -174,11 +191,27 @@ class Intents
     public const AUTO_MODERATION_CONFIGURATION = (1 << 20);
 
     /**
-     * Auto moderation execution events:.
+     * Auto moderation execution events.
      *
      * - AUTO_MODERATION_ACTION_EXECUTION
      */
     public const AUTO_MODERATION_EXECUTION = (1 << 21);
+
+    /**
+     * Guild message poll events.
+     *
+     * - MESSAGE_POLL_VOTE_ADD
+     * - MESSAGE_POLL_VOTE_REMOVE
+     */
+    public const GUILD_MESSAGE_POLLS = (1 << 24);
+
+    /**
+     * Direct message poll events.
+     *
+     *  - MESSAGE_POLL_VOTE_ADD
+     *  - MESSAGE_POLL_VOTE_REMOVE
+     */
+    public const DIRECT_MESSAGE_POLLS = (1 << 25);
 
     /**
      * Returns an array of valid intents.

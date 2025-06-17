@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -15,55 +17,70 @@ use Discord\Exceptions\FileNotFoundException;
 use Discord\Http\Endpoint;
 use Discord\Parts\OAuth\Application;
 use Discord\Parts\Part;
+use Discord\Repository\EmojiRepository;
 use Discord\Repository\GuildRepository;
 use Discord\Repository\PrivateChannelRepository;
+use Discord\Repository\SoundRepository;
 use Discord\Repository\UserRepository;
-use React\Promise\ExtendedPromiseInterface;
+use React\Promise\PromiseInterface;
 
 /**
  * The client is the main interface for the client. Most calls on the main class are forwarded here.
  *
- * @property string                   $id               The unique identifier of the client.
- * @property string                   $username         The username of the client.
- * @property string                   $discriminator    The unique discriminator of the client.
- * @property string                   $avatar           The avatar URL of the client.
- * @property string|null              $avatar_hash      The avatar hash of the client.
- * @property bool                     $bot              Whether the client is a bot.
- * @property bool|null                $mfa_enabled      Whether the Bot owner has two factor enabled on their account.
- * @property bool                     $verified         Whether the client has verified their email.
- * @property string|null              $email            The email of the client.
- * @property string|null              $flags            The flags on a user's account.
- * @property User                     $user             The user instance of the client.
- * @property Application              $application      The OAuth2 application of the bot.
+ * @since 2.0.0
+ *
+ * @property string       $id            The unique identifier of the client.
+ * @property string       $username      The username of the client.
+ * @property string       $discriminator The unique discriminator of the client.
+ * @property string|null  $global_name   The user's display name, if it is set. For bots, this is the application name.
+ * @property ?string      $avatar        The avatar URL of the client.
+ * @property string|null  $avatar_hash   The avatar hash of the client.
+ * @property bool         $bot           Whether the client is a bot.
+ * @property bool|null    $mfa_enabled   Whether the Bot owner has two factor enabled on their account.
+ * @property bool|null    $verified      Whether the client has verified their email.
+ * @property ?string|null $email         The email of the client.
+ * @property int|null     $flags         The flags on a user's account.
+ * @property int|null     $public_flags  The public flags on a user's account.
+ * @property User         $user          The user instance of the client.
+ * @property Application  $application   The OAuth2 application of the bot.
+ *
+ * @property EmojiRepository          $emojis
  * @property GuildRepository          $guilds
  * @property PrivateChannelRepository $private_channels
+ * @property SoundRepository          $sounds
  * @property UserRepository           $users
  */
 class Client extends Part
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $fillable = [
         'verified',
         'username',
+        'public_flags',
         'mfa_enabled',
         'id',
         'flags',
         'email',
         'discriminator',
+        'global_name',
         'bot',
         'avatar',
+
+        // actual form
         'user',
         'application',
     ];
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $repositories = [
+        'emojis' => EmojiRepository::class,
         'guilds' => GuildRepository::class,
         'private_channels' => PrivateChannelRepository::class,
+        'sounds' => SoundRepository::class,
         'users' => UserRepository::class,
     ];
 
@@ -72,10 +89,41 @@ class Client extends Part
      */
     public function afterConstruct(): void
     {
-        $this->application = $this->factory->create(Application::class, [], true);
+        $this->application = $this->factory->part(Application::class, [], true);
+        $this->getCurrentApplication();
+    }
 
-        $this->http->get(Endpoint::APPLICATION_CURRENT)->done(function ($response) {
+    /**
+     * Gets the current application of the client.
+     *
+     * @return PromiseInterface<Application>
+     */
+    public function getCurrentApplication(): PromiseInterface
+    {
+        return $this->http->get(Endpoint::APPLICATION_CURRENT)->then(function ($response) {
             $this->application->fill((array) $response);
+            $this->created = true;
+
+            return $this->application;
+        });
+    }
+
+    /**
+     * Updates the current application associated with the bot user.
+     *
+     * @link https://discord.com/developers/docs/resources/application#edit-current-application
+     *
+     * @param array $options Array of fields to update. All fields are optional.
+     *
+     * @return PromiseInterface<Application>
+     */
+    public function updateCurrentApplication(array $options): PromiseInterface
+    {
+        return $this->http->patch(Endpoint::APPLICATION_CURRENT, $options)->then(function ($response) {
+            $this->application->fill((array) $response);
+            $this->created = true;
+
+            return $this->application;
         });
     }
 
@@ -86,7 +134,7 @@ class Client extends Part
      */
     protected function getUserAttribute(): Part
     {
-        return $this->factory->create(User::class, $this->attributes, true);
+        return $this->factory->part(User::class, $this->attributes, true);
     }
 
     /**
@@ -114,7 +162,7 @@ class Client extends Part
     }
 
     /**
-     * @return string The URL to the clients avatar.
+     * @return string The URL to the client's avatar.
      */
     protected function getAvatarAttribute(): string
     {
@@ -132,31 +180,33 @@ class Client extends Part
     /**
      * Saves the client instance.
      *
-     * @return ExtendedPromiseInterface
+     * @return PromiseInterface
      */
-    public function save(): ExtendedPromiseInterface
+    public function save(): PromiseInterface
     {
         return $this->http->patch(Endpoint::USER_CURRENT, $this->getUpdatableAttributes());
     }
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
+     *
+     * @link https://discord.com/developers/docs/resources/user#modify-current-user-json-params
      */
     public function getUpdatableAttributes(): array
     {
-        $attributes = [
+        $attr = [
             'username' => $this->attributes['username'],
         ];
 
         if (isset($this->attributes['avatarhash'])) {
-            $attributes['avatar'] = $this->attributes['avatarhash'];
+            $attr['avatar'] = $this->attributes['avatarhash'];
         }
 
-        return $attributes;
+        return $attr;
     }
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     public function getRepositoryAttributes(): array
     {

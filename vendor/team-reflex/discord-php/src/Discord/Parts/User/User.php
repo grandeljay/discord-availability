@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -12,42 +14,51 @@
 namespace Discord\Parts\User;
 
 use Discord\Builders\MessageBuilder;
+use Discord\Helpers\BigInt;
 use Discord\Http\Endpoint;
 use Discord\Parts\Channel\Channel;
 use Discord\Parts\Part;
 use Discord\Parts\Channel\Message;
-use React\Promise\ExtendedPromiseInterface;
+use Discord\Parts\Channel\Message\AllowedMentions;
+use React\Promise\PromiseInterface;
+use Stringable;
 
 use function React\Promise\resolve;
 
 /**
  * A user is a general user that is not attached to a guild.
  *
- * @see https://discord.com/developers/docs/resources/user
+ * @link https://discord.com/developers/docs/resources/user
  *
- * @property string       $id            The unique identifier of the user.
- * @property string       $username      The username of the user.
- * @property string       $discriminator The discriminator of the user.
- * @property string       $displayname   The username and discriminator of the user.
- * @property string       $avatar        The avatar URL of the user.
- * @property ?string      $avatar_hash   The avatar hash of the user.
- * @property bool|null    $bot           Whether the user is a bot.
- * @property bool|null    $system        Whether the user is a Discord system user.
- * @property bool|null    $mfa_enabled   Whether MFA is enabled.
- * @property string|null  $banner        The banner URL of the user.
- * @property ?string|null $banner_hash   The banner hash of the user.
- * @property ?int|null    $accent_color  The user's banner color encoded as an integer representation of hexadecimal color code.
- * @property string|null  $locale        User locale.
- * @property bool|null    $verified      Whether the user is verified.
- * @property ?string|null $email         User email.
- * @property int|null     $flags         User flags.
- * @property int|null     $premium_type  Type of nitro subscription.
- * @property int|null     $public_flags  Public flags on the user.
+ * @since 2.0.0
  *
- * @method ExtendedPromiseInterface sendMessage(MessageBuilder $builder)
- * @method ExtendedPromiseInterface sendMessage(string $text, bool $tts = false, Embed|array $embed = null, array $allowed_mentions = null, ?Message $replyTo = null)
+ * @property string             $id                     The unique identifier of the user.
+ * @property string             $username               The username of the user.
+ * @property string             $discriminator          The discriminator of the user.
+ * @property string|null        $global_name            The user's display name, if it is set. For bots, this is the application name.
+ * @property string             $displayname            The display name of the client.
+ * @property ?string            $avatar                 The avatar URL of the user.
+ * @property string|null        $avatar_hash            The avatar hash of the user.
+ * @property bool|null          $bot                    Whether the user is a bot.
+ * @property bool|null          $system                 Whether the user is a Discord system user.
+ * @property bool|null          $mfa_enabled            Whether MFA is enabled.
+ * @property ?string|null       $banner                 The banner URL of the user.
+ * @property string|null        $banner_hash            The banner hash of the user.
+ * @property ?int|null          $accent_color           The user's banner color encoded as an integer representation of hexadecimal color code.
+ * @property string|null        $locale                 User locale.
+ * @property bool|null          $verified               Whether the user is verified.
+ * @property ?string|null       $email                  User email.
+ * @property int|null           $flags                  User flags.
+ * @property int|null           $premium_type           Type of nitro subscription.
+ * @property int|null           $public_flags           Public flags on the user.
+ * @property int|null           $avatar_decoration      The user's avatar decoration URL.
+ * @property int|null           $avatar_decoration_hash The user's avatar decoration hash.
+ * @property ?PrimaryGuild|null $primary_guild          The primary guild of the user.
+ * @property ?Collectibles|null $collectibles           The user's collectibles.
+ *
+ * @method PromiseInterface<Message> sendMessage(MessageBuilder $builder)
  */
-class User extends Part
+class User extends Part implements Stringable
 {
     public const FLAG_DISCORD_EMPLOYEE = (1 << 0);
     public const FLAG_DISCORD_PARTNER = (1 << 1);
@@ -64,7 +75,8 @@ class User extends Part
     public const FLAG_VERIFIED_BOT_DEVELOPER = (1 << 17);
     public const FLAG_DISCORD_CERTIFIED_MODERATOR = (1 << 18);
     public const BOT_HTTP_INTERACTIONS = (1 << 19);
-    public const FLAG_ACTIVE_DEVELOPER = (1 < 22);
+    public const FLAG_SUSPECTED_SPAM = (1 << 20); // Not documented
+    public const FLAG_ACTIVE_DEVELOPER = (1 << 22);
 
     public const PREMIUM_NONE = 0;
     public const PREMIUM_NITRO_CLASSIC = 1;
@@ -72,41 +84,45 @@ class User extends Part
     public const PREMIUM_NITRO_BASIC = 3;
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $fillable = [
         'id',
         'username',
         'discriminator',
+        'global_name',
         'avatar',
         'bot',
         'system',
         'mfa_enabled',
+        'banner',
+        'accent_color',
         'locale',
         'verified',
         'email',
         'flags',
-        'banner',
-        'accent_color',
         'premium_type',
         'public_flags',
+        'avatar_decoration',
+        'primary_guild',
+        'collectibles',
     ];
 
     /**
      * Gets the private channel for the user.
      *
-     * @see https://discord.com/developers/docs/resources/user#create-dm
+     * @link https://discord.com/developers/docs/resources/user#create-dm
      *
-     * @return ExtendedPromiseInterface<Channel>
+     * @return PromiseInterface<Channel>
      */
-    public function getPrivateChannel(): ExtendedPromiseInterface
+    public function getPrivateChannel(): PromiseInterface
     {
         if ($channel = $this->discord->private_channels->get('recipient_id', $this->id)) {
             return resolve($channel);
         }
 
         return $this->http->post(Endpoint::USER_CURRENT_CHANNELS, ['recipient_id' => $this->id])->then(function ($response) {
-            $channel = $this->factory->create(Channel::class, $response, true);
+            $channel = $this->discord->private_channels->create($response, true);
             $this->discord->private_channels->pushItem($channel);
 
             return $channel;
@@ -119,47 +135,45 @@ class User extends Part
      * Takes a `MessageBuilder` or content of the message for the first parameter. If the first parameter
      * is an instance of `MessageBuilder`, the rest of the arguments are disregarded.
      *
-     * @see https://discord.com/developers/docs/resources/channel#create-message
+     * @link https://discord.com/developers/docs/resources/channel#create-message
      *
-     * @param MessageBuilder|string $message          The message builder that should be converted into a message, or the string content of the message.
-     * @param bool                  $tts              Whether the message is TTS.
-     * @param Embed|array|null      $embed            An embed object or array to send in the message.
-     * @param array|null            $allowed_mentions Allowed mentions object for the message.
-     * @param Message|null          $replyTo          Sends the message as a reply to the given message instance.
+     * @param MessageBuilder|string                 $message          The message builder that should be converted into a message, or the string content of the message.
+     * @param bool                                  $tts              Whether the message is TTS.
+     * @param \Discord\Parts\Embed\Embed|array|null $embed            An embed object or array to send in the message.
+     * @param AllowedMentions|array|null            $allowed_mentions Allowed mentions object for the message.
+     * @param Message|null                          $replyTo          Sends the message as a reply to the given message instance.
      *
-     * @return ExtendedPromiseInterface<Message>
+     * @return PromiseInterface<Message>
      */
-    public function sendMessage($message, bool $tts = false, $embed = null, $allowed_mentions = null, ?Message $replyTo = null): ExtendedPromiseInterface
+    public function sendMessage($message, bool $tts = false, $embed = null, $allowed_mentions = null, ?Message $replyTo = null): PromiseInterface
     {
-        return $this->getPrivateChannel()->then(function ($channel) use ($message, $tts, $embed, $allowed_mentions, $replyTo) {
-            return $channel->sendMessage($message, $tts, $embed, $allowed_mentions, $replyTo);
-        });
+        return $this
+            ->getPrivateChannel()
+            ->then(fn (Channel $channel) => $channel->sendMessage($message, $tts, $embed, $allowed_mentions, $replyTo));
     }
 
     /**
      * Broadcasts that you are typing to the channel. Lasts for 5 seconds.
      *
-     * @see https://discord.com/developers/docs/resources/channel#trigger-typing-indicator
+     * @link https://discord.com/developers/docs/resources/channel#trigger-typing-indicator
      *
-     * @throws \Exception
+     * @throws \RuntimeException
      *
-     * @return ExtendedPromiseInterface
+     * @return PromiseInterface
      */
-    public function broadcastTyping(): ExtendedPromiseInterface
+    public function broadcastTyping(): PromiseInterface
     {
-        return $this->getPrivateChannel()->then(function (Channel $channel) {
-            return $channel->broadcastTyping();
-        });
+        return $this->getPrivateChannel()->then(fn (Channel $channel) => $channel->broadcastTyping());
     }
 
     /**
-     * Returns the username with the discriminator.
+     * Returns the display name of the client.
      *
-     * @return string Username#Discriminator
+     * @return string Either global_name or username with optional #discriminator.
      */
     protected function getDisplaynameAttribute(): string
     {
-        return $this->username.'#'.$this->discriminator;
+        return $this->global_name ?? $this->username.($this->discriminator !== '0' ? '#'.$this->discriminator : '');
     }
 
     /**
@@ -168,12 +182,12 @@ class User extends Part
      * @param string|null $format The image format.
      * @param int         $size   The size of the image.
      *
-     * @return string The URL to the clients avatar.
+     * @return string The URL to the client's avatar.
      */
     public function getAvatarAttribute(?string $format = null, int $size = 1024): string
     {
         if (empty($this->attributes['avatar'])) {
-            $avatarDiscrim = (int) $this->discriminator % 5;
+            $avatarDiscrim = (($this->discriminator) ? $this->discriminator % 5 : BigInt::shiftRight($this->id, 22) % 6);
 
             return "https://cdn.discordapp.com/embed/avatars/{$avatarDiscrim}.png?size={$size}";
         }
@@ -198,9 +212,48 @@ class User extends Part
      *
      * @return ?string The client avatar's hash.
      */
-    protected function getAvatarHashAttribute(): ?string
+    public function getAvatarHashAttribute(): ?string
     {
         return $this->attributes['avatar'];
+    }
+
+    /**
+     * Returns the avatar decoration URL for the client.
+     *
+     * @param string|null $format The image format.
+     * @param int         $size   The size of the image.
+     *
+     * @return string|null The URL to the clients avatar decoration.
+     */
+    public function getAvatarDecorationAttribute(?string $format = null, int $size = 288): ?string
+    {
+        if (! isset($this->attributes['avatar_decoration'])) {
+            return null;
+        }
+
+        if (isset($format)) {
+            $allowed = ['png', 'jpg', 'webp'];
+
+            if (! in_array(strtolower($format), $allowed)) {
+                $format = 'png';
+            }
+        } elseif (strpos($this->attributes['avatar_decoration'], 'a_') === 0) {
+            $format = 'png';
+        } else {
+            $format = 'png';
+        }
+
+        return "https://cdn.discordapp.com/avatar-decorations/{$this->id}/{$this->attributes['avatar_decoration']}.{$format}?size={$size}";
+    }
+
+    /**
+     * Returns the avatar decoration hash for the client.
+     *
+     * @return ?string The client avatar decoration's hash.
+     */
+    public function getAvatarDecorationHashAttribute(): ?string
+    {
+        return $this->attributes['avatar_decoration'];
     }
 
     /**
@@ -243,9 +296,33 @@ class User extends Part
     }
 
     /**
+     * Returns the primary guild for the client.
+     */
+    protected function getPrimaryGuildAttribute(): ?PrimaryGuild
+    {
+        if (! isset($this->attributes['primary_guild'])) {
+            return null;
+        }
+
+        return $this->factory->part(PrimaryGuild::class, (array) $this->attributes['primary_guild'], true);
+    }
+
+    /**
+     * Returns the collectibles for the client.
+     */
+    protected function getCollectiblesAttribute(): ?Collectibles
+    {
+        if (! isset($this->attributes['collectibles'])) {
+            return null;
+        }
+
+        return $this->factory->part(Collectibles::class, (array) $this->attributes['collectibles'], true);
+    }
+
+    /**
      * Returns a timestamp for when a user's account was created.
      *
-     * @return float
+     * @return ?float
      */
     public function createdTimestamp()
     {
@@ -253,7 +330,7 @@ class User extends Part
     }
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     public function getRepositoryAttributes(): array
     {

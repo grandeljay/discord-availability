@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -17,6 +19,8 @@ use React\Stream\WritableStreamInterface;
 
 /**
  * Handles recieving audio from Discord.
+ *
+ * @since 3.2.0
  */
 class RecieveStream extends EventEmitter implements DuplexStreamInterface
 {
@@ -115,7 +119,7 @@ class RecieveStream extends EventEmitter implements DuplexStreamInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     public function isReadable()
     {
@@ -123,7 +127,7 @@ class RecieveStream extends EventEmitter implements DuplexStreamInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     public function isWritable()
     {
@@ -131,7 +135,7 @@ class RecieveStream extends EventEmitter implements DuplexStreamInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     public function write($data)
     {
@@ -139,7 +143,7 @@ class RecieveStream extends EventEmitter implements DuplexStreamInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     public function end($data = null)
     {
@@ -152,7 +156,7 @@ class RecieveStream extends EventEmitter implements DuplexStreamInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     public function close()
     {
@@ -167,7 +171,7 @@ class RecieveStream extends EventEmitter implements DuplexStreamInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     public function pause()
     {
@@ -183,7 +187,7 @@ class RecieveStream extends EventEmitter implements DuplexStreamInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     public function resume()
     {
@@ -207,7 +211,7 @@ class RecieveStream extends EventEmitter implements DuplexStreamInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     public function pipe(WritableStreamInterface $dest, array $options = [])
     {

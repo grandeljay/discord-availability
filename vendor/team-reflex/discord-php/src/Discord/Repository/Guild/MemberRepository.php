@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -11,28 +13,30 @@
 
 namespace Discord\Repository\Guild;
 
-use Discord\Helpers\Deferred;
 use Discord\Http\Endpoint;
 use Discord\Parts\User\Member;
 use Discord\Repository\AbstractRepository;
-use React\Promise\ExtendedPromiseInterface;
+use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 
 /**
  * Contains members of a guild.
  *
- * @see \Discord\Parts\User\Member
+ * @since 4.0.0
+ *
+ * @see Member
  * @see \Discord\Parts\Guild\Guild
  *
- * @method Member|null get(string $discrim, $key)  Gets an item from the collection.
- * @method Member|null first()                     Returns the first element of the collection.
- * @method Member|null pull($key, $default = null) Pulls an item from the repository, removing and returning the item.
- * @method Member|null find(callable $callback)    Runs a filter callback over the repository.
+ * @method Member|null get(string $discrim, $key)
+ * @method Member|null pull(string|int $key, $default = null)
+ * @method Member|null first()
+ * @method Member|null last()
+ * @method Member|null find(callable $callback)
  */
 class MemberRepository extends AbstractRepository
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $endpoints = [
         'all' => Endpoint::GUILD_MEMBERS,
@@ -42,14 +46,14 @@ class MemberRepository extends AbstractRepository
     ];
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $class = Member::class;
 
     /**
      * Alias for `$member->delete()`.
      *
-     * @see https://discord.com/developers/docs/resources/guild#remove-guild-member
+     * @link https://discord.com/developers/docs/resources/guild#remove-guild-member
      *
      * @param Member      $member The member to kick.
      * @param string|null $reason Reason for Audit Log.
@@ -62,11 +66,11 @@ class MemberRepository extends AbstractRepository
     }
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      *
      * @param array $queryparams Query string params to add to the request, leave null to paginate all members (Warning: Be careful to use this on very large guild)
      */
-    public function freshen(array $queryparams = null): ExtendedPromiseInterface
+    public function freshen(?array $queryparams = null): PromiseInterface
     {
         if (isset($queryparams)) {
             return parent::freshen($queryparams);
@@ -87,17 +91,16 @@ class MemberRepository extends AbstractRepository
 
                     return;
                 } elseif (! $afterId) {
-                    $this->clear();
+                    $this->items = [];
                 }
 
                 foreach ($response as $value) {
-                    $value = array_merge($this->vars, (array) $value);
-                    $part = $this->factory->create($this->class, $value, true);
-
-                    $this->pushItem($part);
+                    $lastValueId = $value->user->id;
                 }
 
-                $paginate($part->id);
+                $this->cacheFreshen($response)->then(function () use ($paginate, $lastValueId) {
+                    $paginate($lastValueId);
+                });
             }, [$deferred, 'reject']);
         })();
 

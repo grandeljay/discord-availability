@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -13,30 +15,33 @@ namespace Discord\WebSockets\Events;
 
 use Discord\Parts\Channel\Channel;
 use Discord\WebSockets\Event;
-use Discord\Helpers\Deferred;
 
 /**
- * @see https://discord.com/developers/docs/topics/gateway#channel-update
+ * @link https://discord.com/developers/docs/topics/gateway-events#channel-update
+ *
+ * @since 2.1.3
  */
 class ChannelUpdate extends Event
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
-    public function handle(Deferred &$deferred, $data): void
+    public function handle($data)
     {
-        $oldChannel = null;
+        $oldChannel = $repository = null;
 
         /** @var Channel */
-        $channelPart = $this->factory->create(Channel::class, $data, true);
+        $channelPart = $this->factory->part(Channel::class, (array) $data, true);
 
         if ($channelPart->is_private) {
-            if (! $oldChannel = $this->discord->private_channels->get('id', $data->id)) {
-                $this->discord->private_channels->pushItem($channelPart);
+            /** @var ?Channel */
+            if (! $oldChannel = yield $this->discord->private_channels->cacheGet($data->id)) {
+                $repository = $this->discord->private_channels;
             }
         } elseif ($guild = $channelPart->guild) {
-            if (! $oldChannel = $guild->channels->get('id', $data->id)) {
-                $guild->channels->pushItem($channelPart);
+            /** @var ?Channel */
+            if (! $oldChannel = yield $guild->channels->cacheGet($data->id)) {
+                $repository = $guild->channels;
             }
         }
 
@@ -48,6 +53,10 @@ class ChannelUpdate extends Event
             $channelPart->fill((array) $data);
         }
 
-        $deferred->resolve([$channelPart, $oldChannel]);
+        if ($repository) {
+            $repository->set($data->id, $channelPart);
+        }
+
+        return [$channelPart, $oldChannel];
     }
 }

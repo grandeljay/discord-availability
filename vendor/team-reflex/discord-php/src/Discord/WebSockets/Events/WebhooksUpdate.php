@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -11,25 +13,38 @@
 
 namespace Discord\WebSockets\Events;
 
+use Discord\Parts\Channel\Channel;
+use Discord\Parts\Thread\Thread;
 use Discord\WebSockets\Event;
-use Discord\Helpers\Deferred;
 
 /**
- * @see https://discord.com/developers/docs/topics/gateway#webhooks-update
+ * @link https://discord.com/developers/docs/topics/gateway-events#webhooks-update
+ *
+ * @since 7.0.0
  */
 class WebhooksUpdate extends Event
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
-    public function handle(Deferred &$deferred, $data): void
+    public function handle($data)
     {
-        $channel = null;
+        if ($guild = yield $this->discord->guilds->cacheGet($data->guild_id)) {
+            /** @var ?Channel */
+            if (! $channel = yield $guild->channels->cacheGet($data->channel_id)) {
+                /** @var Channel */
+                foreach ($guild->channels as $parent) {
+                    /** @var ?Thread */
+                    if ($thread = yield $parent->threads->cacheGet($data->channel_id)) {
+                        $channel = $thread;
+                        break;
+                    }
+                }
+            }
 
-        if ($guild = $this->discord->guilds->get('id', $data->guild_id)) {
-            $channel = $guild->channels->get('id', $data->channel_id);
+            return [$guild, $channel ?? (object) ['id' => $data->channel_id]];
         }
 
-        $deferred->resolve([$guild, $channel]);
+        return [(object) ['id' => $data->guild_id], (object) ['id' => $data->channel_id]];
     }
 }

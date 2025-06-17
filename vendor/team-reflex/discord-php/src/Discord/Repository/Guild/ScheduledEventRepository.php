@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
@@ -14,23 +16,28 @@ namespace Discord\Repository\Guild;
 use Discord\Http\Endpoint;
 use Discord\Parts\Guild\ScheduledEvent;
 use Discord\Repository\AbstractRepository;
-use React\Promise\ExtendedPromiseInterface;
+use React\Promise\PromiseInterface;
+
+use function React\Promise\resolve;
 
 /**
- * Contains scheduled events to guilds.
+ * Contains scheduled events on a guild.
  *
- * @see \Discord\Parts\Guild\ScheduledEvent
+ * @see ScheduledEvent
  * @see \Discord\Parts\Guild\Guild
  *
- * @method ScheduledEvent|null get(string $discrim, $key)  Gets an item from the collection.
- * @method ScheduledEvent|null first()                     Returns the first element of the collection.
- * @method ScheduledEvent|null pull($key, $default = null) Pulls an item from the repository, removing and returning the item.
- * @method ScheduledEvent|null find(callable $callback)    Runs a filter callback over the repository.
+ * @since 7.0.0
+ *
+ * @method ScheduledEvent|null get(string $discrim, $key)
+ * @method ScheduledEvent|null pull(string|int $key, $default = null)
+ * @method ScheduledEvent|null first()
+ * @method ScheduledEvent|null last()
+ * @method ScheduledEvent|null find(callable $callback)
  */
 class ScheduledEventRepository extends AbstractRepository
 {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $endpoints = [
         'all' => Endpoint::GUILD_SCHEDULED_EVENTS,
@@ -41,16 +48,18 @@ class ScheduledEventRepository extends AbstractRepository
     ];
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     protected $class = ScheduledEvent::class;
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      *
      * @param bool $with_user_count Whether to include number of users subscribed to each event
+     *
+     * @return PromiseInterface<ScheduledEvent>
      */
-    public function fetch(string $id, bool $fresh = false, bool $with_user_count = false): ExtendedPromiseInterface
+    public function fetch(string $id, bool $fresh = false, bool $with_user_count = false): PromiseInterface
     {
         if (! $with_user_count) {
             return parent::fetch($id, $fresh);
@@ -58,21 +67,21 @@ class ScheduledEventRepository extends AbstractRepository
 
         if (! $fresh && $part = $this->get($this->discrim, $id)) {
             if (isset($part->user_count)) {
-                return \React\Promise\resolve($part);
+                return resolve($part);
             }
         }
 
-        $part = $this->factory->create($this->class, [$this->discrim => $id]);
+        $part = $this->factory->part($this->class, [$this->discrim => $id]);
         $endpoint = new Endpoint($this->endpoints['get']);
         $endpoint->bindAssoc(array_merge($part->getRepositoryAttributes(), $this->vars));
 
         $endpoint->addQuery('with_user_count', $with_user_count);
 
-        return $this->http->get($endpoint)->then(function ($response) {
-            $part = $this->factory->create($this->class, array_merge($this->vars, (array) $response), true);
-            $this->push($part);
+        return $this->http->get($endpoint)->then(function ($response) use ($part, $id) {
+            $part->fill(array_merge($this->vars, (array) $response));
+            $part->created = true;
 
-            return $part;
+            return $this->cache->set($id, $part)->then(fn ($success) => $part);
         });
     }
 }

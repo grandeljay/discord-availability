@@ -104,7 +104,7 @@ Parameters
        'attach_files',
    ], [
        'add_reactions',
-   ])->done(function () {
+   ])->then(function () {
        // ...
    });
 
@@ -144,7 +144,7 @@ Parameters
 
    // Member can send messages and attach files,
    // but can't add reactions to message.
-   $channel->setOverwrite($member, $overwrite)->done(function () {
+   $channel->setOverwrite($member, $overwrite)->then(function () {
        // ...
    });
 
@@ -166,13 +166,13 @@ member `Member <#member>`_ or string The member to move required
 
 .. code:: php
 
-   $channel->moveMember($member)->done(function () {
+   $channel->moveMember($member)->then(function () {
        // ...
    });
 
    // or
 
-   $channel->moveMember('123213123123213')->done(function () {
+   $channel->moveMember('123213123123213')->then(function () {
        // ...
    });
 
@@ -195,12 +195,12 @@ member `Member <#member>`_ or string The member to mute/unmute required
 .. code:: php
 
    // muting a member with a member object
-   $channel->muteMember($member)->done(function () {
+   $channel->muteMember($member)->then(function () {
        // ...
    });
 
    // unmuting a member with a member ID
-   $channel->unmuteMember('123213123123213')->done(function () {
+   $channel->unmuteMember('123213123123213')->then(function () {
        // ...
    });
 
@@ -239,7 +239,7 @@ Parameters are in an array.
    $channel->createInvite([
        'max_age' => 60, // 1 minute
        'max_uses' => 5, // 5 uses
-   ])->done(function (Invite $invite) {
+   ])->then(function (Invite $invite) {
        // ...
    });
 
@@ -269,7 +269,7 @@ Parameters
        $message3,
        'my_message4_id',
        'my_message5_id',
-   ])->done(function () {
+   ])->then(function () {
        // ...
    });
 
@@ -299,7 +299,7 @@ Parameters
 
    $channel->getMessageHistory([
        'limit' => 5,
-   ])->done(function (Collection $messages) {
+   ])->then(function (Collection $messages) {
        foreach ($messages as $message) {
            // ...
        }
@@ -326,7 +326,7 @@ Parameters
 .. code:: php
 
    // deletes the last 15 messages
-   $channel->limitDelete(15)->done(function () {
+   $channel->limitDelete(15)->then(function () {
        // ...
    });
 
@@ -344,18 +344,18 @@ Parameters
 name    type                   description              default
 ======= ====================== ======================== ========
 message `Message <#message>`_ The message to pin/unpin required
-reason  string                 Reason for Audit Log     
+reason  string                 Reason for Audit Log
 ======= ====================== ======================== ========
 
 .. code:: php
 
    // to pin
-   $channel->pinMessage($message)->done(function (Message $message) {
+   $channel->pinMessage($message)->then(function (Message $message) {
        // ...
    });
 
    // to unpin
-   $channel->unpinMessage($message)->done(function (Message $message) {
+   $channel->unpinMessage($message)->then(function (Message $message) {
        // ...
    });
 
@@ -366,7 +366,7 @@ Gets the channels invites. Returns a collection of invites in a promise.
 
 .. code:: php
 
-   $channel->getInvites()->done(function (Collection $invites) {
+   $channel->getInvites()->then(function (Collection $invites) {
        foreach ($invites as $invite) {
            // ...
        }
@@ -395,7 +395,7 @@ Parameters
        ->addEmbed($embed)
        ->setTts(true);
 
-   $channel->sendMessage($message)->done(function (Message $message) {
+   $channel->sendMessage($message)->then(function (Message $message) {
        // ...
    });
 
@@ -417,7 +417,7 @@ embed `Embed <#embed>`_ The embed to send required
 
 .. code:: php
 
-   $channel->sendEmbed($embed)->done(function (Message $message) {
+   $channel->sendEmbed($embed)->then(function (Message $message) {
        // ...
    });
 
@@ -428,7 +428,7 @@ Broadcasts to the channel that the bot is typing. Genreally, bots should *not* u
 
 .. code:: php
 
-   $channel->broadcastTyping()->done(function () {
+   $channel->broadcastTyping()->then(function () {
        // ...
    });
 
@@ -454,7 +454,7 @@ options array    Array of options                      []
    // Collects 5 messages containing hello
    $channel->createMessageCollector(fn ($message) => strpos($message->content, 'hello') !== false, [
        'limit' => 5,
-   ])->done(function (Collection $messages) {
+   ])->then(function (Collection $messages) {
        foreach ($messages as $message) {
            // ...
        }
@@ -480,7 +480,7 @@ Returns the messages pinned in the channel. Only applicable for text channels. R
 
 .. code:: php
 
-   $channel->getPinnedMessages()->done(function (Collection $messages) {
+   $channel->getPinnedMessages()->then(function (Collection $messages) {
        foreach ($messages as $message) {
            // $message->...
        }
