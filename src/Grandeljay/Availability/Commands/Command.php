@@ -7,6 +7,7 @@ use Discord\Discord;
 use Discord\Parts\Interactions\Command\Option;
 use Discord\Parts\Interactions\Interaction;
 use Grandeljay\Availability\{Bot, Config};
+use Grandeljay\Availability\Time;
 
 class Command
 {
@@ -35,10 +36,10 @@ class Command
 
         if (empty($timeToText)) {
             $timeAvailabilityFrom = Bot::getTimeFromString($timeFromText);
-            $timeAvailabilityTo   = $timeAvailabilityFrom + 3600 * 4;
+            $timeAvailabilityTo   = Time::getEndOfDay($timeAvailabilityFrom);
         } elseif (!empty($timeToText) && empty($timeFromText)) {
             $timeAvailabilityTo   = Bot::getTimeFromString($timeToText);
-            $timeAvailabilityFrom = $timeAvailabilityTo - 3600 * 4;
+            $timeAvailabilityFrom = Time::getEndOfDay($timeAvailabilityTo);
         } else {
             $timeAvailabilityFrom = Bot::getTimeFromString($timeFromText);
             $timeAvailabilityTo   = Bot::getTimeFromString($timeToText);
