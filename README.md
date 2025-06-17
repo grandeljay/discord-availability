@@ -4,7 +4,7 @@ Discord Availability is a discord bot used to track who will be available for a 
 
 ## Requirements
 
-1. PHP v8.1 (v8.2 works but produces deprected notices)
+1. PHP v8.1 - v8.4
 1. Composer
 
 ## Getting started
