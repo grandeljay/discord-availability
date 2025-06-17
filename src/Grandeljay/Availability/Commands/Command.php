@@ -63,7 +63,7 @@ class Command
         $this->description = $description;
 
         /**
-         * When the bot is ready, attempt to create a global slash
+         * When the bot is initialised, attempt to create a global slash
          * command. After the command was successfully created, please
          * remove this code.
          *

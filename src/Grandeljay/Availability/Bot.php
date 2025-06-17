@@ -102,14 +102,14 @@ class Bot
     public function run(): void
     {
         $this->discord->on(
-            'ready', // Event::READY won't work
-            [$this, 'ready']
+            'init', // Event::READY won't work
+            [$this, 'init']
         );
 
         $this->discord->run();
     }
 
-    public function ready(Discord $discord)
+    public function init(Discord $discord)
     {
         /**
          * `$argv` is a native, global PHP variable.
