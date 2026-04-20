@@ -78,6 +78,8 @@ class Config
         $normalisedConfig['eventName']                = $rawConfig['eventName'] ?? "Dota 2";
         $normalisedConfig['logLevel']                 = $rawConfig['logLevel'] ?? "Info";
         $normalisedConfig['timeZone']                 = $rawConfig['timeZone'] ?? \ini_get('date.timezone');
+        $normalisedConfig['nextcloudAppUser']         = $rawConfig['nextcloudAppUser'] ?? null;
+        $normalisedConfig['nextcloudAppPassword']     = $rawConfig['nextcloudAppPassword'] ?? null;
 
         $normalisedConfig['directoryAvailabilities'] = $this->extractAvailabilitiesDirFromConfig($rawConfig);
         $normalisedConfig['token']                   = $this->extractTokenFromConfig($rawConfig);
@@ -304,5 +306,15 @@ class Config
     public function getTimeZone(): string
     {
         return $this->get('timeZone');
+    }
+
+    public function getNextcloudAppUser(): string
+    {
+        return $this->get('nextcloudAppUser');
+    }
+
+    public function getNextcloudAppPassword(): string
+    {
+        return $this->get('nextcloudAppPassword');
     }
 }
