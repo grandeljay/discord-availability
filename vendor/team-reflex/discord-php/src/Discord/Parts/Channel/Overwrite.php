@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -19,7 +20,7 @@ use Discord\Parts\Permissions\ChannelPermission;
 /**
  * Channel Overwrite Class.
  *
- * @link https://discord.com/developers/docs/resources/channel#overwrite-object
+ * @link https://docs.discord.com/developers/resources/channel#overwrite-object
  *
  * @since 3.1.1
  *
@@ -36,7 +37,7 @@ class Overwrite extends Part
     public const TYPE_MEMBER = 1;
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $fillable = [
         'id',
@@ -63,6 +64,16 @@ class Overwrite extends Part
     }
 
     /**
+     * Gets the allow attribute of the role.
+     *
+     * @return ChannelPermission
+     */
+    protected function getAllowAttribute(): ChannelPermission
+    {
+        return $this->attributePartHelper('allow', ChannelPermission::class);
+    }
+
+    /**
      * Sets the deny attribute of the role.
      *
      * @param ChannelPermission|int $deny
@@ -77,7 +88,17 @@ class Overwrite extends Part
     }
 
     /**
-     * {@inheritDoc}
+     * Gets the deny attribute of the role.
+     *
+     * @return ChannelPermission
+     */
+    protected function getDenyAttribute(): ChannelPermission
+    {
+        return $this->attributePartHelper('deny', ChannelPermission::class);
+    }
+
+    /**
+     * @inheritDoc
      *
      * @see Channel::getUpdatableAttributes()
      */
@@ -92,7 +113,7 @@ class Overwrite extends Part
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function getRepositoryAttributes(): array
     {
@@ -102,7 +123,7 @@ class Overwrite extends Part
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function getRawAttributes(): array
     {

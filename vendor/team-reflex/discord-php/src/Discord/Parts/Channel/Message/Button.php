@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -21,7 +22,7 @@ use Discord\Parts\Guild\Emoji;
  *
  * Buttons must be placed inside an Action Row or a Section's accessory field.
  *
- * @link https://discord.com/developers/docs/components/reference#button
+ * @link https://docs.discord.com/developers/components/reference#button
  *
  * @since 10.11.0
  *
@@ -38,7 +39,7 @@ use Discord\Parts\Guild\Emoji;
 class Button extends Interactive
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $fillable = [
         'type',
@@ -59,10 +60,6 @@ class Button extends Interactive
      */
     protected function getEmojiAttribute(): ?Emoji
     {
-        if (! isset($this->attributes['emoji'])) {
-            return null;
-        }
-
-        return $this->factory->part(Emoji::class, (array) $this->attributes['emoji'], true);
+        return $this->attributePartHelper('emoji', Emoji::class);
     }
 }

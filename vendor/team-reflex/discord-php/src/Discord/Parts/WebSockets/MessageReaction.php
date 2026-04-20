@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -50,7 +51,7 @@ use function React\Promise\resolve;
 class MessageReaction extends Part
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $fillable = [
         'user_id',
@@ -62,7 +63,7 @@ class MessageReaction extends Part
     ];
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function isPartial(): bool
     {
@@ -72,7 +73,7 @@ class MessageReaction extends Part
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function fetch(): PromiseInterface
     {
@@ -172,7 +173,7 @@ class MessageReaction extends Part
             }
         }
 
-        return $this->attributes['message'] ?? null;
+        return $this->attributePartHelper('message', Message::class);
     }
 
     /**
@@ -202,11 +203,7 @@ class MessageReaction extends Part
             }
         }
 
-        if (isset($this->attributes['member'])) {
-            return $this->factory->part(Member::class, (array) $this->attributes['member'] + ['guild_id' => $this->guild_id], true);
-        }
-
-        return null;
+        return $this->attributePartHelper('member', Member::class, ['guild_id' => $this->guild_id]);
     }
 
     /**
@@ -216,11 +213,7 @@ class MessageReaction extends Part
      */
     protected function getEmojiAttribute(): ?Emoji
     {
-        if (! isset($this->attributes['emoji'])) {
-            return null;
-        }
-
-        return $this->factory->part(Emoji::class, (array) $this->attributes['emoji'], true);
+        return $this->attributePartHelper('emoji', Emoji::class);
     }
 
     /**
@@ -234,13 +227,13 @@ class MessageReaction extends Part
      *
      * @see Message::deleteReaction()
      *
-     * @link https://discord.com/developers/docs/resources/channel#delete-own-reaction
-     * @link https://discord.com/developers/docs/resources/channel#delete-user-reaction
+     * @link https://docs.discord.com/developers/resources/channel#delete-own-reaction
+     * @link https://docs.discord.com/developers/resources/channel#delete-user-reaction
      */
     public function delete(?int $type = null): PromiseInterface
     {
         if ($type === null) {
-            if ($this->user_id == $this->discord->id) {
+            if ($this->user_id === $this->discord->id) {
                 $type = Message::REACT_DELETE_ME;
             } else {
                 $type = Message::REACT_DELETE_ID;

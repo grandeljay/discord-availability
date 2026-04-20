@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -17,6 +18,7 @@ use Discord\Discord;
 use Discord\Parts\Guild\Emoji;
 use Discord\Parts\Interactions\Interaction;
 use Discord\WebSockets\Event;
+use React\EventLoop\TimerInterface;
 use React\Promise\PromiseInterface;
 
 use function Discord\poly_strlen;
@@ -26,19 +28,35 @@ use function Discord\poly_strlen;
  * They can be clicked by users, and send an interaction to your app when
  * clicked.
  *
- * @link https://discord.com/developers/docs/interactions/message-components#buttons
+ * @link https://docs.discord.com/developers/components/reference#button
  *
  * @since 7.0.0
+ *
+ * @property int          $type      2 for a button.
+ * @property ?int|null    $id        Optional identifier for component.
+ * @property int          $style     A button style.
+ * @property ?string|null $label     Text that appears on the button; max 80 characters.
+ * @property ?array|null  $emoji     Partial emoji: name, id, and animated.
+ * @property string|null  $custom_id Developer-defined identifier for the button; max 100 characters.
+ * @property ?string|null $sku_id    Identifier for a purchasable SKU, only available when using premium-style buttons.
+ * @property ?string|null $url       URL for link-style buttons; max 512 characters.
+ * @property ?bool|null   $disabled  Whether the button is disabled (defaults to false).
  */
 class Button extends Interactive
 {
     public const USAGE = ['Message'];
 
+    /** The most important or recommended action in a group of options. */
     public const STYLE_PRIMARY = 1;
+    /** Alternative or supporting actions. */
     public const STYLE_SECONDARY = 2;
+    /**	Positive confirmation or completion actions. */
     public const STYLE_SUCCESS = 3;
+    /** An action with irreversible consequences. */
     public const STYLE_DANGER = 4;
+    /** Navigates to a URL. */
     public const STYLE_LINK = 5;
+    /** Purchase. */
     public const STYLE_PREMIUM = 6;
 
     /**
@@ -46,63 +64,63 @@ class Button extends Interactive
      *
      * @var int
      */
-    protected $type = Component::TYPE_BUTTON;
+    protected $type = ComponentObject::TYPE_BUTTON;
 
     /**
      * Style of button.
      *
      * @var int
      */
-    private $style = 1;
+    protected $style = 1;
 
     /**
      * Label for the button.
      *
      * @var string|null
      */
-    private $label;
+    protected $label;
 
     /**
      * Emoji to display on the button.
      *
      * @var array|null
      */
-    private $emoji;
+    protected $emoji;
 
     /**
      * 	Identifier for a purchasable SKU, only available when using premium-style buttons.
      *
      * @var string|null
      */
-    private $sku_id;
+    protected $sku_id;
 
     /**
      * URL to send as the button. Only for link buttons.
      *
      * @var string|null
      */
-    private $url;
+    protected $url;
 
     /**
      * Whether the button is disabled.
      *
-     * @var bool
+     * @var bool|null
      */
-    private $disabled = false;
+    protected $disabled;
 
     /**
      * Listener for when the button is pressed.
      *
      * @var callable|null
      */
-    private $listener;
+    protected $listener;
 
     /**
      * Discord instance when the listener is set.
      *
      * @var Discord|null
      */
-    private $discord;
+    protected $discord;
 
     /**
      * Creates a new button.
@@ -278,9 +296,9 @@ class Button extends Interactive
             throw new \InvalidArgumentException('Invalid button style.');
         }
 
-        if ($this->style == self::STYLE_LINK && $style != self::STYLE_LINK) {
+        if ($this->style === self::STYLE_LINK && $style !== self::STYLE_LINK) {
             $this->url = null;
-        } elseif ($this->style != self::STYLE_LINK && $style == self::STYLE_LINK && $this->listener && $this->discord) {
+        } elseif ($this->style !== self::STYLE_LINK && $style === self::STYLE_LINK && $this->listener && $this->discord) {
             $this->setListener(null, $this->discord);
         }
 
@@ -318,8 +336,8 @@ class Button extends Interactive
      */
     public function setEmoji($emoji): self
     {
-        $this->emoji = (function () use ($emoji) {
-            if ($emoji === null) {
+        $this->emoji = (function ($emoji) {
+            if (! $emoji) {
                 return null;
             }
 
@@ -346,9 +364,9 @@ class Button extends Interactive
             return [
                 'id' => $id,
                 'name' => $name,
-                'animated' => $animated == 'a',
+                'animated' => $animated === 'a',
             ];
-        })();
+        })($emoji);
 
         return $this;
     }
@@ -365,7 +383,7 @@ class Button extends Interactive
      */
     public function setCustomId(?string $custom_id): self
     {
-        if ($this->style == Button::STYLE_LINK || $this->style == Button::STYLE_PREMIUM) {
+        if ($this->style === Button::STYLE_LINK || $this->style === Button::STYLE_PREMIUM) {
             throw new \LogicException('You cannot set the custom ID of a link or premium button.');
         }
 
@@ -389,7 +407,7 @@ class Button extends Interactive
      */
     public function setSkuId(?string $sku_id): self
     {
-        if ($this->style != Button::STYLE_PREMIUM) {
+        if ($this->style !== Button::STYLE_PREMIUM) {
             throw new \LogicException('You cannot set the SKU ID of a non-premium button.');
         }
 
@@ -404,13 +422,18 @@ class Button extends Interactive
      * @param string|null $url
      *
      * @throws \LogicException
+     * @throws \LengthException URL exceeds 512 characters.
      *
      * @return $this
      */
     public function setUrl(?string $url): self
     {
-        if ($this->style != Button::STYLE_LINK) {
+        if ($this->style !== Button::STYLE_LINK) {
             throw new \LogicException('You cannot set the URL of a non-link button.');
+        }
+
+        if (isset($url) && poly_strlen($url) > 512) {
+            throw new \LengthException('URL cannot exceed 512 characters.');
         }
 
         $this->url = $url;
@@ -421,11 +444,11 @@ class Button extends Interactive
     /**
      * Sets the button as disabled/not disabled.
      *
-     * @param bool $disabled
+     * @param bool|null $disabled
      *
      * @return $this
      */
-    public function setDisabled(bool $disabled): self
+    public function setDisabled(?bool $disabled): self
     {
         $this->disabled = $disabled;
 
@@ -446,17 +469,18 @@ class Button extends Interactive
      *
      * The button listener will not persist when the bot restarts.
      *
-     * @param ?callable $callback Callback to call when the button is pressed. Will be called with the interaction object.
-     * @param Discord   $discord  Discord client.
-     * @param bool      $oneOff   Whether the listener should be removed after the button is pressed for the first time.
+     * @param ?callable      $callback Callback to call when the button is pressed. Will be called with the interaction object.
+     * @param Discord        $discord  Discord client.
+     * @param bool           $oneOff   Whether the listener should be removed after the button is pressed for the first time.
+     * @param int|float|null $timeout  Optional timeout in seconds after which the listener will be removed.
      *
      * @throws \LogicException
      *
      * @return $this
      */
-    public function setListener(?callable $callback, Discord $discord, bool $oneOff = false): self
+    public function setListener(?callable $callback, Discord $discord, bool $oneOff = false, int|float|null $timeout = null): self
     {
-        if ($this->style == Button::STYLE_LINK || $this->style == Button::STYLE_PREMIUM) {
+        if ($this->style === Button::STYLE_LINK || $this->style === Button::STYLE_PREMIUM) {
             throw new \LogicException('You cannot add a listener to a link or premium button.');
         }
 
@@ -471,30 +495,57 @@ class Button extends Interactive
 
         $this->discord = $discord;
 
-        if ($callback == null) {
+        if ($callback === null) {
             return $this;
         }
 
-        $this->listener = function (Interaction $interaction) use ($callback, $oneOff) {
-            if ($interaction->data->component_type == Component::TYPE_BUTTON && $interaction->data->custom_id == $this->custom_id) {
-                $response = $callback($interaction);
-                $ack = static fn () => $interaction->isResponded() ?: $interaction->acknowledge();
-
-                if ($response instanceof PromiseInterface) {
-                    $response->then($ack);
-                } else {
-                    $ack();
-                }
-
-                if ($oneOff) {
-                    $this->removeListener();
-                }
-            }
-        };
+        $this->listener = $this->createListener($callback, $oneOff, $timeout);
 
         $discord->on(Event::INTERACTION_CREATE, $this->listener);
 
         return $this;
+    }
+
+    /**
+     * Creates a listener.
+     *
+     * @param callable       $callback The callback to execute when the interaction occurs.
+     * @param bool           $oneOff   Whether the listener should be removed after one use.
+     * @param int|float|null $timeout  Optional timeout in seconds after which the listener will be removed.
+     *
+     * @return callable The listener closure.
+     */
+    protected function createListener(callable $callback, bool $oneOff = false, int|float|null $timeout = null): callable
+    {
+        $timer = null;
+
+        $listener = function (Interaction $interaction) use ($callback, $oneOff, &$timer) {
+            if ($interaction->data->component_type !== ComponentObject::TYPE_BUTTON || $interaction->data->custom_id !== $this->custom_id) {
+                return;
+            }
+
+            $response = $callback($interaction);
+            $ack = static fn () => $interaction->isResponded() ?: $interaction->acknowledge();
+
+            $response instanceof PromiseInterface
+                ? $response->then($ack)
+                : $ack();
+
+            if ($oneOff) {
+                $this->removeListener();
+            }
+
+            /** @var ?TimerInterface $timer */
+            if ($timer) {
+                $this->discord->getLoop()->cancelTimer($timer);
+            }
+        };
+
+        if ($timeout) {
+            $timer = $this->discord->getLoop()->addTimer($timeout, fn () => $this->discord->removeListener(Event::INTERACTION_CREATE, $listener));
+        }
+
+        return $listener;
     }
 
     /**
@@ -568,7 +619,7 @@ class Button extends Interactive
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function jsonSerialize(): array
     {
@@ -577,7 +628,7 @@ class Button extends Interactive
             'style' => $this->style,
         ];
 
-        if ($this->style != Button::STYLE_PREMIUM) {
+        if ($this->style !== Button::STYLE_PREMIUM) {
             if (! isset($this->label)) {
                 throw new \DomainException('Non-Premium buttons must have a `label` field set.');
             }
@@ -589,11 +640,11 @@ class Button extends Interactive
 
             if (isset($this->custom_id)) {
                 $content['custom_id'] = $this->custom_id;
-            } elseif ($this->style != Button::STYLE_LINK) {
+            } elseif ($this->style !== Button::STYLE_LINK) {
                 throw new \DomainException('Buttons must have a `custom_id` field set.');
             }
 
-            if ($this->style == Button::STYLE_LINK) {
+            if ($this->style === Button::STYLE_LINK) {
                 if (! isset($this->url)) {
                     throw new \DomainException('Link buttons must have a `url` field set.');
                 }
@@ -601,15 +652,19 @@ class Button extends Interactive
             }
         }
 
-        if ($this->style == Button::STYLE_PREMIUM) {
+        if ($this->style === Button::STYLE_PREMIUM) {
             if (! isset($this->sku_id)) {
                 throw new \DomainException('Premium buttons must have a `sku_id` field set.');
             }
             $content['sku_id'] = $this->sku_id;
         }
 
-        if ($this->disabled) {
-            $content['disabled'] = true;
+        if (isset($this->disabled)) {
+            $content['disabled'] = $this->disabled;
+        }
+
+        if (isset($this->id)) {
+            $content['id'] = $this->id;
         }
 
         return $content;
@@ -618,10 +673,12 @@ class Button extends Interactive
     public function __debugInfo(): array
     {
         $vars = get_object_vars($this);
+        $vars['class'] = $this::class;
         unset($vars['discord']);
         if (isset($vars['listener'])) {
             $vars['listener'] = 'object(Closure)';
         }
+
         return $vars;
     }
 }

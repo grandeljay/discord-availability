@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -17,20 +18,23 @@ use Discord\WebSockets\Event;
 use Discord\Parts\Channel\Channel;
 use Discord\Parts\Channel\Invite;
 use Discord\Parts\Guild\Guild;
+use Discord\WebSockets\Events\Data\InviteDeleteData;
 
 /**
- * @link https://discord.com/developers/docs/topics/gateway-events#invite-delete
+ * @link https://docs.discord.com/developers/events/gateway-events#invite-delete-invite-delete-event-fields
  *
  * @since 5.0.0
  */
 class InviteDelete extends Event
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function handle($data)
     {
         $invitePart = null;
+
+        $data = $this->factory->part(InviteDeleteData::class, (array) $data, true);
 
         /** @var ?Guild */
         if ($guild = yield $this->discord->guilds->cacheGet($data->guild_id)) {

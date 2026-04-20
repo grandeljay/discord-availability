@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -13,8 +14,7 @@ declare(strict_types=1);
 
 namespace Discord\Repository\Monetization;
 
-use Discord\Discord;
-use Discord\Helpers\Collection;
+use Discord\Helpers\ExCollectionInterface;
 use Discord\Http\Endpoint;
 use Discord\Parts\Guild\Guild;
 use Discord\Parts\Monetization\Entitlement;
@@ -36,24 +36,24 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 class EntitlementRepository extends AbstractRepository
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $endpoints = [
         'all' => Endpoint::APPLICATION_ENTITLEMENTS,
         'get' => Endpoint::APPLICATION_ENTITLEMENT,
         'create' => Endpoint::APPLICATION_ENTITLEMENTS,
-        'delete' => Endpoint::APPLICATION_ENTITLEMENT
+        'delete' => Endpoint::APPLICATION_ENTITLEMENT,
     ];
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $class = Entitlement::class;
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
-    public function __construct(Discord $discord, array $vars = [])
+    public function __construct($discord, array $vars = [])
     {
         $vars['application_id'] = $discord->application->id;
 
@@ -63,7 +63,7 @@ class EntitlementRepository extends AbstractRepository
     /**
      * For One-Time Purchase consumable SKUs, marks a given entitlement for the user as consumed. The entitlement will have consumed: true when using List Entitlements.
      *
-     * @link https://discord.com/developers/docs/resources/entitlement#consume-an-entitlement
+     * @link https://docs.discord.com/developers/resources/entitlement#consume-an-entitlement
      *
      * @param Entitlement|string $entitlement
      *
@@ -84,38 +84,38 @@ class EntitlementRepository extends AbstractRepository
     /**
      * Returns all entitlements for a given app, active and expired.
      *
-     * @link https://discord.com/developers/docs/resources/channel#get-channel-messages
+     * @link https://docs.discord.com/developers/resources/channel#get-channel-messages
      *
-     * @param array                         $options                    Array of options.
-     * @param Application|string|int|null   $options['application_id']  Application ID to look up entitlements for. Defaults to the bot's application ID.
-     * @param Member|User|string|int|null   $options['user_id']         User ID to look up entitlements for.
-     * @param array|string|int|null         $options['sku_ids']         Optional list of SKU IDs to check entitlements for.
-     * @param Entitlement|string|int|null   $options['before']          Retrieve entitlements before this entitlement ID.
-     * @param Entitlement|string|int|null   $options['after']           Retrieve entitlements after this entitlement ID.
-     * @param int|null                      $options['limit']           Number of entitlements to return, 1-100, default 100.
-     * @param Guild|string|int|null         $options['guild_id']        Guild ID to look up entitlements for.
-     * @param bool|null                     $options['exclude_ended']   Whether ended entitlements should be omitted. Defaults to false.
-     * @param bool|null                     $options['exclude_deleted'] Whether deleted entitlements should be omitted. Defaults to true.
+     * @param array                       $options                    Array of options.
+     * @param Application|string|int|null $options['application_id']  Application ID to look up entitlements for. Defaults to the bot's application ID.
+     * @param Member|User|string|int|null $options['user_id']         User ID to look up entitlements for.
+     * @param array|string|int|null       $options['sku_ids']         Optional list of SKU IDs to check entitlements for.
+     * @param Entitlement|string|int|null $options['before']          Retrieve entitlements before this entitlement ID.
+     * @param Entitlement|string|int|null $options['after']           Retrieve entitlements after this entitlement ID.
+     * @param int|null                    $options['limit']           Number of entitlements to return, 1-100, default 100.
+     * @param Guild|string|int|null       $options['guild_id']        Guild ID to look up entitlements for.
+     * @param bool|null                   $options['exclude_ended']   Whether ended entitlements should be omitted. Defaults to false.
+     * @param bool|null                   $options['exclude_deleted'] Whether deleted entitlements should be omitted. Defaults to true.
      *
      * @throws \RangeException
      *
-     * @return PromiseInterface<Collection<Entitlement[]>>
-     * @todo Make it in a trait along with Thread
+     * @return PromiseInterface<ExCollectionInterface<Entitlement[]>>
      */
     public function getEntitlements(array $options = []): PromiseInterface
     {
         $resolver = new OptionsResolver();
-        $resolver->setDefaults(['application_id' => $this->vars['application_id']]);
-        $resolver->setAllowedTypes('application_id', [Application::class, 'string', 'int']);
-        $resolver->setAllowedTypes('user_id', ['string', 'int', Member::class, User::class]);
-        $resolver->setAllowedTypes('sku_ids', ['array', 'string, int']);
-        $resolver->setAllowedTypes('before', [Entitlement::class, 'string', 'int']);
-        $resolver->setAllowedTypes('after', [Entitlement::class, 'string', 'int']);
-        $resolver->setAllowedTypes('limit', 'integer');
-        $resolver->setAllowedValues('limit', fn ($value) => ($value >= 1 && $value <= 100));
-        $resolver->setAllowedTypes('guild_id', [Guild::class, 'string', 'integer']);
-        $resolver->setAllowedTypes('exclude_ended', ['bool', null]);
-        $resolver->setAllowedTypes('exclude_deleted', ['bool', null]);
+        $resolver
+            ->setDefaults(['application_id' => $this->vars['application_id']])
+            ->setAllowedTypes('application_id', [Application::class, 'string', 'int'])
+            ->setAllowedTypes('user_id', ['string', 'int', Member::class, User::class])
+            ->setAllowedTypes('sku_ids', ['array', 'string', 'int'])
+            ->setAllowedTypes('before', [Entitlement::class, 'string', 'int'])
+            ->setAllowedTypes('after', [Entitlement::class, 'string', 'int'])
+            ->setAllowedTypes('limit', 'integer')
+            ->setAllowedValues('limit', fn ($value) => ($value >= 1 && $value <= 100))
+            ->setAllowedTypes('guild_id', [Guild::class, 'string', 'integer'])
+            ->setAllowedTypes('exclude_ended', ['bool', null])
+            ->setAllowedTypes('exclude_deleted', ['bool', null]);
 
         $options = $resolver->resolve($options);
 
@@ -150,10 +150,11 @@ class EntitlementRepository extends AbstractRepository
         }
 
         return $this->http->get($endpoint)->then(function ($responses) {
-            $entitlements = Collection::for(Entitlement::class);
+            /** @var ExCollectionInterface<Entitlement> $entitlements */
+            $entitlements = $this->discord->getCollectionClass()::for(Entitlement::class);
 
             foreach ($responses as $response) {
-                $entitlements->pushItem($this->get('id', $response->id) ?: $this->create($response, true));
+                $entitlements->pushItem($this->get('id', $response->id) ?? $this->create($response, true));
             }
 
             return $entitlements;
@@ -167,7 +168,7 @@ class EntitlementRepository extends AbstractRepository
      *
      * After creating a test entitlement, you'll need to reload your Discord client. After doing so, you'll see that your server or user now has premium access.
      *
-     * @link https://discord.com/developers/docs/resources/entitlement#create-test-entitlement
+     * @link https://docs.discord.com/developers/resources/entitlement#create-test-entitlement
      *
      * @param array  $data
      * @param string $data['sku_id']     ID of the SKU to grant the entitlement to.
@@ -178,13 +179,13 @@ class EntitlementRepository extends AbstractRepository
      */
     public function createTestEntitlement(array $data): PromiseInterface
     {
-        if (!isset($data['sku_id'], $data['owner_id'], $data['owner_type'])) {
+        if (! isset($data['sku_id'], $data['owner_id'], $data['owner_type'])) {
             throw new \DomainException('sku_id, owner_id, and owner_type are required to create a test entitlement.');
         }
 
         $payload = [
-            'sku_id'     => $data['sku_id'],
-            'owner_id'   => $data['owner_id'],
+            'sku_id' => $data['sku_id'],
+            'owner_id' => $data['owner_id'],
             'owner_type' => $data['owner_type'],
         ];
 
@@ -192,6 +193,7 @@ class EntitlementRepository extends AbstractRepository
             ->post(Endpoint::bind(Endpoint::APPLICATION_ENTITLEMENTS, $this->vars['application_id']), $payload)
             ->then(function ($response) {
                 $part = $this->create((array) $response, true);
+
                 return $this->cache->set($part->{$this->discrim}, $part)->then(fn ($success) => $part);
             });
     }
@@ -199,7 +201,7 @@ class EntitlementRepository extends AbstractRepository
     /**
      * Deletes a currently-active test entitlement. Discord will act as though that user or guild no longer has entitlement to your premium offering.
      *
-     * @link https://discord.com/developers/docs/resources/entitlement#delete-test-entitlement
+     * @link https://docs.discord.com/developers/resources/entitlement#delete-test-entitlement
      *
      * @param Entitlement|string $entitlement The entitlement or entitlement ID to delete.
      *

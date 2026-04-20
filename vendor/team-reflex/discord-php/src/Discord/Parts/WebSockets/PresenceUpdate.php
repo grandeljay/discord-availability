@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -13,7 +14,6 @@ declare(strict_types=1);
 
 namespace Discord\Parts\WebSockets;
 
-use Discord\Helpers\Collection;
 use Discord\Helpers\ExCollectionInterface;
 use Discord\Parts\Guild\Guild;
 use Discord\Parts\Guild\Role;
@@ -21,6 +21,7 @@ use Discord\Parts\Part;
 use Discord\Parts\User\Member;
 use Discord\Parts\User\Activity;
 use Discord\Parts\User\User;
+use Discord\Parts\User\ClientStatus;
 
 /**
  * A PresenceUpdate part is used when the `PRESENCE_UPDATE` event is fired on
@@ -29,26 +30,28 @@ use Discord\Parts\User\User;
  *
  * @since 2.1.3
  *
- * @link https://discord.com/developers/docs/topics/gateway-events#presence
+ * @link https://docs.discord.com/developers/events/gateway-events#presence
  *
- * @property      User                  $user           The user that the presence update affects.
- * @property      string                $guild_id       The unique identifier of the guild that the presence update affects.
- * @property-read Guild|null            $guild          The guild that the presence update affects.
- * @property      string                $status         The updated status of the user.
- * @property      ExCollectionInterface|Activity[] $activities     The activities of the user.
- * @property-read Activity              $game           The updated game of the user.
- * @property      object                $client_status  Status of the client.
- * @property      string|null           $desktop_status Status of the user on their desktop client. Null if they are not active on desktop.
- * @property      string|null           $mobile_status  Status of the user on their mobile client. Null if they are not active on mobile.
- * @property      string|null           $web_status     Status of the user on their web client. Null if they are not active on web.
+ * @property      User                                       $user            The user that the presence update affects.
+ * @property      string                                     $guild_id        The unique identifier of the guild that the presence update affects.
+ * @property-read Guild|null                                 $guild           The guild that the presence update affects.
+ * @property      string                                     $status          The updated status of the user.
+ * @property      ExCollectionInterface<Activity>|Activity[] $activities      The activities of the user.
+ * @property-read Activity                                   $game            The updated game of the user.
+ * @property      ClientStatus                               $client_status   Status of the client.
+ * @property      string|null                                $desktop_status  Status of the user on their desktop client. Null if they are not active on desktop.
+ * @property      string|null                                $mobile_status   Status of the user on their mobile client. Null if they are not active on mobile.
+ * @property      string|null                                $web_status      Status of the user on their web client. Null if they are not active on web.
+ * @property      string|null                                $embedded_status Status of the user on an embedded application (Xbox, PlayStation, in-game). Null if they are not active on an embedded application.
  *
- * @property-read Member            $member The member that the presence update affects.
- * @property-read ExCollectionInterface|Role[] $roles  Roles that the user has in the guild.
+ * @property-read string                             $id     The ID of the user.
+ * @property-read Member                             $member The member that the presence update affects.
+ * @property-read ExCollectionInterface<Role>|Role[] $roles  Roles that the user has in the guild.
  */
 class PresenceUpdate extends Part
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $fillable = [
         'user',
@@ -59,7 +62,7 @@ class PresenceUpdate extends Part
     ];
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $visible = [
         'game',
@@ -80,7 +83,7 @@ class PresenceUpdate extends Part
             return $user;
         }
 
-        return $this->factory->part(User::class, (array) $this->attributes['user'], true);
+        return $this->attributePartHelper('user', User::class);
     }
 
     /**
@@ -96,17 +99,11 @@ class PresenceUpdate extends Part
     /**
      * Gets the activities attribute.
      *
-     * @return ExCollectionInterface|Activity[]
+     * @return ExCollectionInterface<Activity>|Activity[]
      */
     protected function getActivitiesAttribute(): ExCollectionInterface
     {
-        $collection = Collection::for(Activity::class, null);
-
-        foreach ($this->attributes['activities'] ?? [] as $activity) {
-            $collection->pushItem($this->factory->part(Activity::class, (array) $activity, true));
-        }
-
-        return $collection;
+        return $this->attributeCollectionHelper('activities', Activity::class);
     }
 
     /**
@@ -116,7 +113,17 @@ class PresenceUpdate extends Part
      */
     protected function getGameAttribute(): ?Activity
     {
-        return $this->activities->get('type', Activity::TYPE_GAME);
+        return $this->activities->get('type', Activity::TYPE_PLAYING);
+    }
+
+    /**
+     * Gets the client status attribute.
+     *
+     * @return ClientStatus The client status of the user.
+     */
+    protected function getClientStatusAttribute(): ClientStatus
+    {
+        return $this->attributePartHelper('client_status', ClientStatus::class);
     }
 
     /**
@@ -150,6 +157,16 @@ class PresenceUpdate extends Part
     }
 
     /**
+     * Returns the id attribute.
+     *
+     * @return string The user ID of the member.
+     */
+    protected function getIdAttribute(): string
+    {
+        return $this->user->id;
+    }
+
+    /**
      * Gets the member attribute.
      *
      * @return Member|null
@@ -166,7 +183,7 @@ class PresenceUpdate extends Part
     /**
      * Returns the users roles.
      *
-     * @return ExCollectionInterface|Role[]
+     * @return ExCollectionInterface<Role>|Role[]
      */
     protected function getRolesAttribute(): ExCollectionInterface
     {
@@ -174,6 +191,6 @@ class PresenceUpdate extends Part
             return $member->roles;
         }
 
-        return Collection::for(Role::class);
+        return $this->discord->getCollectionClass()::for(Role::class);
     }
 }

@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -11,12 +14,20 @@
 
 namespace Discord\Builders\Components;
 
+use function Discord\poly_strlen;
+
 /**
  * Thumbnail components allow you to add a thumbnail image to a section.
  *
- * @link https://discord.com/developers/docs/interactions/message-components#thumbnail
+ * @link https://docs.discord.com/developers/components/reference#thumbnail
  *
  * @since 10.5.0
+ *
+ * @property int               $type        11 for thumbnail component.
+ * @property ?int|null         $id          Optional identifier for component.
+ * @property UnfurledMediaItem $media       A url or attachment.
+ * @property ?string|null      $description Alt text for the media, max 1024 characters.
+ * @property ?bool|null        $spoiler     Whether the thumbnail should be a spoiler (or blurred out). Defaults to false.
  */
 class Thumbnail extends Content implements Contracts\ComponentV2
 {
@@ -27,28 +38,28 @@ class Thumbnail extends Content implements Contracts\ComponentV2
      *
      * @var int
      */
-    protected $type = Component::TYPE_THUMBNAIL;
+    protected $type = ComponentObject::TYPE_THUMBNAIL;
 
     /**
      * Media item for the thumbnail.
      *
      * @var UnfurledMediaItem
      */
-    private $media;
+    protected $media;
 
     /**
      * Description for the thumbnail.
      *
      * @var string|null
      */
-    private $description;
+    protected $description;
 
     /**
      * Whether the thumbnail is a spoiler.
      *
-     * @var bool
+     * @var bool|null
      */
-    private $spoiler = false;
+    protected $spoiler;
 
     /**
      * Creates a new thumbnail.
@@ -92,9 +103,9 @@ class Thumbnail extends Content implements Contracts\ComponentV2
      *
      * @return $this
      */
-    public function setDescription(?string $description): self
+    public function setDescription(?string $description = null): self
     {
-        if ($description !== null && strlen($description) > 1024) {
+        if ($description !== null && poly_strlen($description) > 1024) {
             throw new \LengthException('Description cannot exceed 1024 characters.');
         }
 
@@ -110,7 +121,7 @@ class Thumbnail extends Content implements Contracts\ComponentV2
      *
      * @return $this
      */
-    public function setSpoiler(bool $spoiler = true): self
+    public function setSpoiler(?bool $spoiler = true): self
     {
         $this->spoiler = $spoiler;
 
@@ -120,11 +131,11 @@ class Thumbnail extends Content implements Contracts\ComponentV2
     /**
      * Returns the media item for the thumbnail.
      *
-     * @return UnfurledMediaItem
+     * @return ?UnfurledMediaItem
      */
-    public function getMedia(): UnfurledMediaItem
+    public function getMedia(): ?UnfurledMediaItem
     {
-        return $this->media;
+        return $this->media ?? null;
     }
 
     /**
@@ -134,7 +145,7 @@ class Thumbnail extends Content implements Contracts\ComponentV2
      */
     public function getDescription(): ?string
     {
-        return $this->description;
+        return $this->description ?? null;
     }
 
     /**
@@ -144,27 +155,31 @@ class Thumbnail extends Content implements Contracts\ComponentV2
      */
     public function isSpoiler(): bool
     {
-        return $this->spoiler;
+        return $this->spoiler ?? false;
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function jsonSerialize(): array
     {
-        $data = [
+        $content = [
             'type' => $this->type,
             'media' => $this->media,
         ];
 
         if (isset($this->description)) {
-            $data['description'] = $this->description;
+            $content['description'] = $this->description;
         }
 
-        if ($this->spoiler) {
-            $data['spoiler'] = true;
+        if (isset($this->spoiler)) {
+            $content['spoiler'] = true;
         }
 
-        return $data;
+        if (isset($this->id)) {
+            $content['id'] = $this->id;
+        }
+
+        return $content;
     }
 }

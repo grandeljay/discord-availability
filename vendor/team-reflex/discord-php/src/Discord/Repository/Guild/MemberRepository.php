@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -14,10 +15,13 @@ declare(strict_types=1);
 namespace Discord\Repository\Guild;
 
 use Discord\Http\Endpoint;
+use Discord\Parts\Guild\Guild;
 use Discord\Parts\User\Member;
 use Discord\Repository\AbstractRepository;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
+
+use function React\Promise\reject;
 
 /**
  * Contains members of a guild.
@@ -36,7 +40,7 @@ use React\Promise\PromiseInterface;
 class MemberRepository extends AbstractRepository
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $endpoints = [
         'all' => Endpoint::GUILD_MEMBERS,
@@ -46,14 +50,109 @@ class MemberRepository extends AbstractRepository
     ];
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $class = Member::class;
 
     /**
+     * Returns a guild member object for the current user.
+     *
+     * @param Guild|string $guild
+     *
+     * @return PromiseInterface<Member>
+     *
+     * @since 10.32.0
+     */
+    public function getCurrentUserGuildMember($guild, bool $fresh = false): PromiseInterface
+    {
+        if (! is_string($guild)) {
+            $guild = $guild->id;
+        }
+
+        if ($fresh) {
+            return $this->__getCurrentUserGuildMember($guild);
+        }
+
+        return $this->cache->get($guild)->then(function ($part) use ($guild) {
+            if ($part !== null) {
+                return $part;
+            }
+
+            return $this->__getCurrentUserGuildMember($guild);
+        });
+    }
+
+    /**
+     * Returns a guild member object for the current user.
+     * Requires the guilds.members.read OAuth2 scope.
+     *
+     * @link https://docs.discord.com/developers/resources/user#get-current-user-guild-member
+     *
+     * @param string $guild
+     *
+     * @return PromiseInterface<Member>
+     *
+     * @since 10.32.0
+     */
+    protected function __getCurrentUserGuildMember($guild): PromiseInterface
+    {
+        return $this->http->get(Endpoint::bind(Endpoint::USER_CURRENT_MEMBER, $guild))->then(function ($response) {
+            $part = $this->factory->part($this->class, $response, true);
+
+            return $this->cache->set($part->{$this->discrim}, $part)->then(fn ($success) => $part);
+        });
+    }
+
+    /**
+     * Modifies the current member (no validation).
+     *
+     * @link https://docs.discord.com/developers/resources/guild#modify-current-member-json-params
+     *
+     * @param Guild|string $guild            The guild or guild ID.
+     * @param array        $params           The parameters to modify.
+     * @param ?string|null $params['nick']   Value to set user's nickname to.
+     * @param ?string|null $params['banner'] Data URI base64 encoded banner image.
+     * @param ?string|null $params['avatar'] Data URL base64 encoded avatar image.
+     * @param ?string|null $params['bio']    Guild member bio.
+     * @param string|null  $reason           Reason for Audit Log.
+     *
+     * @return PromiseInterface<Member>
+     *
+     * @since 10.30.0
+     */
+    public function modifyCurrentMember($guild, array $params, ?string $reason = null): PromiseInterface
+    {
+        if (! is_string($guild)) {
+            $guild = $guild->id;
+        }
+
+        static $allowed = ['nick', 'banner', 'avatar', 'bio'];
+        $params = array_filter(
+            $params,
+            fn ($key) => in_array($key, $allowed, true),
+            ARRAY_FILTER_USE_KEY
+        );
+
+        if (empty($params)) {
+            return reject(new \InvalidArgumentException('No valid parameters to modify.'));
+        }
+
+        $headers = [];
+        if (isset($reason)) {
+            $headers['X-Audit-Log-Reason'] = $reason;
+        }
+
+        return $this->http->patch(Endpoint::bind(Endpoint::GUILD_MEMBER_SELF, $guild), $params, $headers)->then(function ($response) {
+            $part = $this->factory->part(Member::class, (array) $response, true);
+
+            return $this->cache->set($part->{$this->discrim}, $part)->then(fn ($success) => $part);
+        });
+    }
+
+    /**
      * Alias for `$member->delete()`.
      *
-     * @link https://discord.com/developers/docs/resources/guild#remove-guild-member
+     * @link https://docs.discord.com/developers/resources/guild#remove-guild-member
      *
      * @param Member      $member The member to kick.
      * @param string|null $reason Reason for Audit Log.
@@ -66,7 +165,7 @@ class MemberRepository extends AbstractRepository
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      *
      * @param array $queryparams Query string params to add to the request, leave null to paginate all members (Warning: Be careful to use this on very large guild)
      */

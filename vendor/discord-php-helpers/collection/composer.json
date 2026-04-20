@@ -1,0 +1,27 @@
+{
+    "name": "discord-php-helpers/collection",
+    "description": "A collection library for DiscordPHP. Inspired by Laravel Collections.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "David Cole",
+            "email": "david.cole1340@gmail.com"
+        },
+        {
+            "name": "Valithor Obsidion",
+            "email": "valzargaming@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.0"
+    },
+    "require-dev": {
+        "team-reflex/discord-php": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "Discord\\": "src/Discord/"
+        }
+    }
+}

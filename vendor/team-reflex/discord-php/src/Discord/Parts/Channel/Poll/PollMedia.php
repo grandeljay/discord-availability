@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -19,17 +20,17 @@ use Discord\Parts\Guild\Emoji;
 /**
  * The poll media object is a common object that backs both the question and answers.
  *
- * @link https://discord.com/developers/docs/resources/poll#poll-media-object
+ * @link https://docs.discord.com/developers/resources/poll#poll-media-object
  *
  * @since 10.0.0
  *
- * @property string|null        $text   The text of the field. Text should always be non-null for both questions and answers, but please do not depend on that in the future. The maximum length of text is 300 for the question, and 55 for any answer.
- * @property Emoji|string|null  $emoji  The emoji of the field. When creating a poll answer with an emoji, one only needs to send either the id (custom emoji) or name (default emoji) as the only field.
+ * @property string|null       $text  The text of the field. Text should always be non-null for both questions and answers, but please do not depend on that in the future. The maximum length of text is 300 for the question, and 55 for any answer.
+ * @property Emoji|string|null $emoji The emoji of the field. When creating a poll answer with an emoji, one only needs to send either the id (custom emoji) or name (default emoji) as the only field.
  */
 class PollMedia extends Part
 {
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected $fillable = [
         'text',
@@ -89,7 +90,7 @@ class PollMedia extends Part
             return [
                 'id' => $id,
                 'name' => $name,
-                'animated' => $animated == 'a',
+                'animated' => $animated === 'a',
             ];
         })();
 

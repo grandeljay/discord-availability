@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -16,7 +17,7 @@ namespace Discord\Parts\Channel\Message;
 use Discord\Parts\Part;
 
 /**
- * @link https://discord.com/developers/docs/components/reference#media-gallery-media-gallery-item-structure
+ * @link https://docs.discord.com/developers/components/reference#media-gallery-media-gallery-item-structure
  *
  * @since 10.11.0
  *
@@ -27,7 +28,7 @@ use Discord\Parts\Part;
 class MediaGalleryItem extends Part
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $fillable = [
         'media',
@@ -37,6 +38,6 @@ class MediaGalleryItem extends Part
 
     protected function getMediaAttribute(): UnfurledMediaItem
     {
-        return $this->createOf(UnfurledMediaItem::class, $this->attributes['media'], true);
+        return $this->attributePartHelper('media', UnfurledMediaItem::class);
     }
 }

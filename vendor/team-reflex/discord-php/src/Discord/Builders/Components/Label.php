@@ -1,0 +1,172 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is a part of the DiscordPHP project.
+ *
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
+ *
+ * This file is subject to the MIT license that is bundled
+ * with this source code in the LICENSE.md file.
+ */
+
+namespace Discord\Builders\Components;
+
+use function Discord\poly_strlen;
+
+/**
+ * A Label is a top-level layout component. Labels wrap modal components with text as a label and optional description.
+ *
+ * The description may display above or below the component depending on the platform.
+ *
+ * @link https://docs.discord.com/developers/components/reference#label
+ *
+ * @since 10.19.0
+ *
+ * @property int                             $type        18 for a label.
+ * @property ?string|null                    $id          Optional identifier for component.
+ * @property string                          $label       The label text; max 45 characters.
+ * @property ?string|null                    $description An optional description text for the label; max 100 characters.
+ * @property FileUpload|SelectMenu|TextInput $component   The component within the label.
+ */
+class Label extends Layout
+{
+    public const USAGE = ['Modal'];
+
+    /**
+     * Component type.
+     *
+     * @var int
+     */
+    protected $type = ComponentObject::TYPE_LABEL;
+
+    /**
+     * The text for the label.
+     *
+     * @var string
+     */
+    protected $label;
+
+    /**
+     * Optional description for the label.
+     *
+     * @var string|null
+     */
+    protected $description;
+
+    /**
+     * The component associated with the label.
+     *
+     * @var FileUpload|SelectMenu|TextInput
+     */
+    protected $component;
+
+    /**
+     * Creates a new label component.
+     *
+     * @param string                          $label       The text for the label.
+     * @param FileUpload|SelectMenu|TextInput $component   The component associated with the label.
+     * @param string|null                     $description Optional description for the label.
+     *
+     * @return self
+     */
+    public static function new(string $label, $component, ?string $description = null): self
+    {
+        $label_component = new self();
+
+        $label_component->setLabel($label);
+        $label_component->setComponent($component);
+        $label_component->setDescription($description);
+
+        return $label_component;
+    }
+
+    /**
+     * Sets the label text.
+     *
+     * @param string $label The text for the label. Must be between 1 and 45 characters.
+     *
+     * @return self
+     */
+    public function setLabel(string $label): self
+    {
+        if (poly_strlen($label) === 0 || poly_strlen($label) > 45) {
+            throw new \LengthException('Label must be between 1 and 45 in length.');
+        }
+
+        $this->label = $label;
+
+        return $this;
+    }
+
+    /**
+     * Sets the description text.
+     *
+     * @param string|null $description The description for the label. Max 100 characters.
+     *
+     * @return self
+     */
+    public function setDescription(?string $description = null): self
+    {
+        if (isset($description)) {
+            if (poly_strlen($description) === 0) {
+                $description = null;
+            } elseif (poly_strlen($description) > 100) {
+                throw new \LengthException('Description must be between 0 and 100 in length.');
+            }
+        }
+
+        $this->description = $description;
+
+        return $this;
+    }
+
+    /** Sets The component within the label.
+     *
+     * @link https://docs.discord.com/developers/components/reference#label-label-child-components
+     *
+     * @param FileUpload|SelectMenu|TextInput $component The component within the label.
+     *
+     * @return self
+     */
+    public function setComponent($component): self
+    {
+        // The disabled field on String Selects is not currently allowed in modals, and will trigger an error if used.
+        if ($component instanceof StringSelect) {
+            $component->setDisabled(null);
+        }
+
+        // The label field on the Text Input is not allowed in favor of label on the Label component.
+        if ($component instanceof TextInput) {
+            $component->setLabel(null);
+        }
+
+        $this->component = $component;
+
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function jsonSerialize(): array
+    {
+        $data = [
+            'type' => $this->type,
+            'label' => $this->label,
+            'component' => $this->component,
+        ];
+
+        if (isset($this->description)) {
+            $data['description'] = $this->description;
+        }
+
+        if (isset($this->id)) {
+            $data['id'] = $this->id;
+        }
+
+        return $data;
+    }
+}

@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -15,17 +16,22 @@ namespace Discord\Parts\Guild;
 
 use Carbon\Carbon;
 use Discord\Http\Endpoint;
+use Discord\Http\Exceptions\NoPermissionsException;
 use Discord\Parts\Part;
 use Discord\Parts\User\User;
+use Discord\Repository\Guild\GuildTemplateRepository;
+use DomainException;
 use React\Promise\PromiseInterface;
 use Stringable;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+
+use function React\Promise\reject;
 
 /**
  * A Guild Template is a code that when used, creates a guild based on a
  * snapshot of an existing guild.
  *
- * @link https://discord.com/developers/docs/resources/guild-template
+ * @link https://docs.discord.com/developers/resources/guild-template
  *
  * @since 7.0.0
  *
@@ -39,13 +45,13 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * @property      Carbon     $updated_at              When this template was last synced to the source guild.
  * @property      string     $source_guild_id         The ID of the guild this template is based on.
  * @property-read Guild|null $source_guild            The guild this template is based on.
- * @property      object     $serialized_source_guild The guild snapshot this template contains.
+ * @property      Guild      $serialized_source_guild The guild snapshot this template contains.
  * @property      ?bool      $is_dirty                Whether the template has unsynced changes.
  */
 class GuildTemplate extends Part implements Stringable
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $fillable = [
         'code',
@@ -82,7 +88,17 @@ class GuildTemplate extends Part implements Stringable
             return $guild;
         }
 
-        return $this->createOf(Guild::class, $this->attributes['serialized_source_guild']);
+        return $this->attributePartHelper('serialized_source_guild', Guild::class);
+    }
+
+    /**
+     * Returns the serialized source guild attribute.
+     *
+     * @return Guild The guild snapshot this template contains.
+     */
+    protected function getSerializedSourceGuildAttribute(): Guild
+    {
+        return $this->attributePartHelper('serialized_source_guild', Guild::class);
     }
 
     /**
@@ -96,7 +112,7 @@ class GuildTemplate extends Part implements Stringable
             return $creator;
         }
 
-        return $this->factory->part(User::class, (array) $this->attributes['creator'], true);
+        return $this->attributePartHelper('creator', User::class);
     }
 
     /**
@@ -108,7 +124,7 @@ class GuildTemplate extends Part implements Stringable
      */
     protected function getCreatedAtAttribute(): Carbon
     {
-        return new Carbon($this->attributes['created_at']);
+        return $this->attributeCarbonHelper('created_at');
     }
 
     /**
@@ -120,14 +136,14 @@ class GuildTemplate extends Part implements Stringable
      */
     protected function getUpdatedAtAttribute(): Carbon
     {
-        return new Carbon($this->attributes['updated_at']);
+        return $this->attributeCarbonHelper('updated_at');
     }
 
     /**
      * Creates a guild from this template. Can be used only by bots in less than
      * 10 guilds.
      *
-     * @link https://discord.com/developers/docs/resources/guild-template#create-guild-from-guild-template
+     * @link https://docs.discord.com/developers/resources/guild-template#create-guild-from-guild-template
      *
      * @param array       $options         An array of options.
      * @param string      $options['name'] The name of the guild (2-100 characters).
@@ -184,9 +200,9 @@ class GuildTemplate extends Part implements Stringable
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      *
-     * @link https://discord.com/developers/docs/resources/guild-template#create-guild-template-json-params
+     * @link https://docs.discord.com/developers/resources/guild-template#create-guild-template-json-params
      */
     public function getCreatableAttributes(): array
     {
@@ -198,9 +214,9 @@ class GuildTemplate extends Part implements Stringable
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      *
-     * @link https://discord.com/developers/docs/resources/guild-template#modify-guild-template-json-params
+     * @link https://docs.discord.com/developers/resources/guild-template#modify-guild-template-json-params
      */
     public function getUpdatableAttributes(): array
     {
@@ -211,7 +227,76 @@ class GuildTemplate extends Part implements Stringable
     }
 
     /**
-     * {@inheritDoc}
+     * Syncs the template to the guild's current state. Requires the MANAGE_GUILD permission.
+     *
+     * @link https://docs.discord.com/developers/resources/guild-template#sync-guild-template
+     *
+     * @return PromiseInterface<GuildTemplate>
+     *
+     * @since 10.40.0
+     */
+    public function sync(): PromiseInterface
+    {
+        if (! isset($this->attributes['source_guild_id'])) {
+            return reject(new DomainException('Cannot sync a guild template that is not associated with a guild.'));
+        }
+
+        /** @var Guild $guild */
+        $guild = $this->guild ?? $this->factory->part(Guild::class, ['id' => $this->attributes['source_guild_id']], true);
+
+        if ($botperms = $guild->getBotPermissions()) {
+            if (! $botperms->manage_guild) {
+                return reject(new NoPermissionsException("You do not have permission to save changes to the guild template {$this->code} in guild {$guild->id}."));
+            }
+        }
+
+        return $guild->templates->sync($this->code);
+    }
+
+    /**
+     * Gets the originating repository of the part.
+     *
+     * @since 10.42.0
+     *
+     * @throws \Exception If the part does not have an originating repository.
+     *
+     * @return GuildTemplateRepository|null The repository, or null if required part data is missing.
+     */
+    public function getRepository(): GuildTemplateRepository|null
+    {
+        if (! isset($this->attributes['source_guild_id'])) {
+            return null;
+        }
+
+        /** @var Guild $guild */
+        $guild = $this->guild ?? $this->factory->part(Guild::class, ['id' => $this->attributes['source_guild_id']], true);
+
+        return $guild->templates;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function save(?string $reason = null): PromiseInterface
+    {
+        if (isset($this->attributes['source_guild_id'])) {
+            /** @var Guild $guild */
+            $guild = $this->guild ?? $this->factory->part(Guild::class, ['id' => $this->attributes['source_guild_id']], true);
+
+            if ($botperms = $guild->getBotPermissions()) {
+                if (! $botperms->manage_guild) {
+                    return reject(new NoPermissionsException("You do not have permission to save changes to the guild template {$this->code} in guild {$guild->id}."));
+                }
+            }
+
+            return $guild->templates->save($this, $reason);
+        }
+
+        return parent::save();
+    }
+
+    /**
+     * @inheritDoc
      */
     public function getRepositoryAttributes(): array
     {

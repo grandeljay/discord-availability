@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -22,14 +23,14 @@ use Discord\Parts\Guild\Guild;
 use Discord\Parts\Thread\Thread;
 
 /**
- * @link https://discord.com/developers/docs/topics/gateway-events#message-reaction-add
+ * @link https://docs.discord.com/developers/events/gateway-events#message-reaction-add
  *
  * @since 4.0.4
  */
 class MessageReactionAdd extends Event
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function handle($data)
     {
@@ -37,9 +38,9 @@ class MessageReactionAdd extends Event
 
         /** @var ?Guild */
         if (isset($data->guild_id) && $guild = yield $this->discord->guilds->cacheGet($data->guild_id)) {
-            /** @var ?Channel */
+            /** @var ?Channel $channel */
             if (! $channel = yield $guild->channels->cacheGet($data->channel_id)) {
-                /** @var Channel */
+                /** @var Channel $channel */
                 foreach ($guild->channels as $channel) {
                     /** @var ?Thread */
                     if ($thread = yield $channel->threads->cacheGet($data->channel_id)) {
@@ -49,15 +50,15 @@ class MessageReactionAdd extends Event
                 }
             }
         } else {
-            /** @var ?Channel */
+            /** @var ?Channel $channel*/
             $channel = yield $this->discord->private_channels->cacheGet($data->channel_id);
         }
-
+        /** @var ?Channel $channel */
         $reaction = new MessageReaction($this->discord, (array) $data, true);
 
-        /** @var ?Message */
         if (isset($channel) && $message = yield $channel->messages->cacheGet($data->message_id)) {
-            $me = $data->user_id == $this->discord->id;
+            /** @var Message $message */
+            $me = $data->user_id === $this->discord->id;
 
             /** @var ?Reaction */
             if ($react = yield $message->reactions->cacheGet($reaction->reaction_id)) {

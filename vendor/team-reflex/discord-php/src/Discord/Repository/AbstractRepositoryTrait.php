@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -16,10 +17,8 @@ namespace Discord\Repository;
 use Discord\Discord;
 use Discord\Factory\Factory;
 use Discord\Helpers\CacheWrapper;
-use Discord\Helpers\Collection;
-use Discord\Helpers\ExCollectionInterface;
 use Discord\Helpers\CollectionTrait;
-use Discord\Helpers\LegacyCacheWrapper;
+use Discord\Helpers\ExCollectionInterface;
 use Discord\Http\Endpoint;
 use Discord\Http\Http;
 use Discord\Parts\Part;
@@ -31,6 +30,19 @@ use function Discord\nowait;
 use function React\Promise\reject;
 use function React\Promise\resolve;
 
+/**
+ * Provides common functionality for all repositories.
+ *
+ * @property Discord      $discord   The Discord client instance.
+ * @property string       $discrim   The collection discriminator.
+ * @property array        $items     The items contained in the collection.
+ * @property string       $class     Class type allowed into the collection.
+ * @property Http         $http      The HTTP client.
+ * @property Factory      $factory   The parts factory.
+ * @property array        $endpoints Endpoints for interacting with the Discord servers.
+ * @property array        $vars      Variables that are related to the repository.
+ * @property CacheWrapper $cache     The react/cache wrapper.
+ */
 trait AbstractRepositoryTrait
 {
     use CollectionTrait
@@ -61,7 +73,6 @@ trait AbstractRepositoryTrait
         __debugInfo as __debugInfo;
 
         // 'Parent' methods
-        __construct as __Collection____construct;
         get as __Collection__get;
         set as __Collection__set;
         pull as __Collection__pull;
@@ -80,57 +91,6 @@ trait AbstractRepositoryTrait
         offsetUnset as __Collection__offsetUnset;
         jsonSerialize as __Collection__jsonSerialize;
         getIterator as __Collection__getIterator;
-    }
-
-    /**
-     * The HTTP client.
-     *
-     * @var Http Client.
-     */
-    protected $http;
-
-    /**
-     * The parts factory.
-     *
-     * @var Factory Parts factory.
-     */
-    protected $factory;
-
-    /**
-     * Endpoints for interacting with the Discord servers.
-     *
-     * @var array Endpoints.
-     */
-    protected $endpoints = [];
-
-    /**
-     * Variables that are related to the repository.
-     *
-     * @var array Variables.
-     */
-    protected $vars = [];
-
-    /**
-     * @var CacheWrapper
-     */
-    protected $cache;
-
-    /**
-     * AbstractRepository constructor.
-     *
-     * @param Discord $discord
-     * @param array   $vars    An array of variables used for the endpoint.
-     */
-    public function __construct(protected Discord $discord, array $vars = [])
-    {
-        $this->http = $discord->getHttpClient();
-        $this->factory = $discord->getFactory();
-        $this->vars = $vars;
-        if ($cacheConfig = $discord->getCacheConfig(static::class)) {
-            $this->cache = new CacheWrapper($discord, $cacheConfig, $this->items, $this->class, $this->vars);
-        } else {
-            $this->cache = new LegacyCacheWrapper($discord, $this->items, $this->class);
-        }
     }
 
     /**
@@ -178,7 +138,7 @@ trait AbstractRepositoryTrait
     {
         foreach ($response as $value) {
             $value = array_merge($this->vars, (array) $value);
-            $part = $this->factory->create($this->class, $value, true);
+            $part = $this->factory->part($this->class, $value, true);
             $items[$part->{$this->discrim}] = $part;
         }
 
@@ -215,6 +175,8 @@ trait AbstractRepositoryTrait
      * @return PromiseInterface<Part>
      *
      * @throws \Exception
+     *
+     * @deprecated 10.38.0 Use `Part->save($reason)` to ensure permissions are checked.
      */
     public function save(Part $part, ?string $reason = null): PromiseInterface
     {
@@ -248,11 +210,12 @@ trait AbstractRepositoryTrait
                 case 'patch': // Update old part
                     $part->fill((array) $response);
                     $part->created = true;
+
                     return $this->cache->set($part->{$this->discrim}, $part)->then(fn ($success) => $part);
                 default: // Create new part
-                    $newPart = $this->factory->create($this->class, (array) $response, true);
-                    $newPart->created = true;
-                    return $this->cache->set($newPart->{$this->discrim}, $this->factory->create($this->class, (array) $response, true))->then(fn ($success) => $newPart);
+                    $newPart = $this->factory->part($this->class, (array) $response, true);
+
+                    return $this->cache->set($newPart->{$this->discrim}, $newPart)->then(fn ($success) => $newPart);
             }
         });
     }
@@ -402,7 +365,7 @@ trait AbstractRepositoryTrait
             return null;
         }
 
-        if ($discrim == $this->discrim) {
+        if ($discrim === $this->discrim) {
             if ($item = $this->offsetGet($key)) {
                 return $item;
             }
@@ -597,7 +560,8 @@ trait AbstractRepositoryTrait
      */
     public function filter(callable $callback)
     {
-        $collection = new Collection([], $this->discrim, $this->class);
+        /** @var ExCollectionInterface $collection */
+        $collection = new ($this->discord->getCollectionClass())([], $this->discrim, $this->class);
 
         foreach ($this->items as $offset => $item) {
             if ($item instanceof WeakReference) {
@@ -656,20 +620,13 @@ trait AbstractRepositoryTrait
     /**
      * Converts the weak caches to array.
      *
+     * @deprecated 10.42.0 Use `jsonSerialize`
+     *
      * @return array
      */
-    public function toArray(): array
+    public function toArray(bool $assoc = true): array
     {
-        $items = [];
-
-        foreach ($this->items as $offset => $item) {
-            if ($item instanceof WeakReference) {
-                $item = $item->get();
-            }
-            $items[$offset] = $item;
-        }
-
-        return $items;
+        return $this->jsonSerialize($assoc);
     }
 
     /**
@@ -758,11 +715,22 @@ trait AbstractRepositoryTrait
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
-    public function jsonSerialize(): array
+    public function jsonSerialize(bool $assoc = true): array
     {
-        return $this->toArray();
+        $items = [];
+
+        foreach ($this->items as $offset => $item) {
+            if ($item instanceof WeakReference) {
+                $item = $item->get();
+            }
+            $assoc
+                ? $items[$offset] = $item
+                : $items[] = $item;
+        }
+
+        return $items;
     }
 
     /**
@@ -797,8 +765,8 @@ trait AbstractRepositoryTrait
      * Previously, this class utilized `parent::method` to call methods from the parent class.
      * This was changed to use the `__Collection__method` naming convention to avoid conflicts
      *
-     * @param string $name The name of the method being called.
-     * @param array $arguments The arguments passed to the method.
+     * @param string $name      The name of the method being called.
+     * @param array  $arguments The arguments passed to the method.
      *
      * @return mixed The result of the called method.
      *

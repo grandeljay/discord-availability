@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -13,16 +14,14 @@ declare(strict_types=1);
 
 namespace Discord\Parts\Interactions\Request;
 
-use Discord\Helpers\Collection;
 use Discord\Helpers\ExCollectionInterface;
 use Discord\Parts\Channel\Message\Component;
-use Discord\Parts\Interactions\Command\Command;
 use Discord\Parts\Part;
 
 /**
  * Represents the data associated with an interaction.
  *
- * @link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-interaction-data
+ * @link https://docs.discord.com/developers/interactions/receiving-and-responding#interaction-object-interaction-data
  *
  * @since 7.0.0
  *
@@ -30,18 +29,20 @@ use Discord\Parts\Part;
  * @property string                                       $name           Name of the invoked command.
  * @property int                                          $type           The type of the invoked command.
  * @property Resolved|null                                $resolved       Resolved users, members, roles and channels that are relevant.
- * @property ExCollectionInterface|Option[]|null          $options        Parameters and values from the user.
+ * @property ExCollectionInterface<Option>|Option[]       $options        Parameters and values from the user.
  * @property string|null                                  $guild_id       ID of the guild internally passed from Interaction or ID of the guild the command belongs to.
  * @property string|null                                  $target_id      ID the of user or message targeted by a user or message command.
  * @property string|null                                  $custom_id      Custom ID the component was created for. (Only for Message Component & Modal)
  * @property int|null                                     $component_type Type of the component. (Only for Message Component)
  * @property string[]|null                                $values         Values selected in a select menu. (Only for Message Component)
- * @property ExCollectionInterface|Component[]|null       $components     The values submitted by the user. (Only for Modal)
+ * @property ExCollectionInterface<Component>|Component[] $components     The values submitted by the user. (Only for Modal)
+ *
+ * @since 10.19.0 Use either `ApplicationCommandData`,`MessageComponentData`, or `ModalSubmitData`
  */
 class InteractionData extends Part
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $fillable = [
         'id',
@@ -56,47 +57,29 @@ class InteractionData extends Part
         'custom_id',
         'component_type',
         'values',
-        'components', // modal only
+
+        // modal components
+        'components',
     ];
 
     /**
      * Gets the options of the interaction.
      *
-     * @return ExCollectionInterface|Option[]|null $options
+     * @return ExCollectionInterface<Option>|Option[] $options
      */
-    protected function getOptionsAttribute(): ?ExCollectionInterface
+    protected function getOptionsAttribute(): ExCollectionInterface
     {
-        if (! isset($this->attributes['options']) && $this->type != Command::CHAT_INPUT) {
-            return null;
-        }
-
-        $options = Collection::for(Option::class, 'name');
-
-        foreach ($this->attributes['options'] ?? [] as $option) {
-            $options->pushItem($this->createOf(Option::class, $option));
-        }
-
-        return $options;
+        return $this->attributeCollectionHelper('options', Option::class, 'name');
     }
 
     /**
      * Gets the components of the interaction.
      *
-     * @return ExCollectionInterface|Component[]|null $components
+     * @return ExCollectionInterface<Component>|Component[]
      */
-    protected function getComponentsAttribute(): ?ExCollectionInterface
+    protected function getComponentsAttribute(): ExCollectionInterface
     {
-        if (! isset($this->attributes['components'])) {
-            return null;
-        }
-
-        $components = Collection::for(Component::class, null);
-
-        foreach ($this->attributes['components'] as $component) {
-            $components->pushItem($this->createOf(Component::TYPES[$component->type ?? 0], $component));
-        }
-
-        return $components;
+        return $this->attributeTypedCollectionHelper(Component::class, 'components');
     }
 
     /**

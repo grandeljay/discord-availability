@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -14,9 +17,13 @@ namespace Discord\Builders\Components;
 /**
  * Text display components allow you to send text.
  *
- * @link https://discord.com/developers/docs/interactions/message-components#text-display
+ * @link https://docs.discord.com/developers/components/reference#text-display
  *
  * @since 10.5.0
+ *
+ * @property int       $type    10 for text display component.
+ * @property ?int|null $id      Optional identifier for component.
+ * @property string    $content Text that will be displayed similar to a message.
  */
 class TextDisplay extends Content implements Contracts\ComponentV2
 {
@@ -27,14 +34,14 @@ class TextDisplay extends Content implements Contracts\ComponentV2
      *
      * @var int
      */
-    protected $type = Component::TYPE_TEXT_DISPLAY;
+    protected $type = ComponentObject::TYPE_TEXT_DISPLAY;
 
     /**
      * Content of the text display.
      *
      * @var string
      */
-    private $content;
+    protected $content;
 
     /**
      * Creates a new text display.
@@ -76,13 +83,19 @@ class TextDisplay extends Content implements Contracts\ComponentV2
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function jsonSerialize(): array
     {
-        return [
+        $data = [
             'type' => $this->type,
             'content' => $this->content,
         ];
+
+        if (isset($this->id)) {
+            $data['id'] = $this->id;
+        }
+
+        return $data;
     }
 }

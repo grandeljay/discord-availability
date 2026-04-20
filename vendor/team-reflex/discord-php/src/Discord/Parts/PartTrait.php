@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -15,40 +16,63 @@ namespace Discord\Parts;
 
 use Carbon\Carbon;
 use Discord\Discord;
+use Discord\Factory\Factory;
+use Discord\Helpers\ExCollectionInterface;
+use Discord\Http\Http;
+use Discord\Repository\AbstractRepository;
 use React\Promise\PromiseInterface;
 
+use function React\Promise\reject;
+
 /**
- * This class is the base of all objects that are returned. All "Parts" extend
- * off this base class.
- *
- * @since 2.0.0
+ * @property Http    $http               The HTTP client.
+ * @property Factory $factory            The factory instance.
+ * @property Discord $discord            The Discord client.
+ * @property array   $scriptData         Custom script data. Used for storing custom information, used by end products.
+ * @property array   $fillable           The array of attributes that can be mass-assigned.
+ * @property array   $attributes         The parts attributes and content.
+ * @property array   $visible            Attributes which are visible from debug info.
+ * @property array   $hidden             Attributes that are hidden from public.
+ * @property array   $repositories       Repositories that can exist in a part.
+ * @property array   $repositories_cache An array of repositories.
+ * @property bool    $created            Whether the part has been created.
  */
 trait PartTrait
 {
-    /**
-     * Create a new part instance.
-     *
-     * @param Discord $discord    The Discord client.
-     * @param array   $attributes An array of attributes to build the part.
-     * @param bool    $created    Whether the part has already been created.
-     */
-    public function __construct(Discord $discord, array $attributes = [], bool $created = false)
-    {
-        $this->discord = $discord;
-        $this->http = $discord->getHttpClient();
-        $this->factory = $discord->getFactory();
-
-        $this->created = $created;
-        $this->fill($attributes);
-
-        $this->afterConstruct();
-    }
-
     /**
      * Called after the part has been constructed.
      */
     protected function afterConstruct(): void
     {
+    }
+
+    /**
+     * Gets the originating repository of the part.
+     *
+     * @since 10.42.0
+     *
+     * @throws \Exception If the part does not have an originating repository.
+     *
+     * @return AbstractRepository|null The repository, or null if required part data is missing.
+     */
+    public function getRepository()
+    {
+        throw new \Exception('This part does not have an originating repository.');
+    }
+
+    /**
+     * Save the part with its originating repository.
+     *
+     * @param string|null $reason The reason for the audit log, if supported.
+     *
+     * @throws \Exception             If the part does not support saving.
+     * @throws NoPermissionsException Missing permission.
+     *
+     * @return PromiseInterface<Part> Resolves with the saved part.
+     */
+    public function save(?string $reason = null): PromiseInterface
+    {
+        return reject(new \Exception('This part does not support saving.'));
     }
 
     /**
@@ -104,7 +128,7 @@ trait PartTrait
      *
      * @return string|false Either a string if it is a method or false.
      */
-    private function checkForGetMutator(string $key)
+    protected function checkForGetMutator(string $key)
     {
         $str = 'get'.self::studly($key).'Attribute';
 
@@ -124,7 +148,7 @@ trait PartTrait
      *
      * @return string|false Either a string if it is a method or false.
      */
-    private function checkForSetMutator(string $key)
+    protected function checkForSetMutator(string $key)
     {
         $str = 'set'.self::studly($key).'Attribute';
 
@@ -143,11 +167,11 @@ trait PartTrait
      * @return mixed      Either the attribute if it exists or void.
      * @throws \Exception
      */
-    private function getAttribute(string $key)
+    protected function getAttribute(string $key)
     {
         if (isset($this->repositories[$key])) {
             if (! isset($this->repositories_cache[$key])) {
-                $this->repositories_cache[$key] = $this->factory->create($this->repositories[$key], $this->getRepositoryAttributes());
+                $this->repositories_cache[$key] = $this->factory->repository($this->repositories[$key], $this->getRepositoryAttributes());
             }
 
             return $this->repositories_cache[$key];
@@ -170,7 +194,7 @@ trait PartTrait
      * @param string $key   The key to the attribute.
      * @param mixed  $value The value of the attribute.
      */
-    private function setAttribute(string $key, $value): void
+    protected function setAttribute(string $key, $value): void
     {
         if ($str = $this->checkForSetMutator($key)) {
             $this->{$str}($value);
@@ -231,9 +255,7 @@ trait PartTrait
      */
     public function offsetUnset($key): void
     {
-        if (isset($this->attributes[$key])) {
-            unset($this->attributes[$key]);
-        }
+        unset($this->attributes[$key]);
     }
 
     /**
@@ -372,6 +394,7 @@ trait PartTrait
             if (array_key_exists($key, $this->attributes)) {
                 $attr[$key] = $value;
             } elseif (is_int($key) && array_key_exists($value, $this->attributes)) {
+                // The key is an index, not a key-value pair, and needs to be stripped.
                 $attr[$value] = $this->attributes[$value];
             }
         }
@@ -438,6 +461,127 @@ trait PartTrait
         $studlyWords = array_map('ucfirst', $words);
 
         return $studlyCache[$string] = implode($studlyWords);
+    }
+
+    /**
+     * Helps with getting ISO8601 timestamp attributes.
+     *
+     * @param string $key   The attribute key.
+     * @param string $class The attribute class.
+     *
+     * @throws \Exception
+     *
+     * @return Carbon|null
+     *
+     * @since 10.19.0
+     */
+    protected function attributeCarbonHelper($key): ?Carbon
+    {
+        if (! isset($this->attributes[$key])) {
+            return null;
+        }
+
+        return ($this->attributes[$key] instanceof Carbon)
+            ? $this->attributes[$key]
+            : $this->attributes[$key] = Carbon::parse($this->attributes[$key]);
+    }
+
+    /**
+     * Helps with getting Part attributes.
+     *
+     * @param string  $key     The attribute key.
+     * @param string  $class   The attribute class.
+     * @param ?string $discrim The attribute discriminator.
+     *
+     * @throws \Exception
+     *
+     * @return ExCollectionInterface
+     *
+     * @since 10.19.0
+     */
+    protected function attributeCollectionHelper($key, $class, ?string $discrim = 'id', ?array $extraData = []): ExCollectionInterface
+    {
+        /** @var ExCollectionInterface $collection */
+        $collection = $this->discord->getCollectionClass()::for($class, $discrim);
+
+        if (empty($this->attributes[$key])) {
+            return $collection;
+        }
+
+        foreach ($this->attributes[$key] as &$part) {
+            $collection->pushItem(
+                $part instanceof $class
+                    ? $part
+                    : $part = $this->createOf($class, ((array) $part) + $extraData)
+            );
+        }
+
+        return $collection;
+    }
+
+    /**
+     * Helps with getting Part attributes for classes with extended types.
+     *
+     * @param string $class The attribute class.
+     * @param string $key   The attribute key.
+     *
+     * @return ExCollectionInterface
+     */
+    protected function attributeTypedCollectionHelper(string $class, $key): ExCollectionInterface
+    {
+        /** @var ExCollectionInterface $collection */
+        $collection = $this->discord->getCollectionClass()::for($class);
+
+        if (empty($this->attributes[$key])) {
+            return $collection;
+        }
+
+        foreach ($this->attributes[$key] as &$part) {
+            if (! $part instanceof $class) {
+                $part = $this->createOf($class::TYPES[$part->type ?? $part->component_type ?? 0], $part);
+            }
+            $collection->pushItem($part);
+        }
+
+        return $collection;
+    }
+
+    /**
+     * Helps with getting Part attributes.
+     *
+     * @param string $key       The attribute key.
+     * @param string $class     The attribute class.
+     * @param array  $extraData Extra data to pass to the part constructor.
+     *
+     * @throws \Exception
+     *
+     * @return Part|null
+     *
+     * @since 10.19.0
+     */
+    protected function attributePartHelper($key, $class, $extraData = []): ?Part
+    {
+        if (! isset($this->attributes[$key]) || ! $this->attributes[$key]) {
+            return null;
+        }
+
+        return ($this->attributes[$key] instanceof $class)
+            ? $this->attributes[$key]
+            : $this->attributes[$key] = $this->createOf($class, ((array) $this->attributes[$key]) + $extraData);
+    }
+
+    /**
+     * Returns an array of constant names and their values.
+     *
+     * @return array An associative array where keys are constant names and values are their values.
+     *
+     * @since 10.19.0
+     */
+    public function getConstants(): array
+    {
+        $reflection = new \ReflectionClass($this::class);
+
+        return $reflection->getConstants();
     }
 
     /**

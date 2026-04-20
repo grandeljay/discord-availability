@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -13,13 +14,18 @@ declare(strict_types=1);
 
 namespace Discord\Parts\Channel;
 
+use Discord\Http\Exceptions\NoPermissionsException;
 use Discord\Parts\Guild\Guild;
 use Discord\Parts\Part;
+use Discord\Repository\Channel\StageInstanceRepository;
+use React\Promise\PromiseInterface;
+
+use function React\Promise\reject;
 
 /**
  * A Stage Instance holds information about a live stage.
  *
- * @link https://discord.com/developers/docs/resources/stage-instance#stage-instance-resource
+ * @link https://docs.discord.com/developers/resources/stage-instance#stage-instance-resource
  *
  * @since 7.0.0
  *
@@ -35,10 +41,13 @@ use Discord\Parts\Part;
  */
 class StageInstance extends Part
 {
+    /** The Stage instance is visible publicly. (deprecated) */
+    public const PRIVACY_LEVEL_PUBLIC = 1;
+    /** The Stage instance is visible to only guild members. */
     public const PRIVACY_LEVEL_GROUP_ONLY = 2;
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $fillable = [
         'id',
@@ -47,8 +56,10 @@ class StageInstance extends Part
         'topic',
         'privacy_level',
         'send_start_notification',
-        'discoverable_disabled', // deprecated
         'guild_scheduled_event_id',
+
+        // deprecated
+        'discoverable_disabled',
     ];
 
     /**
@@ -82,9 +93,9 @@ class StageInstance extends Part
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      *
-     * @link https://discord.com/developers/docs/resources/stage-instance#create-stage-instance-json-params
+     * @link https://docs.discord.com/developers/resources/stage-instance#create-stage-instance-json-params
      */
     public function getCreatableAttributes(): array
     {
@@ -103,9 +114,9 @@ class StageInstance extends Part
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      *
-     * @link https://discord.com/developers/docs/resources/stage-instance#modify-stage-instance-json-params
+     * @link https://docs.discord.com/developers/resources/stage-instance#modify-stage-instance-json-params
      */
     public function getUpdatableAttributes(): array
     {
@@ -116,7 +127,47 @@ class StageInstance extends Part
     }
 
     /**
-     * {@inheritDoc}
+     * Gets the originating repository of the part.
+     *
+     * @since 10.42.0
+     *
+     * @throws \Exception If the part does not have an originating repository.
+     *
+     * @return StageInstanceRepository|null The repository, or null if required part data is missing.
+     */
+    public function getRepository(): StageInstanceRepository|null
+    {
+        if (! isset($this->attributes['channel_id'])) {
+            return null;
+        }
+
+        $channel = $this->channel ?? $this->factory->part(Channel::class, ['id' => $this->channel_id], true);
+
+        return $channel->stage_instances;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function save(?string $reason = null): PromiseInterface
+    {
+        if (isset($this->attributes['channel_id'])) {
+            /** @var Channel $channel */
+            $channel = $this->channel ?? $this->factory->part(Channel::class, ['id' => $this->channel_id], true);
+            if ($botperms = $channel->getBotPermissions()) {
+                if ($botperms->manage_channels && $botperms->mute_members && $botperms->move_members) {
+                    return reject(new NoPermissionsException("You do not have permission to moderate members in the channel {$channel->id}."));
+                }
+            }
+
+            return $channel->stage_instances->save($this, $reason);
+        }
+
+        return parent::save();
+    }
+
+    /**
+     * @inheritDoc
      */
     public function getRepositoryAttributes(): array
     {

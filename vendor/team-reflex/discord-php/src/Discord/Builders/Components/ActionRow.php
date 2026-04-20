@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -13,17 +14,25 @@ declare(strict_types=1);
 
 namespace Discord\Builders\Components;
 
+use Discord\Builders\ComponentsTrait;
+
 /**
  * An Action Row is a non-interactive container component for other types of
  * components.
  * It has a type: 1 and a sub-array of components of other types.
  *
- * @link https://discord.com/developers/docs/interactions/message-components#action-rows
+ * @link https://docs.discord.com/developers/components/reference#action-row
  *
  * @since 7.0.0
+ *
+ * @property int               $type       1 for action row component.
+ * @property ComponentObject[] $components Up to 5 interactive button components or a single select component.
  */
 class ActionRow extends Layout
 {
+    use ComponentsTrait;
+
+    /** Usage of ActionRow in Modal is deprecated. Use `ComponentObject::Label` as the top-level container. */
     public const USAGE = ['Message', 'Modal'];
 
     /**
@@ -31,14 +40,7 @@ class ActionRow extends Layout
      *
      * @var int
      */
-    protected $type = Component::TYPE_ACTION_ROW;
-
-    /**
-     * Components contained by the action row.
-     *
-     * @var ComponentObject[]
-     */
-    private $components = [];
+    protected $type = ComponentObject::TYPE_ACTION_ROW;
 
     /**
      * Creates a new action row.
@@ -55,12 +57,14 @@ class ActionRow extends Layout
      *
      * @param ComponentObject $component Component to add.
      *
-     * @throws \InvalidArgumentException
-     * @throws \OverflowException
+     * @throws \InvalidArgumentException Component is not a valid type.
+     * @throws \OverflowException        If the action row has more than 5 components.
+     *
+     * @since 10.19.0
      *
      * @return $this
      */
-    public function addComponent(ComponentObject $component): self
+    public function addComponent($component): self
     {
         if ($component instanceof ActionRow) {
             throw new \InvalidArgumentException('You cannot add another `ActionRow` to this action row.');
@@ -92,7 +96,7 @@ class ActionRow extends Layout
      */
     public function removeComponent(ComponentObject $component): self
     {
-        if (($idx = array_search($component, $this->components)) !== null) {
+        if (($idx = array_search($component, $this->components)) !== false) {
             array_splice($this->components, $idx, 1);
         }
 
@@ -122,13 +126,19 @@ class ActionRow extends Layout
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function jsonSerialize(): array
     {
-        return [
+        $content = [
             'type' => $this->type,
             'components' => $this->components,
         ];
+
+        if (isset($this->id)) {
+            $content['id'] = $this->id;
+        }
+
+        return $content;
     }
 }

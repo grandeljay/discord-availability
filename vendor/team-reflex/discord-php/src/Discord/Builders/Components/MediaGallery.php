@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -14,9 +17,13 @@ namespace Discord\Builders\Components;
 /**
  * Media gallery components allow you to group images, videos or gifs into a gallery grid.
  *
- * @link https://discord.com/developers/docs/interactions/message-components#media-gallery
+ * @link https://docs.discord.com/developers/components/reference#media-gallery
  *
  * @since 10.5.0
+ *
+ * @property int                $type  12 for media gallery component.
+ * @property ?int|null          $id    Optional identifier for component.
+ * @property MediaGalleryItem[] $items 1 to 10 media gallery items.
  */
 class MediaGallery extends Content implements Contracts\ComponentV2
 {
@@ -27,14 +34,14 @@ class MediaGallery extends Content implements Contracts\ComponentV2
      *
      * @var int
      */
-    protected $type = Component::TYPE_MEDIA_GALLERY;
+    protected $type = ComponentObject::TYPE_MEDIA_GALLERY;
 
     /**
      * Array of media gallery items.
      *
      * @var MediaGalleryItem[]
      */
-    private $items = [];
+    protected $items = [];
 
     /**
      * Creates a new media gallery.
@@ -49,12 +56,12 @@ class MediaGallery extends Content implements Contracts\ComponentV2
     /**
      * Adds a media item to the gallery.
      *
-     * @param MediaGalleryItem|string $item         Media gallery item or URL of the media item.
-     * @param string|null             $description  Description for the media item (max 1024 characters).
+     * @param MediaGalleryItem|string $item        Media gallery item or URL of the media item.
+     * @param string|null             $description Description for the media item (max 1024 characters).
      * @param bool                    $spoiler     Whether the media item is a spoiler.
      *
      * @throws \OverflowException Gallery exceeds 10 items.
-     * @throws \LengthException  Description exceeds 1024 characters.
+     * @throws \LengthException   Description exceeds 1024 characters.
      *
      * @return $this
      */
@@ -84,7 +91,7 @@ class MediaGallery extends Content implements Contracts\ComponentV2
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function jsonSerialize(): array
     {
@@ -92,9 +99,15 @@ class MediaGallery extends Content implements Contracts\ComponentV2
             throw new \DomainException('MediaGallery must have at least one item.');
         }
 
-        return [
+        $content = [
             'type' => $this->type,
             'items' => $this->items,
         ];
+
+        if (isset($this->id)) {
+            $content['id'] = $this->id;
+        }
+
+        return $content;
     }
 }

@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -13,9 +14,12 @@ declare(strict_types=1);
 
 namespace Discord\Repository\Guild;
 
+use Discord\Builders\Builder;
+use Discord\Builders\ChannelBuilder;
 use Discord\Http\Endpoint;
 use Discord\Parts\Channel\Channel;
 use Discord\Repository\AbstractRepository;
+use React\Promise\PromiseInterface;
 
 /**
  * Contains channels on a guild.
@@ -34,7 +38,7 @@ use Discord\Repository\AbstractRepository;
 class ChannelRepository extends AbstractRepository
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $endpoints = [
         'all' => Endpoint::GUILD_CHANNELS,
@@ -45,7 +49,68 @@ class ChannelRepository extends AbstractRepository
     ];
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $class = Channel::class;
+
+    /**
+     * Attempts to save a channel to the Discord servers.
+     *
+     * @link https://docs.discord.com/developers/resources/guild#create-guild-channel
+     *
+     * @deprecated 10.41.3 use `ChannelBuilder::create($repository)`
+     * @since 10.25.0
+     *
+     * @param Guild|string                  $guild   The guild or guild ID that the channel should be created on.
+     * @param Channel|ChannelBuilder|string $channel The Channel builder that should be converted into a channel, or the name of the channel.
+     * @param string|null                   $reason  Reason for Audit Log.
+     *
+     * @return PromiseInterface<Channel>
+     */
+    public function createChannel($guild, $channel, ?string $reason = null): PromiseInterface
+    {
+        return $this->build($guild, $channel, $reason);
+    }
+
+    /**
+     * Attempts to save a channel to the Discord servers.
+     *
+     * @link https://docs.discord.com/developers/resources/guild#create-guild-channel
+     *
+     * @deprecated 10.41.0 Use `ChannelBuilder::create($repository)`
+     * @since 10.25.0
+     *
+     * @param Guild|string                  $guild   The guild or guild ID that the channel should be created on.
+     * @param Channel|ChannelBuilder|string $channel The Channel builder that should be converted into a channel, or the name of the channel.
+     * @param string|null                   $reason  Reason for Audit Log.
+     *
+     * @return PromiseInterface<Channel>
+     */
+    public function build($guild, $channel, ?string $reason = null): PromiseInterface
+    {
+        if (! is_string($guild)) {
+            $guild = $guild->id;
+        }
+
+        if (is_string($channel)) {
+            $channel = ChannelBuilder::new($channel)->setName($channel);
+        }
+
+        $headers = [];
+        if (isset($reason)) {
+            $headers['X-Audit-Log-Reason'] = $reason;
+        }
+
+        return $this->http->post(Endpoint::bind(Endpoint::GUILD_CHANNELS, $guild), $channel, $headers)
+            ->then(function ($response) {
+                if ($channelPart = $this->get('id', $response->id)) {
+                    $channelPart->fill((array) $response);
+                    $channelPart->created = true;
+                } else {
+                    $channelPart = $this->create($response, true);
+                }
+
+                return $this->cache->set($channelPart->{$this->discrim}, $channelPart)->then(fn ($success) => $channelPart);
+            });
+    }
 }

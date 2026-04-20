@@ -3,17 +3,18 @@
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
  */
 
 use Discord\Discord;
+use Discord\WebSockets\Intents;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
-use React\EventLoop\Loop;
 
 class DiscordSingleton
 {
@@ -25,7 +26,7 @@ class DiscordSingleton
     public static function get()
     {
         if (! self::$discord) {
-            self::new_cache();
+            self::new();
         }
 
         return self::$discord;
@@ -33,9 +34,7 @@ class DiscordSingleton
 
     private static function new_cache()
     {
-        $loop = Loop::get();
-
-        $redis = (new Clue\React\Redis\Factory($loop))->createLazyClient('localhost:6379');
+        $redis = (new Clue\React\Redis\Factory())->createLazyClient('localhost:6379');
         $cache = new WyriHaximus\React\Cache\Redis($redis);
 
         //$cache = new WyriHaximus\React\Cache\Filesystem(React\Filesystem\Filesystem::create($loop), getenv('RUNNER_TEMP').DIRECTORY_SEPARATOR);
@@ -53,7 +52,9 @@ class DiscordSingleton
 
         $discord = new Discord([
             'token' => getenv('DISCORD_TOKEN'),
-            'loop' => $loop,
+            'intents' => Intents::getDefaultIntents(),
+            'useTransportCompression' => false, // Disable zlib-stream
+            'usePayloadCompression' => false, // RFC1950 2.2
             'logger' => $logger,
             'cache' => $cache,
         ]);
@@ -71,7 +72,7 @@ class DiscordSingleton
 
         self::$discord = $discord;
 
-        $discord->run();
+        self::$discord->run();
 
         if ($e !== null) {
             throw $e;
@@ -89,6 +90,9 @@ class DiscordSingleton
         $discord = new Discord([
             'token' => getenv('DISCORD_TOKEN'),
             'logger' => $logger,
+            'intents' => Intents::getDefaultIntents(),
+            'useTransportCompression' => false, // Disable zlib-stream
+            'usePayloadCompression' => false, // RFC1950 2.2
         ]);
 
         $e = null;
@@ -102,12 +106,12 @@ class DiscordSingleton
             $discord->getLoop()->stop();
         });
 
-        $discord->getLoop()->run();
+        self::$discord = $discord;
+
+        self::$discord->run();
 
         if ($e !== null) {
             throw $e;
         }
-
-        self::$discord = $discord;
     }
 }

@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -18,14 +19,14 @@ use Discord\Parts\Part;
 /**
  * Represents the collectibles a user has.
  *
- * @link https://discord.com/developers/docs/resources/user#collectibles
+ * @link https://docs.discord.com/developers/resources/user#collectibles
  *
  * @property ?Nameplate|null $nameplate The nameplate collectible object, if present.
  */
 class Collectibles extends Part
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $fillable = [
         'nameplate',
@@ -38,9 +39,6 @@ class Collectibles extends Part
      */
     protected function getNameplateAttribute(): ?Nameplate
     {
-        if (!isset($this->attributes['nameplate'])) {
-            return null;
-        }
-        return $this->factory->part(Nameplate::class, (array) $this->attributes['nameplate'], true);
+        return $this->attributePartHelper('nameplate', Nameplate::class);
     }
 }

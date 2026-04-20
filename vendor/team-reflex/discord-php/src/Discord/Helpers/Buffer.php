@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -15,6 +16,7 @@ namespace Discord\Helpers;
 
 use Discord\Exceptions\BufferTimedOutException;
 use Evenement\EventEmitter;
+use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
@@ -30,37 +32,37 @@ class Buffer extends EventEmitter implements WritableStreamInterface
      *
      * @var string
      */
-    private $buffer = '';
+    protected $buffer = '';
 
     /**
      * Array of deferred reads waiting to be resolved.
      *
      * @var Deferred[]|int[]
      */
-    private $reads = [];
+    protected $reads = [];
 
     /**
      * Whether the buffer has been closed.
      *
      * @var bool
      */
-    private $closed = false;
+    protected $closed = false;
 
     /**
      * ReactPHP event loop.
      * Required for timeouts.
      *
-     * @var LoopInterface
+     * @var LoopInterface|null
      */
-    private $loop;
+    protected $loop;
 
-    public function __construct(LoopInterface $loop = null)
+    public function __construct(?LoopInterface $loop = null)
     {
-        $this->loop = $loop;
+        $this->loop = $loop ?? Loop::get();
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function write($data): bool
     {
@@ -88,7 +90,7 @@ class Buffer extends EventEmitter implements WritableStreamInterface
      *
      * @return string|bool The bytes read, or false if not enough bytes are present.
      */
-    private function readRaw(int $length)
+    protected function readRaw(int $length)
     {
         if (strlen($this->buffer) >= $length) {
             $output = substr($this->buffer, 0, $length);
@@ -130,7 +132,7 @@ class Buffer extends EventEmitter implements WritableStreamInterface
                 $deferred->promise()->then(function () use ($timer) {
                     $this->loop->cancelTimer($timer);
                 });
-            } elseif ($timeout == 0) {
+            } elseif ($timeout === 0) {
                 $deferred->reject(new BufferTimedOutException());
             }
         }
@@ -179,7 +181,7 @@ class Buffer extends EventEmitter implements WritableStreamInterface
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function isWritable()
     {
@@ -187,7 +189,7 @@ class Buffer extends EventEmitter implements WritableStreamInterface
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function end($data = null): void
     {
@@ -196,7 +198,7 @@ class Buffer extends EventEmitter implements WritableStreamInterface
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function close(): void
     {

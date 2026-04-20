@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -14,19 +15,20 @@ declare(strict_types=1);
 namespace Discord\Builders;
 
 use Discord\Builders\Components\ActionRow;
-use Discord\Builders\Components\Component;
 use Discord\Builders\Components\ComponentObject;
 use Discord\Builders\Components\Contracts\ComponentV2;
-use Discord\Builders\Components\SelectMenu;
+use Discord\Builders\Components\Interactive;
 use Discord\Exceptions\FileNotFoundException;
 use Discord\Helpers\Multipart;
 use Discord\Http\Exceptions\RequestFailedException;
 use Discord\Parts\Channel\Attachment;
 use Discord\Parts\Channel\Message;
 use Discord\Parts\Channel\Message\AllowedMentions;
-use Discord\Parts\Channel\Poll\Poll;
+use Discord\Parts\Channel\Poll\PollCreateRequest as Poll;
 use Discord\Parts\Embed\Embed;
 use Discord\Parts\Guild\Sticker;
+use Discord\Repository\Channel\MessageRepository;
+use Discord\Repository\PrivateChannelRepository;
 use JsonSerializable;
 
 use function Discord\poly_strlen;
@@ -40,6 +42,8 @@ use function Discord\poly_strlen;
  */
 class MessageBuilder extends Builder implements JsonSerializable
 {
+    use ComponentsTrait;
+
     /**
      * Content of the message.
      *
@@ -104,13 +108,6 @@ class MessageBuilder extends Builder implements JsonSerializable
     protected $forward;
 
     /**
-     * Components to send with this message.
-     *
-     * @var ComponentObject[]|null
-     */
-    protected $components;
-
-    /**
      * IDs of up to 3 stickers in the server to send in the message.
      *
      * @var string[]
@@ -160,6 +157,20 @@ class MessageBuilder extends Builder implements JsonSerializable
     public static function new(): self
     {
         return new static();
+    }
+
+    /**
+     * Creates the message in the given repository.
+     *
+     * @param MessageRepository|PrivateChannelRepository $repository
+     *
+     * @return Message
+     *
+     * @since 10.41.0
+     */
+    public function create(MessageRepository|PrivateChannelRepository $repository): Message
+    {
+        return $repository->create($this->jsonSerialize());
     }
 
     /**
@@ -353,13 +364,13 @@ class MessageBuilder extends Builder implements JsonSerializable
     /**
      * Sets the allowed mentions object of the message.
      *
-     * @link https://discord.com/developers/docs/resources/channel#allowed-mentions-object
+     * @link https://docs.discord.com/developers/resources/channel#allowed-mentions-object
      *
-     * @param AllowedMentions|array $allowed_mentions
+     * @param AllowedMentions|array|null $allowed_mentions
      *
      * @return $this
      */
-    public function setAllowedMentions(AllowedMentions|array $allowed_mentions): self
+    public function setAllowedMentions(AllowedMentions|array|null $allowed_mentions = null): self
     {
         $this->allowed_mentions = $allowed_mentions;
 
@@ -420,51 +431,14 @@ class MessageBuilder extends Builder implements JsonSerializable
     }
 
     /**
-     * Adds a component to the builder.
-     *
-     * @param ComponentObject $component Component to add.
-     *
-     * @throws \InvalidArgumentException Component is not a valid type.
-     * @throws \OverflowException        Builder exceeds component limits.
-     *
-     * @return $this
-     */
-    public function addComponent(Component $component): self
-    {
-        if (! $component instanceof ComponentObject) {
-            throw new \InvalidArgumentException('You can only add component objects to a message.');
-        }
-
-        if ($component instanceof ComponentV2) {
-            $this->setV2Flag();
-        }
-
-        if ($component instanceof SelectMenu) {
-            $component = ActionRow::new()->addComponent($component);
-        }
-
-        if ($this->flags & Message::FLAG_IS_V2_COMPONENTS) {
-            $this->enforceV2Limits();
-        } else {
-            $this->enforceV1Limits($component);
-        }
-
-        $this->components[] = $component;
-
-        return $this;
-    }
-
-    /**
      * Validates the total number of components added to the message.
      *
      * @throws \OverflowException If the total number of components is 40 or more.
      */
     protected function enforceV2Limits(): void
     {
-        if (isset($this->components)) {
-            if ($this->countTotalComponents($this->components) >= 40) {
-                throw new \OverflowException('You can only add 40 components to a v2 message');
-            }
+        if ($this->countTotalComponents() >= 40) {
+            throw new \OverflowException('You can only add 40 components to a v2 message');
         }
     }
 
@@ -473,19 +447,17 @@ class MessageBuilder extends Builder implements JsonSerializable
      *
      * @param ComponentObject $component
      *
-     * @throws \OverflowException If more than 5 components are added.
+     * @throws \OverflowException        If more than 5 components are added.
      * @throws \InvalidArgumentException If a component is not an ActionRow or is not properly wrapped.
      */
-    protected function enforceV1Limits(Component $component): void
+    protected function enforceV1Limits(ComponentObject $component): void
     {
         if (! $component instanceof ActionRow) {
             throw new \InvalidArgumentException('You can only add action rows as components to v1 messages. Put your other components inside an action row.');
         }
 
-        if (isset($this->components)) {
-            if (count($this->components) >= 5) {
-                throw new \OverflowException('You can only add 5 components to a v1 message');
-            }
+        if (count($this->components) >= 5) {
+            throw new \OverflowException('You can only add 5 components to a v1 message');
         }
     }
 
@@ -497,7 +469,7 @@ class MessageBuilder extends Builder implements JsonSerializable
     public function countTotalComponents(): int
     {
         return (int) array_sum(array_map(
-            fn($component) => (is_array($component) && isset($component['components']) && is_array($component['components']))
+            fn ($component) => (is_array($component) && isset($component['components']) && is_array($component['components']))
                 ? 1 + $this->countTotalComponents($component['components'])
                 : 1,
             $this->components ?? []
@@ -511,29 +483,53 @@ class MessageBuilder extends Builder implements JsonSerializable
      *
      * @return $this
      */
-    public function removeComponent(Component $component): self
+    public function removeComponent($component): self
     {
-        if (($idx = array_search($component, $this->components)) !== null) {
-            array_splice($this->components, $idx, 1);
+        if (! isset($this->components)) {
+            return $this;
+        }
+
+        $index = array_search($component, $this->components, true);
+        if ($index !== false) {
+            array_splice($this->components, $index, 1);
         }
 
         return $this;
     }
 
     /**
-     * Sets the components of the message. Removes the existing components in the process.
+     * Adds a component to the builder.
      *
-     * @param array $components New message components.
+     * @param ComponentObject $component Component to add.
+     *
+     * @throws \InvalidArgumentException Component is not a valid type.
+     * @throws \OverflowException        Builder exceeds component limits.
      *
      * @return $this
      */
-    public function setComponents(array $components): self
+    public function addComponent($component): self
     {
-        $this->components = [];
-
-        foreach ($components as $component) {
-            $this->addComponent($component);
+        if (! in_array('Message', $component::USAGE, true)) {
+            throw new \InvalidArgumentException('Invalid component type for messages.');
         }
+
+        if ($component instanceof Interactive) {
+            $component = ActionRow::new()->addComponent($component);
+        }
+
+        if ($component instanceof ComponentV2) {
+            $this->setIsComponentsV2Flag();
+        }
+
+        $this->components ??= [];
+        
+        if ($this->flags & Message::FLAG_IS_COMPONENTS_V2) {
+            $this->enforceV2Limits();
+        } else {
+            $this->enforceV1Limits($component);
+        }
+
+        $this->components[] = $component;
 
         return $this;
     }
@@ -545,13 +541,13 @@ class MessageBuilder extends Builder implements JsonSerializable
      */
     public function getComponents(): array
     {
-        return $this->components;
+        return $this->components ?? [];
     }
 
     /**
      * Adds a sticker to the builder. Only used for sending message or creating forum thread.
      *
-     * @param string|Sticker $sticker Sticker to add.
+     * @param Sticker|string $sticker Sticker to add.
      *
      * @throws \OverflowException Builder exceeds 3 stickers.
      *
@@ -575,7 +571,7 @@ class MessageBuilder extends Builder implements JsonSerializable
     /**
      * Removes a sticker from the builder.
      *
-     * @param string|Sticker $sticker Sticker to remove.
+     * @param Sticker|string $sticker Sticker to remove.
      *
      * @return $this
      */
@@ -585,7 +581,7 @@ class MessageBuilder extends Builder implements JsonSerializable
             $sticker = $sticker->id;
         }
 
-        if (($idx = array_search($sticker, $this->sticker_ids)) !== null) {
+        if (($idx = array_search($sticker, $this->sticker_ids)) !== false) {
             array_splice($this->sticker_ids, $idx, 1);
         }
 
@@ -595,7 +591,7 @@ class MessageBuilder extends Builder implements JsonSerializable
     /**
      * Sets the stickers of the builder. Removes the existing stickers in the process.
      *
-     * @param array $stickers New sticker ids.
+     * @param Sticker[]|string[] $stickers New sticker ids.
      *
      * @return $this
      */
@@ -709,7 +705,7 @@ class MessageBuilder extends Builder implements JsonSerializable
     /**
      * Adds attachment(s) to the builder.
      *
-     * @param Attachment|string|int ...$attachments Attachment objects or IDs to add
+     * @param Attachment[]|string[]|string|int ...$attachments Attachment objects or IDs to add
      *
      * @return $this
      */
@@ -757,7 +753,7 @@ class MessageBuilder extends Builder implements JsonSerializable
      *
      * @return $this
      */
-    public function setPoll(Poll|null $poll): self
+    public function setPoll($poll = null): self
     {
         $this->poll = $poll;
 
@@ -775,19 +771,109 @@ class MessageBuilder extends Builder implements JsonSerializable
     }
 
     /**
-     * Sets or unsets the V2 components flag for the message.
+     * Sets or unsets the SUPPRESS_EMBEDS flag for the message.
+     *
+     * @since 10.19.0
+     *
+     * @param  bool $enable
+     * @return self
+     */
+    public function setSuppressEmbedsFlag(bool $enable = true): self
+    {
+        if ($enable) {
+            if (! ($this->flags & Message::FLAG_SUPPRESS_EMBEDS)) {
+                $this->flags |= Message::FLAG_SUPPRESS_EMBEDS;
+            }
+        } elseif ($this->flags & Message::FLAG_SUPPRESS_EMBEDS) {
+            $this->flags &= ~Message::FLAG_SUPPRESS_EMBEDS;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Sets or unsets the SUPPRESS_NOTIFICATIONS flag for the message.
+     *
+     * @since 10.19.0
+     *
+     * @param  bool $enable
+     * @return self
+     */
+    public function setSuppressNotificationsFlag(bool $enable = true): self
+    {
+        if ($enable) {
+            if (! ($this->flags & Message::FLAG_SUPPRESS_NOTIFICATIONS)) {
+                $this->flags |= Message::FLAG_SUPPRESS_NOTIFICATIONS;
+            }
+        } elseif ($this->flags & Message::FLAG_SUPPRESS_NOTIFICATIONS) {
+            $this->flags &= ~Message::FLAG_SUPPRESS_NOTIFICATIONS;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Sets or unsets the IS_VOICE_MESSAGE flag for the message.
+     *
+     * @since 10.19.0
+     *
+     * @param  bool $enable
+     * @return self
+     */
+    public function setIsVoiceMessageFlag(bool $enable = true): self
+    {
+        if ($enable) {
+            if (! ($this->flags & Message::FLAG_IS_VOICE_MESSAGE)) {
+                $this->flags |= Message::FLAG_IS_VOICE_MESSAGE;
+            }
+        } elseif ($this->flags & Message::FLAG_IS_VOICE_MESSAGE) {
+            $this->flags &= ~Message::FLAG_IS_VOICE_MESSAGE;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Sets or unsets the IS_COMPONENTS_V2 flag for the message.
+     * Once a message has been sent with this flag, it can't be removed from that message.
+     *
+     * When the `IS_COMPONENTS_V2` flag is set, any of the used `content`, `embeds`, `sticker_ids`, or `poll` fields must have their values reset to empty.
+     * For `content` and `poll` this is `null`.
+     * For `embeds` and `sticker_ids` this is `[]`.
+     * Failing to do this will result in a 400 BAD REQUEST response.
+     *
+     * @deprecated 10.19.0 use `MessageBuilder::setIsComponentsV2Flag()` instead.
      *
      * @param  bool $enable
      * @return self
      */
     public function setV2Flag(bool $enable = true): self
     {
+        return $this->setIsComponentsV2Flag($enable);
+    }
+
+    /**
+     * Sets or unsets the IS_COMPONENTS_V2 flag for the message.
+     * Once a message has been sent with this flag, it can't be removed from that message.
+     *
+     * When the `IS_COMPONENTS_V2` flag is set, any of the used `content`, `embeds`, `sticker_ids`, or `poll` fields must have their values reset to empty.
+     * For `content` and `poll` this is `null`.
+     * For `embeds` and `sticker_ids` this is `[]`.
+     * Failing to do this will result in a 400 BAD REQUEST response.
+     *
+     * @since 10.19.0
+     *
+     * @param  bool $enable
+     * @return self
+     */
+    public function setIsComponentsV2Flag(bool $enable = true): self
+    {
         if ($enable) {
-            if (! ($this->flags & Message::FLAG_IS_V2_COMPONENTS)) {
-                $this->flags |= Message::FLAG_IS_V2_COMPONENTS;
+            if (! ($this->flags & Message::FLAG_IS_COMPONENTS_V2)) {
+                $this->flags |= Message::FLAG_IS_COMPONENTS_V2;
             }
-        } elseif ($this->flags & Message::FLAG_IS_V2_COMPONENTS) {
-            $this->flags &= ~Message::FLAG_IS_V2_COMPONENTS;
+        } elseif ($this->flags & Message::FLAG_IS_COMPONENTS_V2) {
+            $this->flags &= ~Message::FLAG_IS_COMPONENTS_V2;
         }
 
         return $this;
@@ -795,7 +881,7 @@ class MessageBuilder extends Builder implements JsonSerializable
 
     /**
      * Sets the flags of the message.
-     * Only works for some message types and some message flags.
+     * Only `SUPPRESS_EMBEDS`, `SUPPRESS_NOTIFICATIONS`, `IS_VOICE_MESSAGE`, and `IS_COMPONENTS_V2` can be set for the Create Message endpoint.
      *
      * @param int $flags
      *
@@ -874,17 +960,23 @@ class MessageBuilder extends Builder implements JsonSerializable
      *
      * @param bool $payload Whether to include the JSON payload in the response.
      *
+     * @throws \RuntimeException If encoding the message to JSON fails.
+     *
      * @return Multipart
      */
     public function toMultipart(bool $payload = true): Multipart
     {
         $fields = [];
 
+        if (($jsonEncoded = json_encode($this)) === false) {
+            throw new \RuntimeException('Failed to encode message to JSON: '.json_last_error_msg());
+        }
+
         if ($payload) {
             $fields = [
                 [
                     'name' => 'payload_json',
-                    'content' => json_encode($this),
+                    'content' => $jsonEncoded,
                     'headers' => [
                         'Content-Type' => 'application/json',
                     ],
@@ -904,7 +996,7 @@ class MessageBuilder extends Builder implements JsonSerializable
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function jsonSerialize(): array
     {
@@ -912,7 +1004,7 @@ class MessageBuilder extends Builder implements JsonSerializable
         $body = [];
 
         if (isset($this->content)) {
-            if (! ($this->flags & Message::FLAG_IS_V2_COMPONENTS)) {
+            if (! ($this->flags & Message::FLAG_IS_COMPONENTS_V2)) {
                 $body['content'] = $this->content;
                 $empty = false;
             }
@@ -935,7 +1027,7 @@ class MessageBuilder extends Builder implements JsonSerializable
         }
 
         if (isset($this->embeds)) {
-            if (! ($this->flags & Message::FLAG_IS_V2_COMPONENTS)) {
+            if (! ($this->flags & Message::FLAG_IS_COMPONENTS_V2)) {
                 $body['embeds'] = $this->embeds;
                 $empty = false;
             }
@@ -968,14 +1060,14 @@ class MessageBuilder extends Builder implements JsonSerializable
         }
 
         if ($this->sticker_ids) {
-            if (! ($this->flags & Message::FLAG_IS_V2_COMPONENTS)) {
+            if (! ($this->flags & Message::FLAG_IS_COMPONENTS_V2)) {
                 $body['sticker_ids'] = $this->sticker_ids;
                 $empty = false;
             }
         }
 
         if (! empty($this->files)) {
-            if (! ($this->flags & Message::FLAG_IS_V2_COMPONENTS)) {
+            if (! ($this->flags & Message::FLAG_IS_COMPONENTS_V2)) {
                 $empty = false;
             }
         }
@@ -986,7 +1078,7 @@ class MessageBuilder extends Builder implements JsonSerializable
         }
 
         if (isset($this->poll)) {
-            if (! ($this->flags & Message::FLAG_IS_V2_COMPONENTS)) {
+            if (! ($this->flags & Message::FLAG_IS_COMPONENTS_V2)) {
                 $body['poll'] = $this->poll;
                 $empty = false;
             }

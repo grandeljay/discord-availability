@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -16,7 +17,7 @@ namespace Discord\WebSockets;
 /**
  * Contains constants used in websockets.
  *
- * @link https://discord.com/developers/docs/topics/opcodes-and-status-codes
+ * @link https://docs.discord.com/developers/topics/opcodes-and-status-codes
  *
  * @since 3.2.1
  */
@@ -29,7 +30,7 @@ class Op
      * payload type. Your connection to our gateway may also sometimes close.
      * When it does, you will receive a close code that tells you what happened.
      *
-     * @link https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-opcodes
+     * @link https://docs.discord.com/developers/topics/opcodes-and-status-codes#gateway-gateway-opcodes
      */
 
     /** Dispatches an event. */
@@ -39,9 +40,13 @@ class Op
     /** Used for client handshake. */
     public const OP_IDENTIFY = 2;
     /** Used to update the client presence. */
-    public const OP_PRESENCE_UPDATE = 3;
+    public const OP_UPDATE_PRESENCE = 3;
+    /** @deprecated 10.18.31 Use `OP_UPDATE_PRESENCE` */
+    public const OP_PRESENCE_UPDATE = self::OP_UPDATE_PRESENCE;
     /** Used to join/move/leave voice channels. */
-    public const OP_VOICE_STATE_UPDATE = 4;
+    public const OP_UPDATE_VOICE_STATE = 4;
+    /** @deprecated 10.18.31 Use `OP_UPDATE_VOICE_STATE` */
+    public const OP_VOICE_STATE_UPDATE = self::OP_UPDATE_VOICE_STATE;
     /** Used for voice ping checking. */
     public const OP_VOICE_SERVER_PING = 5;
     /** Used to resume a closed connection. */
@@ -49,7 +54,9 @@ class Op
     /** Used to redirect clients to a new gateway. */
     public const OP_RECONNECT = 7;
     /** Used to request member chunks. */
-    public const OP_GUILD_MEMBER_CHUNK = 8;
+    public const OP_REQUEST_GUILD_MEMBERS = 8;
+    /** @deprecated 10.18.31 Use `OP_REQUEST_GUILD_MEMBERS` */
+    public const OP_GUILD_MEMBER_CHUNK = self::OP_REQUEST_GUILD_MEMBERS;
     /** Used to notify clients when they have an invalid session. */
     public const OP_INVALID_SESSION = 9;
     /** Used to pass through the heartbeat interval. */
@@ -57,27 +64,30 @@ class Op
     /** Used to acknowledge heartbeats. */
     public const OP_HEARTBEAT_ACK = 11;
     /** Request soundboard sounds. */
-    public const REQUEST_SOUNDBOARD_SOUNDS = 31;
-
+    public const OP_REQUEST_SOUNDBOARD_SOUNDS = 31;
 
     /**
      * Voice Opcodes.
      *
      * Our voice gateways have their own set of opcodes and close codes.
      *
-     * @link https://discord.com/developers/docs/topics/opcodes-and-status-codes#voice-voice-opcodes
+     * @link https://docs.discord.com/developers/topics/opcodes-and-status-codes#voice-voice-opcodes
      */
 
     /** Used to begin a voice WebSocket connection. */
     public const VOICE_IDENTIFY = 0;
     /** Used to select the voice protocol. */
-    public const VOICE_SELECT_PROTO = 1;
+    public const VOICE_SELECT_PROTOCOL = 1;
+    /** @deprecated use VOICE_SELECT_PROTOCOL */
+    public const VOICE_SELECT_PROTO = self::VOICE_SELECT_PROTOCOL;
     /** Used to complete the WebSocket handshake. */
     public const VOICE_READY = 2;
     /** Used to keep the WebSocket connection alive. */
     public const VOICE_HEARTBEAT = 3;
     /** Used to describe the session. */
-    public const VOICE_DESCRIPTION = 4;
+    public const VOICE_SESSION_DESCRIPTION = 4;
+    /** @deprecated use VOICE_SESSION_DESCRIPTION */
+    public const VOICE_DESCRIPTION = self::VOICE_SESSION_DESCRIPTION;
     /** Used to identify which users are speaking. */
     public const VOICE_SPEAKING = 5;
     /** Sent by the Discord servers to acknowledge heartbeat */
@@ -92,6 +102,13 @@ class Op
     public const VOICE_CLIENT_CONNECT = 11;
     /** A client has disconnected from the voice channel. */
     public const VOICE_CLIENT_DISCONNECT = 13;
+    /** Undocumented. */
+    public const VOICE_CLIENT_UNKNOWN_15 = 15;
+    /** Undocumented. */
+    public const VOICE_CLIENT_UNKNOWN_18 = 18;
+    /** Undocumented. Assumed to be the platform type in which the user is. */
+    public const VOICE_CLIENT_PLATFORM = 20;
+
     /** A downgrade from the DAVE protocol is upcoming. */
     public const VOICE_DAVE_PREPARE_TRANSITION = 21;
     /** Execute a previously announced protocol transition. */
@@ -124,7 +141,7 @@ class Op
      * what the application defined close codes for the gateway are, and which
      * close codes you should not attempt to reconnect.
      *
-     * @link https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-close-event-codes
+     * @link https://docs.discord.com/developers/topics/opcodes-and-status-codes#gateway-gateway-close-event-codes
      */
 
     /** Normal close or heartbeat is invalid. */
@@ -165,7 +182,7 @@ class Op
     /**
      * Voice Close Event Codes.
      *
-     * @link https://discord.com/developers/docs/topics/opcodes-and-status-codes#voice-voice-close-event-codes
+     * @link https://docs.discord.com/developers/topics/opcodes-and-status-codes#voice-voice-close-event-codes
      */
 
     /** Can't find the server. */
@@ -178,6 +195,14 @@ class Op
     public const CLOSE_VOICE_SERVER_CRASH = 4015;
     /** Unknown encryption mode. */
     public const CLOSE_VOICE_UNKNOWN_ENCRYPT = 4016;
+    /** E2EE/DAVE protocol required. */
+    public const CLOSE_VOICE_E2EE_DAVE_REQUIRED = 4017;
+    /** You sent a malformed request. */
+    public const CLOSE_VOICE_BAD_REQUEST = 4020;
+    /** Disconnect due to rate limit exceeded. Should not reconnect. */
+    public const CLOSE_VOICE_DISCONNECTED_RATE_LIMITED = 4021;
+    /** Disconnect all clients due to call terminated (channel deleted, voice server changed, etc.). Should not reconnect. */
+    public const CLOSE_VOICE_DISCONNECTED_CALL_TERMINATED = 4022;
 
     /**
      * Returns the critical event codes that we should not reconnect after.

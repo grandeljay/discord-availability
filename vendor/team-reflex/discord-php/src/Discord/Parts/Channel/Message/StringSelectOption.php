@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -15,12 +16,11 @@ namespace Discord\Parts\Channel\Message;
 
 use Discord\Parts\Guild\Emoji;
 use Discord\Parts\Part;
-use Discord\Repository\Guild\EmojiRepository;
 
 /**
- * Specified choices in a string select menu; max 25
+ * Specified choices in a string select menu; max 25.
  *
- * @link https://discord.com/developers/docs/components/reference#string-select-select-option-structure
+ * @link https://docs.discord.com/developers/components/reference#string-select-select-option-structure
  *
  * @since 10.11.0
  *
@@ -33,7 +33,7 @@ use Discord\Repository\Guild\EmojiRepository;
 class StringSelectOption extends Part
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $fillable = [
         'label',
@@ -45,6 +45,6 @@ class StringSelectOption extends Part
 
     protected function getEmojiAttribute(): Emoji
     {
-        return $this->createOf(Emoji::class, $this->attributes['emoji'], true);
+        return $this->attributePartHelper('emoji', Emoji::class);
     }
 }

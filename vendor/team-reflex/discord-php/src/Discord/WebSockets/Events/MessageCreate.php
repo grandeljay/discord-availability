@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -21,14 +22,14 @@ use Discord\Parts\Thread\Thread;
 use Discord\WebSockets\Intents;
 
 /**
- * @link https://discord.com/developers/docs/topics/gateway-events#message-create
+ * @link https://docs.discord.com/developers/events/gateway-events#message-create
  *
  * @since 2.1.3
  */
 class MessageCreate extends Event
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function handle($data)
     {
@@ -37,16 +38,12 @@ class MessageCreate extends Event
         /** @var Message */
         $messagePart = $this->factory->part(Message::class, (array) $data, true);
 
-        if ($messagePart->is_private) {
-            /** @var Channel */
-            $channel = $this->factory->part(Channel::class, [
-                'id' => $data->channel_id,
-                'type' => Channel::TYPE_DM,
-                'last_message_id' => $data->id,
-                'recipients' => [$data->author],
-            ], true);
-
-            $this->discord->private_channels->set($data->channel_id, $channel);
+        $channel = $messagePart->channel;
+        if ($channel->type === Channel::TYPE_DM || $channel->type === Channel::TYPE_GROUP_DM) {
+            $channel->last_message_id = $data->id;
+            $this->discord->private_channels->set($channel->id, $channel);
+        } else {
+            unset($channel); // Force reload below
         }
 
         /** @var ?Guild */
@@ -68,7 +65,7 @@ class MessageCreate extends Event
 
         if ($this->discord->options['storeMessages'] && (isset($channel) || $channel = $messagePart->channel)) {
             // Only cache if message intent is enabled or message was sent by the bot or message is not cached
-            if (($this->discord->options['intents'] & Intents::MESSAGE_CONTENT) || $data->author->id == $this->discord->id || ! (yield $channel->messages->cache->has($data->id))) {
+            if (($this->discord->options['intents'] & Intents::MESSAGE_CONTENT) || $data->author->id === $this->discord->id || ! (yield $channel->messages->cache->has($data->id))) {
                 $channel->messages->set($data->id, $messagePart);
             }
         }

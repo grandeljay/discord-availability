@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -14,7 +15,6 @@ declare(strict_types=1);
 namespace Discord\Parts\Embed;
 
 use Carbon\Carbon;
-use Discord\Helpers\Collection;
 use Discord\Helpers\ExCollectionInterface;
 use Discord\Parts\Channel\Attachment;
 use Discord\Parts\Part;
@@ -24,35 +24,59 @@ use function Discord\poly_strlen;
 /**
  * An embed object to be sent with a message.
  *
- * @link https://discord.com/developers/docs/resources/channel#embed-object
+ * @link https://docs.discord.com/developers/resources/message#embed-object-embed-structure
  *
  * @since 4.0.3
+ * @since 10.19.0 The `provider` property was added and `thumbnail` was updated to return `Thumbnail`.
  *
- * @property      string|null        $title       The title of the embed.
- * @property-read string|null        $type        The type of the embed.
- * @property      string|null        $description A description of the embed.
- * @property      string|null        $url         The URL of the embed.
- * @property      Carbon|null        $timestamp   A timestamp of the embed.
- * @property      int|null           $color       The color of the embed.
- * @property      Footer|null        $footer      The footer of the embed.
- * @property      Image|null         $image       The image of the embed.
- * @property      Image|null         $thumbnail   The thumbnail of the embed.
- * @property-read Video|null         $video       The video of the embed.
- * @property-read object|null        $provider    The provider of the embed.
- * @property      Author|null        $author      The author of the embed.
- * @property      ExCollectionInterface|Field[] $fields      A collection of embed fields.
+ * @property      ?string|null                          $title       The title of the embed.
+ * @property-read ?string|null                          $type        The type of the embed (always "rich" for webhook embeds).
+ * @property      ?string|null                          $description A description of the embed.
+ * @property      ?string|null                          $url         The URL of the embed.
+ * @property      ?Carbon|null                          $timestamp   A timestamp of the embed.
+ * @property      ?int|null                             $color       The color of the embed.
+ * @property      ?Footer|null                          $footer      The footer of the embed.
+ * @property      ?Image|null                           $image       The image of the embed.
+ * @property      ?Thumbnail|null                       $thumbnail   The thumbnail of the embed.
+ * @property-read ?Video|null                           $video       The video of the embed.
+ * @property-read ?Provider|null                        $provider    The provider of the embed.
+ * @property      ?Author|null                          $author      The author of the embed.
+ * @property      ?ExCollectionInterface<Field>|Field[] $fields      A collection of embed fields (max of 25).
+ * @property      ?int|null                             $flags       Embedded flags combined as a bitfield.
  */
 class Embed extends Part
 {
+    public const TYPES = [
+        0 => Embed::class, // Fallback for unknown types
+        self::TYPE_RICH => EmbedRich::class,
+        self::TYPE_IMAGE => EmbedImage::class,
+        self::TYPE_VIDEO => EmbedVideo::class,
+        self::TYPE_GIFV => EmbedGifv::class,
+        self::TYPE_ARTICLE => EmbedArticle::class,
+        self::TYPE_LINK => EmbedLink::class,
+        self::TYPE_POLL_RESULT => EmbedPollResult::class,
+    ];
+
+    /** Generic embed rendered from embed attributes. */
     public const TYPE_RICH = 'rich';
+    /** Image embed. */
     public const TYPE_IMAGE = 'image';
+    /** Video embed. */
     public const TYPE_VIDEO = 'video';
+    /** Animated gif image embed rendered as a video embed. */
     public const TYPE_GIFV = 'gifv';
+    /** Article embed. */
     public const TYPE_ARTICLE = 'article';
+    /** Link embed. */
     public const TYPE_LINK = 'link';
+    /** Poll result embed. */
+    public const TYPE_POLL_RESULT = 'poll_result';
+
+    /** This embed is a reply to an activity card and is no longer displayed. */
+    public const FLAG_IS_CONTENT_INVENTORY_ENTRY = 1 << 5;
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $fillable = [
         'title',
@@ -68,6 +92,7 @@ class Embed extends Part
         'provider',
         'author',
         'fields',
+        'flags',
     ];
 
     /**
@@ -79,85 +104,77 @@ class Embed extends Part
      */
     protected function getTimestampAttribute(): ?Carbon
     {
-        if (! isset($this->attributes['timestamp'])) {
-            return null;
-        }
-
-        return Carbon::parse($this->attributes['timestamp']);
+        return $this->attributeCarbonHelper('timestamp');
     }
 
     /**
      * Gets the footer attribute.
      *
-     * @return Footer The footer attribute.
+     * @return Footer|null The footer attribute.
      */
-    protected function getFooterAttribute(): Footer
+    protected function getFooterAttribute(): ?Footer
     {
-        return $this->attributeHelper('footer', Footer::class);
+        return $this->attributePartHelper('footer', Footer::class);
     }
 
     /**
      * Gets the image attribute.
      *
-     * @return Image The image attribute.
+     * @return Image|null The image attribute.
      */
-    protected function getImageAttribute(): Image
+    protected function getImageAttribute(): ?Image
     {
-        return $this->attributeHelper('image', Image::class);
+        return $this->attributePartHelper('image', Image::class);
     }
 
     /**
      * Gets the thumbnail attribute.
      *
-     * @return Image The thumbnail attribute.
+     * @return Thumbnail|null The thumbnail attribute.
      */
-    protected function getThumbnailAttribute(): Image
+    protected function getThumbnailAttribute(): ?Thumbnail
     {
-        return $this->attributeHelper('thumbnail', Image::class);
+        return $this->attributePartHelper('thumbnail', Thumbnail::class);
     }
 
     /**
      * Gets the video attribute.
      *
-     * @return Video The video attribute.
+     * @return Video|null The video attribute.
      */
-    protected function getVideoAttribute(): Video
+    protected function getVideoAttribute(): ?Video
     {
-        return $this->attributeHelper('video', Video::class);
+        return $this->attributePartHelper('video', Video::class);
+    }
+
+    /**
+     * Gets the provider attribute.
+     *
+     * @return Provider|null The provider attribute.
+     */
+    protected function getProviderAttribute(): ?Provider
+    {
+        return $this->attributePartHelper('provider', Provider::class);
     }
 
     /**
      * Gets the author attribute.
      *
-     * @return Author The author attribute.
+     * @return Author|null The author attribute.
      */
-    protected function getAuthorAttribute(): Author
+    protected function getAuthorAttribute(): ?Author
     {
-        return $this->attributeHelper('author', Author::class);
+        return $this->attributePartHelper('author', Author::class);
     }
 
     /**
      * Gets the fields attribute.
      *
-     * @return ExCollectionInterface|Field[]
+     * @return ExCollectionInterface<Field>|Field[]
      */
     protected function getFieldsAttribute(): ExCollectionInterface
     {
-        $fields = Collection::for(Field::class, null);
-
-        if (! array_key_exists('fields', $this->attributes)) {
-            return $fields;
-        }
-
-        foreach ($this->attributes['fields'] as $field) {
-            if (! ($field instanceof Field)) {
-                $field = $this->createOf(Field::class, $field);
-            }
-
-            $fields->pushItem($field);
-        }
-
-        return $fields;
+        return $this->attributeCollectionHelper('fields', Field::class, 'name');
     }
 
     /**
@@ -234,7 +251,7 @@ class Embed extends Part
      */
     protected function setTitleAttribute(string $title): self
     {
-        if (poly_strlen($title) == 0) {
+        if (poly_strlen($title) === 0) {
             $this->attributes['title'] = null;
         } elseif (poly_strlen($title) > 256) {
             throw new \LengthException('Embed title can not be longer than 256 characters');
@@ -505,11 +522,9 @@ class Embed extends Part
      * Ensures a URL is valid for use in embeds.
      *
      * @param ?string $url
-     * @param array $allowed Allowed URL scheme
+     * @param array   $allowed Allowed URL scheme
      *
      * @throws \DomainException
-     *
-     * @return void
      */
     protected function ensureValidUrl(?string $url = null, array $allowed = ['http', 'https', 'attachment']): void
     {
@@ -575,29 +590,6 @@ class Embed extends Part
     }
 
     /**
-     * Helps with getting embed attributes.
-     *
-     * @param string $key   The attribute key.
-     * @param string $class The attribute class.
-     *
-     * @throws \Exception
-     *
-     * @return mixed
-     */
-    private function attributeHelper($key, $class)
-    {
-        if (! array_key_exists($key, $this->attributes)) {
-            return $this->factory->create($class);
-        }
-
-        if ($this->attributes[$key] instanceof $class) {
-            return $this->attributes[$key];
-        }
-
-        return $this->factory->create($class, $this->attributes[$key], true);
-    }
-
-    /**
      * Returns all possible embed types.
      *
      * @return array
@@ -611,6 +603,7 @@ class Embed extends Part
             self::TYPE_GIFV,
             self::TYPE_ARTICLE,
             self::TYPE_LINK,
+            self::TYPE_POLL_RESULT,
         ];
     }
 }

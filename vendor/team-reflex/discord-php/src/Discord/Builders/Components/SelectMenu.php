@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -14,9 +15,10 @@ declare(strict_types=1);
 namespace Discord\Builders\Components;
 
 use Discord\Discord;
-use Discord\Helpers\Collection;
+use Discord\Helpers\ExCollectionInterface;
 use Discord\Parts\Interactions\Interaction;
 use Discord\WebSockets\Event;
+use React\EventLoop\TimerInterface;
 use React\Promise\PromiseInterface;
 
 use function Discord\poly_strlen;
@@ -27,21 +29,21 @@ use function Discord\poly_strlen;
  * On desktop, clicking on a select menu opens a dropdown-style UI.
  * On mobile, tapping a select menu opens up a half-sheet with the options.
  *
- * @link https://discord.com/developers/docs/interactions/message-components#select-menus
+ * @link https://docs.discord.com/developers/components/reference#select-menus
  *
  * @since 10.0.0 Renamed from SelectMenu to StringSelect and made SelectMenu abstract
  * @since 10.9.0 Extends Interactive instead of Component
  */
 abstract class SelectMenu extends Interactive
 {
-    public const USAGE = ['Message'];
+    public const USAGE = ['Message', 'Modal'];
 
     /**
      * Component type.
      *
      * @var int
      */
-    protected $type = Component::TYPE_SELECT_MENU; // Default type
+    protected $type = ComponentObject::TYPE_STRING_SELECT; // Default type
 
     /**
      * Custom ID to identify the select menu.
@@ -51,14 +53,14 @@ abstract class SelectMenu extends Interactive
     protected $custom_id;
 
     /**
-     * Specified choices in a select menu (only required and available for string selects (type 3); max 25
+     * Specified choices in a select menu (only required and available for string selects (type 3); max 25.
      *
      * @var array|null
      */
     protected $options;
 
     /**
-     * List of channel types to include in the channel select component (type 8)
+     * List of channel types to include in the channel select component (type 8).
      *
      * @var array|null
      */
@@ -73,7 +75,7 @@ abstract class SelectMenu extends Interactive
 
     /**
      * List of default values for auto-populated select menu components;
-     * number of default values must be in the range defined by min_values and max_values
+     * number of default values must be in the range defined by min_values and max_values.
      *
      * @var array|null
      */
@@ -101,6 +103,13 @@ abstract class SelectMenu extends Interactive
      * @var bool|null
      */
     protected $disabled;
+
+    /**
+     * Whether the select menu is required. Defaults to true. (Modal only).
+     *
+     * @var bool|null
+     */
+    protected $required;
 
     /**
      * Callback used to listen for `INTERACTION_CREATE` events.
@@ -140,7 +149,7 @@ abstract class SelectMenu extends Interactive
 
     /**
      * Sets the type for the select menu.
-     * (text: 3, user: 5, role: 6, mentionable: 7, channels: 8)
+     * (text: 3, user: 5, role: 6, mentionable: 7, channels: 8).
      *
      * @param int $type
      *
@@ -150,7 +159,7 @@ abstract class SelectMenu extends Interactive
      */
     public function setType(int $type): self
     {
-        $allowed_types = [self::TYPE_STRING_SELECT, self::TYPE_USER_SELECT, self::TYPE_ROLE_SELECT, self::TYPE_MENTIONABLE_SELECT, self::TYPE_CHANNEL_SELECT];
+        static $allowed_types = [self::TYPE_STRING_SELECT, self::TYPE_USER_SELECT, self::TYPE_ROLE_SELECT, self::TYPE_MENTIONABLE_SELECT, self::TYPE_CHANNEL_SELECT];
         if (! in_array($type, $allowed_types)) {
             throw new \InvalidArgumentException('Invalid select menu type.');
         }
@@ -161,27 +170,7 @@ abstract class SelectMenu extends Interactive
     }
 
     /**
-     * Sets the custom ID for the select menu.
-     *
-     * @param string $custom_id
-     *
-     * @throws \LengthException If the custom ID is longer than 100 characters.
-     *
-     * @return $this
-     */
-    public function setCustomId($custom_id): self
-    {
-        if (poly_strlen($custom_id) > 100) {
-            throw new \LengthException('Custom ID must be maximum 100 characters.');
-        }
-
-        $this->custom_id = $custom_id;
-
-        return $this;
-    }
-
-    /**
-     * Specified choices in a select menu (only required and available for string selects (type 3); max 25
+     * Specified choices in a select menu (only required and available for string selects (type 3); max 25.
      *
      * @param array $options
      *
@@ -191,7 +180,7 @@ abstract class SelectMenu extends Interactive
      */
     public function setOptions(array $options): self
     {
-        if ($this->type != self::TYPE_STRING_SELECT) {
+        if ($this->type !== self::TYPE_STRING_SELECT) {
             throw new \InvalidArgumentException('Options can only be set for string selects.');
         }
 
@@ -214,7 +203,7 @@ abstract class SelectMenu extends Interactive
      */
     public function setChannelTypes(array $channel_types): self
     {
-        if ($this->type != self::TYPE_CHANNEL_SELECT) {
+        if ($this->type !== self::TYPE_CHANNEL_SELECT) {
             throw new \InvalidArgumentException('Channel types can only be set for channel selects.');
         }
 
@@ -245,7 +234,7 @@ abstract class SelectMenu extends Interactive
 
     public function setDefaultValues(?array $default_values): self
     {
-        $allowed_types = [self::TYPE_USER_SELECT, self::TYPE_ROLE_SELECT, self::TYPE_MENTIONABLE_SELECT, self::TYPE_CHANNEL_SELECT];
+        static $allowed_types = [self::TYPE_USER_SELECT, self::TYPE_ROLE_SELECT, self::TYPE_MENTIONABLE_SELECT, self::TYPE_CHANNEL_SELECT];
         if (! in_array($this->type, $allowed_types)) {
             throw new \InvalidArgumentException('Default values can only be set for user, role, mentionable, and channel selects.');
         }
@@ -295,13 +284,13 @@ abstract class SelectMenu extends Interactive
     }
 
     /**
-     * Sets the select menus disabled state.
+     * Sets the select menus disabled state. (Message only).
      *
-     * @param bool $disabled
+     * @param bool|null $disabled
      *
      * @return $this
      */
-    public function setDisabled(bool $disabled = true): self
+    public function setDisabled(?bool $disabled = true): self
     {
         $this->disabled = $disabled;
 
@@ -337,7 +326,7 @@ abstract class SelectMenu extends Interactive
      *
      * @todo setListener callback return for each type.
      */
-    public function setListener(?callable $callback, Discord $discord, bool $oneOff = false): self
+    public function setListener(?callable $callback, Discord $discord, bool $oneOff = false, int|float|null $timeout = null): self
     {
         if ($this->listener) {
             $this->discord->removeListener(Event::INTERACTION_CREATE, $this->listener);
@@ -345,17 +334,40 @@ abstract class SelectMenu extends Interactive
 
         $this->discord = $discord;
 
-        if ($callback == null) {
+        if ($callback === null) {
             return $this;
         }
 
-        $this->listener = function (Interaction $interaction) use ($callback, $oneOff) {
-            if ($interaction->data->component_type == $this->type &&
-                $interaction->data->custom_id == $this->custom_id) {
+        $this->listener = $this->createListener($callback, $oneOff, $timeout);
+
+        $discord->on(Event::INTERACTION_CREATE, $this->listener);
+
+        return $this;
+    }
+
+    /**
+     * Creates a listener callback for handling select menu interactions.
+     *
+     * @param callable       $callback The callback to execute when the interaction is received.
+     *                                 If the select menu has options, the callback receives
+     *                                 ($interaction, $options), otherwise just ($interaction).
+     * @param bool           $oneOff   Whether the listener should be removed after being triggered once.
+     * @param int|float|null $timeout  Optional timeout in seconds after which the listener will be removed.
+     *
+     * @return callable The listener closure to be registered for interaction events.
+     */
+    protected function createListener(callable $callback, bool $oneOff = false, int|float|null $timeout = null): callable
+    {
+        $timer = null;
+
+        $listener = function (Interaction $interaction) use ($callback, $oneOff, &$timer) {
+            if ($interaction->data->component_type === $this->type &&
+                $interaction->data->custom_id === $this->custom_id) {
                 if (empty($this->options)) {
                     $response = $callback($interaction);
                 } else {
-                    $options = Collection::for(Option::class, null);
+                    /** @var ExCollectionInterface<Option> $options */
+                    $options = $this->discord->getCollectionClass()::for(Option::class, null);
 
                     foreach ($this->options as $option) {
                         if (in_array($option->getValue(), $interaction->data->values)) {
@@ -376,12 +388,19 @@ abstract class SelectMenu extends Interactive
                 if ($oneOff) {
                     $this->removeListener();
                 }
+
+                /** @var ?TimerInterface $timer */
+                if ($timer) {
+                    $this->discord->getLoop()->cancelTimer($timer);
+                }
             }
         };
 
-        $discord->on(Event::INTERACTION_CREATE, $this->listener);
+        if ($timeout) {
+            $timer = $this->discord->getLoop()->addTimer($timeout, fn () => $this->discord->removeListener(Event::INTERACTION_CREATE, $listener));
+        }
 
-        return $this;
+        return $listener;
     }
 
     /**
@@ -475,7 +494,7 @@ abstract class SelectMenu extends Interactive
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function jsonSerialize(): array
     {
@@ -502,22 +521,33 @@ abstract class SelectMenu extends Interactive
 
         if (isset($this->min_values)) {
             if (isset($this->options) && $this->min_values > count($this->options)) {
-                throw new \OutOfBoundsException('There are less options than the minimum number of options to be selected.');
+                throw new \DomainException('There are less options than the minimum number of options to be selected.');
             }
 
             $content['min_values'] = $this->min_values;
         }
 
-        if ($this->max_values) {
+        if (isset($this->max_values) && $this->max_values) {
             if (isset($this->options) && $this->max_values > count($this->options)) {
-                throw new \OutOfBoundsException('There are less options than the maximum number of options to be selected.');
+                throw new \DomainException('There are less options than the maximum number of options to be selected.');
             }
 
             $content['max_values'] = $this->max_values;
         }
 
-        if ($this->disabled) {
+        if (isset($this->disabled) && $this->disabled) {
             $content['disabled'] = true;
+        }
+
+        if (isset($this->required)) {
+            $content['required'] = true;
+            if ($this->min_values === null || $this->min_values === 0) {
+                throw new \LengthException('Required select menus must have a minimum value greater than 0.');
+            }
+        }
+
+        if (isset($this->id)) {
+            $content['id'] = $this->id;
         }
 
         return $content;

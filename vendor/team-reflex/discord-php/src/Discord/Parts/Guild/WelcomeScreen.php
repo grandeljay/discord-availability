@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -13,24 +14,23 @@ declare(strict_types=1);
 
 namespace Discord\Parts\Guild;
 
-use Discord\Helpers\Collection;
 use Discord\Helpers\ExCollectionInterface;
 use Discord\Parts\Part;
 
 /**
  * A Welcome Screen of a Guild.
  *
- * @link https://discord.com/developers/docs/resources/guild#welcome-screen-object-welcome-screen-structure
+ * @link https://docs.discord.com/developers/resources/guild#welcome-screen-object-welcome-screen-structure
  *
  * @since 7.0.0
  *
- * @property ?string                     $description      The server description shown in the welcome screen.
- * @property ExCollectionInterface|WelcomeChannel[] $welcome_channels The channels shown in the welcome screen, up to 5.
+ * @property ?string                                                $description      The server description shown in the welcome screen.
+ * @property ExCollectionInterface<WelcomeChannel>|WelcomeChannel[] $welcome_channels The channels shown in the welcome screen, up to 5.
  */
 class WelcomeScreen extends Part
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $fillable = [
         'description',
@@ -40,16 +40,10 @@ class WelcomeScreen extends Part
     /**
      * Returns the Welcome Channels of the Welcome Screen.
      *
-     * @return ExCollectionInterface|WelcomeChannel[] The channels of welcome screen.
+     * @return ExCollectionInterface<WelcomeChannel>|WelcomeChannel[] The channels of welcome screen.
      */
     protected function getWelcomeChannelsAttribute(): ExCollectionInterface
     {
-        $collection = Collection::for(WelcomeChannel::class, null);
-
-        foreach ($this->attributes['welcome_channels'] ?? [] as $welcome_channel) {
-            $collection->pushItem($this->createOf(WelcomeChannel::class, $welcome_channel));
-        }
-
-        return $collection;
+        return $this->attributeCollectionHelper('welcome_channels', WelcomeChannel::class, 'channel_id');
     }
 }

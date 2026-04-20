@@ -3,6 +3,6 @@
     "description": "Yet another reason to hate php.",
     "license": "proprietary",
     "require": {
-        "team-reflex/discord-php": "^10.17"
+        "team-reflex/discord-php": "^10.47"
     }
 }

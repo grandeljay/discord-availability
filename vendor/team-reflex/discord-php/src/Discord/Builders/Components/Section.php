@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -11,15 +14,24 @@
 
 namespace Discord\Builders\Components;
 
+use Discord\Builders\ComponentsTrait;
+
 /**
  * Section components allow you to define up to 3 text display components and add either a thumbnail or button to the right side.
  *
- * @link https://discord.com/developers/docs/interactions/message-components#section
+ * @link https://docs.discord.com/developers/components/reference#section
  *
  * @since 10.5.0
+ *
+ * @property int              $type       9 for a section component.
+ * @property ?int|null        $id         Optional identifier for the component.
+ * @property TextDisplay[]    $components One to three text display components.
+ * @property Thumbnail|Button $accessory  A thumbnail or button component.
  */
 class Section extends Layout implements Contracts\ComponentV2
 {
+    use ComponentsTrait;
+
     public const USAGE = ['Message'];
 
     /**
@@ -27,21 +39,21 @@ class Section extends Layout implements Contracts\ComponentV2
      *
      * @var int
      */
-    protected $type = Component::TYPE_SECTION;
+    protected $type = ComponentObject::TYPE_SECTION;
 
     /**
      * Array of text display components.
      *
      * @var TextDisplay[]
      */
-    private $components = [];
+    protected $components = [];
 
     /**
      * Accessory component (Thumbnail or Button).
      *
      * @var Thumbnail|Button|null
      */
-    private $accessory;
+    protected $accessory;
 
     /**
      * Creates a new section.
@@ -56,16 +68,16 @@ class Section extends Layout implements Contracts\ComponentV2
     /**
      * Adds a text display component to the section.
      * Text displays can only be used within sections.
-     *  Use setAccessory() instead for Thumbnail or Button.
+     * Use setAccessory() instead for Thumbnail or Button.
      *
      * @param TextDisplay|string $component Text display component to add.
      *
      * @throws \InvalidArgumentException Component is not a TextDisplay.
-     * @throws \OverflowException Section exceeds 3 text components.
+     * @throws \OverflowException        Section exceeds 3 text components.
      *
      * @return $this
      */
-    public function addComponent(ComponentObject|string $component): self
+    public function addComponent($component): self
     {
         if (is_string($component)) {
             $component = TextDisplay::new($component);
@@ -125,11 +137,11 @@ class Section extends Layout implements Contracts\ComponentV2
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function jsonSerialize(): array
     {
-        $data = [
+        $content = [
             'type' => $this->type,
             'components' => $this->components,
         ];
@@ -137,8 +149,12 @@ class Section extends Layout implements Contracts\ComponentV2
         if (! isset($this->accessory)) {
             throw new \DomainException('Section must have an accessory component set.');
         }
-        $data['accessory'] = $this->accessory;
+        $content['accessory'] = $this->accessory;
 
-        return $data;
+        if (isset($this->id)) {
+            $content['id'] = $this->id;
+        }
+
+        return $content;
     }
 }

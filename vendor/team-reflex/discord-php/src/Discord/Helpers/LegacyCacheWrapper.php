@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -20,7 +21,7 @@ use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
 
 /**
- * Legacy v7.x in memory cache behavior
+ * Legacy v7.x in memory cache behavior.
  *
  * @since 10.0.0
  * @internal
@@ -91,7 +92,7 @@ final class LegacyCacheWrapper extends CacheWrapper
      */
     public function delete($key)
     {
-        if (!array_key_exists($key, $this->items)) {
+        if (! array_key_exists($key, $this->items)) {
             return resolve(false);
         }
 
@@ -178,6 +179,8 @@ final class LegacyCacheWrapper extends CacheWrapper
      * @param Part $part
      *
      * @return object
+     *
+     * @todo PHP 8.5 clone($part, ['attributes' => $part->getRawAttributes()])
      */
     public function serializer($part)
     {
@@ -199,7 +202,7 @@ final class LegacyCacheWrapper extends CacheWrapper
         }
         $part = $this->discord->getFactory()->part($this->class, $value->attributes, $value->created);
         foreach ($value as $name => $var) {
-            if (!in_array($name, ['created', 'attributes'])) {
+            if (! in_array($name, ['created', 'attributes'])) {
                 $part->{$name} = $var;
             }
         }

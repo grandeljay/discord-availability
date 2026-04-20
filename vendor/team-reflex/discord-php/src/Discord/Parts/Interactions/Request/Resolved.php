@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -13,7 +14,7 @@ declare(strict_types=1);
 
 namespace Discord\Parts\Interactions\Request;
 
-use Discord\Helpers\Collection;
+use Discord\Builders\ChannelBuilder;
 use Discord\Helpers\ExCollectionInterface;
 use Discord\Parts\Channel\Attachment;
 use Discord\Parts\Channel\Channel;
@@ -28,24 +29,24 @@ use Discord\Parts\User\User;
 /**
  * Represents the data associated with an interaction.
  *
- * @link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-resolved-data-structure
+ * @link https://docs.discord.com/developers/interactions/receiving-and-responding#interaction-object-resolved-data-structure
  *
  * @since 7.0.0
  *
- * @property ExCollectionInterface|User[]|null             $users       The ids and User objects.
- * @property ExCollectionInterface|Member[]|null           $members     The ids and partial Member objects.
- * @property ExCollectionInterface|Role[]|null             $roles       The ids and Role objects.
- * @property ExCollectionInterface|Channel[]|Thread[]|null $channels    The ids and partial Channel objects.
- * @property ExCollectionInterface|Message[]|null          $messages    The ids and partial Message objects.
- * @property ExCollectionInterface|Attachment[]|null       $attachments The ids and partial Attachment objects.
+ * @property ExCollectionInterface<User>|User[]                $users       The ids and User objects.
+ * @property ExCollectionInterface<Member>|Member[]            $members     The ids and partial Member objects.
+ * @property ExCollectionInterface<Role>|Role[]                $roles       The ids and Role objects.
+ * @property ExCollectionInterface<Channel>|Channel[]|Thread[] $channels    The ids and partial Channel objects.
+ * @property ExCollectionInterface<Message>|Message[]          $messages    The ids and partial Message objects.
+ * @property ExCollectionInterface<Attachment>|Attachment[]    $attachments The ids and partial Attachment objects.
  *
  * @property      string|null $guild_id ID of the guild internally passed from Interaction.
- * @property-read ?Guild|null $guild The guild the interaction was sent in.
+ * @property-read ?Guild|null $guild    The guild the interaction was sent in.
  */
 class Resolved extends Part
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $fillable = [
         'users',
@@ -60,26 +61,33 @@ class Resolved extends Part
     ];
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $hidden = ['guild_id'];
 
     /**
      * Returns a collection of resolved users.
      *
-     * @return ExCollectionInterface|User[]|null Map of Snowflakes to user objects
+     * @return ExCollectionInterface<User>|User[] Map of Snowflakes to user objects
      */
-    protected function getUsersAttribute(): ?ExCollectionInterface
+    protected function getUsersAttribute(): ExCollectionInterface
     {
-        if (! isset($this->attributes['users'])) {
-            return null;
+        if (isset($this->attributes['users']) && $this->attributes['users'] instanceof ExCollectionInterface) {
+            return $this->attributes['users'];
         }
 
-        $collection = Collection::for(User::class);
+        /** @var ExCollectionInterface<User> $collection */
+        $collection = $this->discord->getCollectionClass()::for(User::class);
+
+        if (! isset($this->attributes['users'])) {
+            return $collection;
+        }
 
         foreach ($this->attributes['users'] as $snowflake => $user) {
-            $collection->pushItem($this->discord->users->get('id', $snowflake) ?: $this->factory->part(User::class, (array) $user, true));
+            $collection->pushItem($this->discord->users->get('id', $snowflake) ?? $this->factory->part(User::class, (array) $user, true));
         }
+
+        $this->attributes['users'] = $collection;
 
         return $collection;
     }
@@ -89,15 +97,20 @@ class Resolved extends Part
      *
      * Partial Member objects are missing user, deaf and mute fields
      *
-     * @return ExCollectionInterface|Member[]|null Map of Snowflakes to partial member objects
+     * @return ExCollectionInterface<Member>|Member[] Map of Snowflakes to partial member objects
      */
-    protected function getMembersAttribute(): ?ExCollectionInterface
+    protected function getMembersAttribute(): ExCollectionInterface
     {
-        if (! isset($this->attributes['members'])) {
-            return null;
+        if (isset($this->attributes['members']) && $this->attributes['members'] instanceof ExCollectionInterface) {
+            return $this->attributes['members'];
         }
 
-        $collection = Collection::for(Member::class);
+        /** @var ExCollectionInterface<Member> $collection */
+        $collection = $this->discord->getCollectionClass()::for(Member::class);
+
+        if (! isset($this->attributes['members'])) {
+            return $collection;
+        }
 
         foreach ($this->attributes['members'] as $snowflake => $member) {
             if ($guild = $this->discord->guilds->get('id', $this->guild_id)) {
@@ -112,21 +125,28 @@ class Resolved extends Part
             $collection->pushItem($memberPart);
         }
 
+        $this->attributes['members'] = $collection;
+
         return $collection;
     }
 
     /**
      * Returns a collection of resolved roles.
      *
-     * @return ExCollectionInterface|Role[]|null Map of Snowflakes to role objects
+     * @return ExCollectionInterface<Role>|Role[] Map of Snowflakes to role objects
      */
-    protected function getRolesAttribute(): ?ExCollectionInterface
+    protected function getRolesAttribute(): ExCollectionInterface
     {
-        if (! isset($this->attributes['roles'])) {
-            return null;
+        if (isset($this->attributes['roles']) && $this->attributes['roles'] instanceof ExCollectionInterface) {
+            return $this->attributes['roles'];
         }
 
-        $collection = Collection::for(Role::class);
+        /** @var ExCollectionInterface<Role> $collection */
+        $collection = $this->discord->getCollectionClass()::for(Role::class);
+
+        if (! isset($this->attributes['roles'])) {
+            return $collection;
+        }
 
         foreach ($this->attributes['roles'] as $snowflake => $role) {
             if ($guild = $this->discord->guilds->get('id', $this->guild_id)) {
@@ -140,6 +160,8 @@ class Resolved extends Part
             $collection->pushItem($rolePart);
         }
 
+        $this->attributes['roles'] = $collection;
+
         return $collection;
     }
 
@@ -148,15 +170,20 @@ class Resolved extends Part
      *
      * Partial Channel objects only have id, name, type and permissions fields. Threads will also have thread_metadata and parent_id fields.
      *
-     * @return ExCollectionInterface|Channel[]|Thread[]|null Map of Snowflakes to partial channel objects
+     * @return ExCollectionInterface<Channel|Thread>|Channel[]|Thread[] Map of Snowflakes to partial channel objects
      */
-    protected function getChannelsAttribute(): ?ExCollectionInterface
+    protected function getChannelsAttribute(): ExCollectionInterface
     {
-        if (! isset($this->attributes['channels'])) {
-            return null;
+        if (isset($this->attributes['channels']) && $this->attributes['channels'] instanceof ExCollectionInterface) {
+            return $this->attributes['channels'];
         }
 
-        $collection = new Collection();
+        /** @var ExCollectionInterface $collection */
+        $collection = new ($this->discord->getCollectionClass());
+
+        if (! isset($this->attributes['channels'])) {
+            return $collection;
+        }
 
         foreach ($this->attributes['channels'] as $snowflake => $channel) {
             if ($guild = $this->discord->guilds->get('id', $this->guild_id)) {
@@ -164,15 +191,13 @@ class Resolved extends Part
             }
 
             if (! isset($channelPart)) {
-                if (in_array($channel->type, [Channel::TYPE_ANNOUNCEMENT_THREAD, Channel::TYPE_PRIVATE_THREAD, Channel::TYPE_PUBLIC_THREAD])) {
-                    $channelPart = $this->factory->part(Thread::class, (array) $channel + ['guild_id' => $this->guild_id], true);
-                } else {
-                    $channelPart = $this->factory->part(Channel::class, (array) $channel + ['guild_id' => $this->guild_id], true);
-                }
+                $channelPart = $this->factory->part(ChannelBuilder::TYPES[$channel->type] ?? Channel::class, (array) $channel + ['guild_id' => $this->guild_id], true);
             }
 
             $collection->pushItem($channelPart);
         }
+
+        $this->attributes['channels'] = $collection;
 
         return $collection;
     }
@@ -180,15 +205,20 @@ class Resolved extends Part
     /**
      * Returns a collection of resolved messages.
      *
-     * @return ExCollectionInterface|Message[]|null Map of Snowflakes to partial messages objects
+     * @return ExCollectionInterface<Message>|Message[] Map of Snowflakes to partial messages objects
      */
-    protected function getMessagesAttribute(): ?ExCollectionInterface
+    protected function getMessagesAttribute(): ExCollectionInterface
     {
-        if (! isset($this->attributes['messages'])) {
-            return null;
+        if (isset($this->attributes['messages']) && $this->attributes['messages'] instanceof ExCollectionInterface) {
+            return $this->attributes['messages'];
         }
 
-        $collection = Collection::for(Message::class);
+        /** @var ExCollectionInterface<Message> $collection */
+        $collection = $this->discord->getCollectionClass()::for(Message::class);
+
+        if (! isset($this->attributes['messages'])) {
+            return $collection;
+        }
 
         foreach ($this->attributes['messages'] as $snowflake => $message) {
             if ($guild = $this->discord->guilds->get('id', $this->guild_id)) {
@@ -200,27 +230,19 @@ class Resolved extends Part
             $collection->pushItem($messagePart ?? $this->factory->part(Message::class, (array) $message + ['guild_id' => $this->guild_id], true));
         }
 
+        $this->attributes['messages'] = $collection;
+
         return $collection;
     }
 
     /**
      * Returns a collection of resolved attachments.
      *
-     * @return ExCollectionInterface|Attachment[]|null Map of Snowflakes to attachments objects
+     * @return ExCollectionInterface<Attachment>|Attachment[] Map of Snowflakes to attachments objects
      */
-    protected function getAttachmentsAttribute(): ?ExCollectionInterface
+    protected function getAttachmentsAttribute(): ExCollectionInterface
     {
-        if (! isset($this->attributes['attachments'])) {
-            return null;
-        }
-
-        $attachments = Collection::for(Attachment::class);
-
-        foreach ($this->attributes['attachments'] as $attachment) {
-            $attachments->pushItem($this->factory->part(Attachment::class, (array) $attachment, true));
-        }
-
-        return $attachments;
+        return $this->attributeCollectionHelper('attachments', Attachment::class);
     }
 
     protected function getGuildAttribute(): ?Guild

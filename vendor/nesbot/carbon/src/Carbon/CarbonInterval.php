@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Carbon;
 
+use Carbon\Constants\UnitValue;
 use Carbon\Exceptions\BadFluentConstructorException;
 use Carbon\Exceptions\BadFluentSetterException;
 use Carbon\Exceptions\InvalidCastException;
@@ -191,7 +192,7 @@ use Throwable;
  * @method $this ceilMicrosecond(int|float $precision = 1) Ceil the current instance microsecond with given precision.
  * @method $this ceilMicroseconds(int|float $precision = 1) Ceil the current instance microsecond with given precision.
  */
-class CarbonInterval extends DateInterval implements CarbonConverterInterface
+class CarbonInterval extends DateInterval implements CarbonConverterInterface, UnitValue
 {
     use LocalFactory;
     use IntervalRounding;
@@ -533,7 +534,7 @@ class CarbonInterval extends DateInterval implements CarbonConverterInterface
                         ($totalDays - $this->d).' days '.
                         ($hours - $this->h).' hours '.
                         ($minutes - $this->i).' minutes '.
-                        ($intervalSeconds - $this->s).' seconds '.
+                        number_format($intervalSeconds - $this->s, 6, '.', '').' seconds '.
                         ($microseconds - $intervalMicroseconds).' microseconds ',
                     ));
                 }
@@ -1082,7 +1083,7 @@ class CarbonInterval extends DateInterval implements CarbonConverterInterface
 
                 default:
                     throw new InvalidIntervalException(
-                        \sprintf('Invalid part %s in definition %s', $part, $intervalDefinition),
+                        "Invalid part $part in definition $intervalDefinition",
                     );
             }
         }

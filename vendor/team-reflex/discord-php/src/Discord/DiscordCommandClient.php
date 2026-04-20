@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -74,12 +75,12 @@ class DiscordCommandClient extends Discord
             }
 
             $this->on('message', function ($message) {
-                if ($message->author->id == $this->id) {
+                if ($message->author->id === $this->id) {
                     return;
                 }
 
                 if ($withoutPrefix = $this->checkForPrefix($message->content)) {
-                    $args = str_getcsv($withoutPrefix, ' ');
+                    $args = str_getcsv($withoutPrefix, ' ', '"', '\\');
                     $command = array_shift($args);
 
                     if (null !== $command && $this->commandClientOptions['caseInsensitiveCommands']) {
@@ -142,7 +143,7 @@ class DiscordCommandClient extends Discord
                     if (! empty($this->aliases)) {
                         $aliasesString = '';
                         foreach ($this->aliases as $alias => $command) {
-                            if ($command != $commandString) {
+                            if ($command !== $commandString) {
                                 continue;
                             }
 
@@ -228,8 +229,8 @@ class DiscordCommandClient extends Discord
     protected function checkForPrefix(string $content): ?string
     {
         foreach ($this->commandClientOptions['prefixes'] as $prefix) {
-            if (substr($content, 0, strlen($prefix)) == $prefix) {
-                return substr($content, strlen($prefix));
+            if (substr($content, 0, poly_strlen($prefix)) === $prefix) {
+                return substr($content, poly_strlen($prefix));
             }
         }
 
@@ -446,9 +447,9 @@ class DiscordCommandClient extends Discord
                     if (is_string($reason) || $reason instanceof \Stringable) {
                         $this->getLogger()->error($reason);
                     } else {
-                        $this->getLogger()->warning('Unhandled internal rejected promise, $reason is not a Throwable, '  . gettype($reason) . ' given.');
+                        $this->getLogger()->warning('Unhandled internal rejected promise, $reason is not a Throwable, '.gettype($reason).' given.');
                     }
-                }
+                },
             ]);
 
         $options = $resolver->resolve($options);
@@ -476,7 +477,7 @@ class DiscordCommandClient extends Discord
      */
     public function __get(string $name)
     {
-        $allowed = ['commands', 'aliases'];
+        static $allowed = ['commands', 'aliases'];
 
         if (in_array($name, $allowed)) {
             return $this->{$name};

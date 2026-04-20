@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -13,7 +14,6 @@ declare(strict_types=1);
 
 namespace Discord\Repository\Thread;
 
-use Discord\Discord;
 use Discord\Http\Endpoint;
 use Discord\Parts\Thread\Member;
 use Discord\Repository\AbstractRepository;
@@ -35,12 +35,12 @@ use Discord\Repository\AbstractRepository;
 class MemberRepository extends AbstractRepository
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $discrim = 'user_id';
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $endpoints = [
         'all' => Endpoint::THREAD_MEMBERS,
@@ -48,14 +48,14 @@ class MemberRepository extends AbstractRepository
     ];
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $class = Member::class;
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
-    public function __construct(Discord $discord, array $vars = [])
+    public function __construct($discord, array $vars = [])
     {
         unset($vars['channel_id']); // For thread
         parent::__construct($discord, $vars);

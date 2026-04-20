@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -11,16 +14,26 @@
 
 namespace Discord\Builders\Components;
 
+use Discord\Builders\ComponentsTrait;
+
 /**
  * Containers are a new way to group components together.
  * You can also specify an accent color (similar to embeds) and spoiler it.
  *
- * @link https://discord.com/developers/docs/interactions/message-components#container
+ * @link https://docs.discord.com/developers/components/reference#container
  *
  * @since 10.5.0
+ *
+ * @property int        $type         17 for container component.
+ * @property ?int|null  $id           Optional identifier for component.
+ * @property array      $components   Components of the type action row, text display, section, media gallery, separator, or file.
+ * @property ?int|null  $accent_color Color for the accent on the container as RGB from 0x000000 to 0xFFFFFF.
+ * @property ?bool|null $spoiler      Whether the container should be a spoiler (or blurred out). Defaults to false.
  */
 class Container extends Layout implements Contracts\ComponentV2
 {
+    use ComponentsTrait;
+
     public const USAGE = ['Message'];
 
     /**
@@ -28,28 +41,21 @@ class Container extends Layout implements Contracts\ComponentV2
      *
      * @var int
      */
-    protected $type = Component::TYPE_CONTAINER;
-
-    /**
-     * Array of components.
-     *
-     * @var ComponentObject[]
-     */
-    private $components = [];
+    protected $type = ComponentObject::TYPE_CONTAINER;
 
     /**
      * Accent color for the container.
      *
      * @var int|null
      */
-    private $accent_color;
+    protected $accent_color;
 
     /**
      * Whether the container is a spoiler.
      *
-     * @var bool
+     * @var bool|null
      */
-    private $spoiler = false;
+    protected $spoiler;
 
     /**
      * Creates a new container.
@@ -100,49 +106,17 @@ class Container extends Layout implements Contracts\ComponentV2
      *
      * @return $this
      */
-    public function addComponent(ComponentObject $component): self
+    public function addComponent($component): self
     {
-        if ($component instanceof SelectMenu) {
+        if ($component instanceof Interactive) {
             $component = ActionRow::new()->addComponent($component);
         }
 
-        if (! ( $component instanceof ActionRow || $component instanceof Section || $component instanceof TextDisplay || $component instanceof MediaGallery || $component instanceof File || $component instanceof Separator )) {
+        if (! ($component instanceof ActionRow || $component instanceof Section || $component instanceof TextDisplay || $component instanceof MediaGallery || $component instanceof File || $component instanceof Separator)) {
             throw new \InvalidArgumentException('Invalid component type.');
         }
 
         $this->components[] = $component;
-
-        return $this;
-    }
-
-    /**
-     * Add a group of components to the container.
-     *
-     * @param ComponentObject[] $components Components to add.
-     *
-     * @throws \InvalidArgumentException Component is not a valid type.
-     *
-     * @return $this
-     */
-    public function addComponents(array $components): self
-    {
-        foreach ($components as $component) {
-            $this->addComponent($component);
-        }
-
-        return $this;
-    }
-
-    /**
-     * Sets the components for the container.
-     *
-     * @param ComponentObject[] $components Components to set.
-     *
-     * @return $this
-     */
-    public function setComponents(array $components): self
-    {
-        $this->components = $components;
 
         return $this;
     }
@@ -154,7 +128,7 @@ class Container extends Layout implements Contracts\ComponentV2
      *
      * @return $this
      */
-    public function setAccentColor($color): self
+    public function setAccentColor($color = null): self
     {
         if ($color !== null) {
             $color = self::resolveColor($color);
@@ -168,11 +142,11 @@ class Container extends Layout implements Contracts\ComponentV2
     /**
      * Sets whether the container is a spoiler.
      *
-     * @param bool $spoiler Whether the container is a spoiler.
+     * @param bool|null $spoiler Whether the container is a spoiler.
      *
      * @return $this
      */
-    public function setSpoiler(bool $spoiler = true): self
+    public function setSpoiler(?bool $spoiler = true): self
     {
         $this->spoiler = $spoiler;
 
@@ -206,27 +180,31 @@ class Container extends Layout implements Contracts\ComponentV2
      */
     public function isSpoiler(): bool
     {
-        return $this->spoiler;
+        return $this->spoiler ?? false;
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function jsonSerialize(): array
     {
-        $data = [
+        $content = [
             'type' => $this->type,
             'components' => $this->components,
         ];
 
         if (isset($this->accent_color)) {
-            $data['accent_color'] = $this->accent_color;
+            $content['accent_color'] = $this->accent_color;
         }
 
-        if ($this->spoiler) {
-            $data['spoiler'] = true;
+        if (isset($this->spoiler)) {
+            $content['spoiler'] = $this->spoiler;
         }
 
-        return $data;
+        if (isset($this->id)) {
+            $content['id'] = $this->id;
+        }
+
+        return $content;
     }
 }

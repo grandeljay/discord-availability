@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -21,14 +22,14 @@ use Discord\Parts\Thread\Thread;
 use Discord\WebSockets\Intents;
 
 /**
- * @link https://discord.com/developers/docs/topics/gateway-events#message-update
+ * @link https://docs.discord.com/developers/events/gateway-events#message-update
  *
  * @since 2.1.3
  */
 class MessageUpdate extends Event
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function handle($data)
     {
@@ -61,7 +62,7 @@ class MessageUpdate extends Event
                 $messagePart->fill((array) $data);
 
                 // Deal with empty message content intent
-                if (! ($this->discord->options['intents'] & Intents::MESSAGE_CONTENT) && ($data->author->id ?? $oldMessagePart->user_id) != $this->discord->id) {
+                if (! ($this->discord->options['intents'] & Intents::MESSAGE_CONTENT) && ($data->author->id ?? $oldMessagePart->user_id) !== $this->discord->id) {
                     $cacheMessagePart = clone $oldMessagePart;
                     // Ignore intent required fields
                     $cacheMessagePart->fill(array_filter((array) $data, fn ($value, $key) => ! in_array($key, ['content', 'embeds', 'attachments', 'components']), ARRAY_FILTER_USE_BOTH));

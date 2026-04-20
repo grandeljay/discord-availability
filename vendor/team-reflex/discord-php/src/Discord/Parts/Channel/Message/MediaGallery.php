@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -13,7 +14,6 @@ declare(strict_types=1);
 
 namespace Discord\Parts\Channel\Message;
 
-use Discord\Helpers\Collection;
 use Discord\Helpers\ExCollectionInterface;
 
 /**
@@ -21,18 +21,18 @@ use Discord\Helpers\ExCollectionInterface;
  *
  * Media Galleries are only available in messages.
  *
- * @link https://discord.com/developers/docs/components/reference#media-gallery
+ * @link https://docs.discord.com/developers/components/reference#media-gallery
  *
  * @since 10.11.0
  *
- * @property int                                      $type  12 for media gallery component.
- * @property string|null                              $id    Optional identifier for component.
- * @property ExCollectionInterface|MediaGalleryItem[] $items 1 to 10 media gallery items.
+ * @property int                                                        $type  12 for media gallery component.
+ * @property string|null                                                $id    Optional identifier for component.
+ * @property ExCollectionInterface<MediaGalleryItem>|MediaGalleryItem[] $items 1 to 10 media gallery items.
  */
 class MediaGallery extends Content
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $fillable = [
         'type',
@@ -40,15 +40,36 @@ class MediaGallery extends Content
         'items',
     ];
 
-    /** @return ExCollectionInterface|MediaGalleryItem[] */
+    /** @return ExCollectionInterface<MediaGalleryItem>|MediaGalleryItem[] */
     protected function getItemsAttribute(): ExCollectionInterface
     {
-        $collection = Collection::for(MediaGalleryItem::class);
+        return $this->attributeCollectionHelper('items', MediaGalleryItem::class);
+    }
 
-        foreach ($this->attributes['items'] as $item) {
-            $collection->pushItem($this->createOf(MediaGalleryItem::class, $item));
+    /**
+     * Returns an iterator for the collection.
+     *
+     * @return \Traversable
+     */
+    public function getIterator(): \Traversable
+    {
+        return new \ArrayIterator($this->items);
+    }
+
+    /**
+     * Handles dynamic calls to the collection.
+     *
+     * @param string $name   Function name.
+     * @param array  $params Function parameters.
+     *
+     * @return mixed
+     */
+    public function __call($name, $arguments)
+    {
+        if (method_exists($this->items, $name)) {
+            return $this->items->{$name}(...$arguments);
         }
 
-        return $collection;
+        throw new \BadMethodCallException("Method $name does not exist.");
     }
 }

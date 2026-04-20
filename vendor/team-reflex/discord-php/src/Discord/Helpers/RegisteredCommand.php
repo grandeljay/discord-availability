@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -21,7 +22,7 @@ use Discord\Parts\Interactions\Request\Option;
  * RegisteredCommand represents a command that has been registered with the
  * Discord servers and has a handler to handle when the command is triggered.
  *
- * https://discord.com/developers/docs/interactions/application-commands
+ * https://docs.discord.com/developers/interactions/application-commands
  *
  * @since 7.0.0
  *
@@ -41,28 +42,28 @@ class RegisteredCommand
      *
      * @var string
      */
-    private $name;
+    protected $name;
 
     /**
      * The callback to be called when the command is triggered.
      *
      * @var callable
      */
-    private $callback;
+    protected $callback;
 
     /**
      * The callback to be called when the auto complete is triggered.
      *
      * @var callable
      */
-    private $autocomplete_callback;
+    protected $autocomplete_callback;
 
     /**
      * Array of sub-commands.
      *
      * @var RegisteredCommand[]
      */
-    private $subCommands;
+    protected $subCommands;
 
     /**
      * RegisteredCommand represents a command that has been registered with the
@@ -85,22 +86,25 @@ class RegisteredCommand
      * Executes the command. Will search for a sub-command if given, otherwise
      * executes the callback, if given.
      *
-     * @param array       $options
-     * @param Interaction $interaction
+     * @param ExCollectionInterface<Option>|Option[] $options
+     * @param Interaction                            $interaction
      *
      * @return bool Whether the command successfully executed.
      */
-    public function execute(array $options, Interaction $interaction): bool
+    public function execute($options, Interaction $interaction): bool
     {
-        $params = Collection::for(Option::class, 'name');
+        /** @var ExCollectionInterface<Option> $params */
+        $params = $this->discord->getCollectionClass()::for(Option::class, 'name');
 
         foreach ($options as $option) {
+            /** @var Option $option */
             if (isset($this->subCommands[$option->name])) {
                 if ($this->subCommands[$option->name]->execute($option->options ?? [], $interaction)) {
                     return true;
                 }
             }
-            $params->pushItem($this->discord->getFactory()->part(Option::class, (array) $option, true));
+
+            $params->pushItem($option);
         }
 
         if (isset($this->callback)) {
@@ -116,7 +120,7 @@ class RegisteredCommand
      * Executes the command. Will search for a sub-command if given, otherwise
      * executes the callback, if given.
      *
-     * @param Interaction $interaction
+     * @param ApplicationCommand|ApplicationCommandAutocomplete $interaction
      *
      * @return bool Whether the command successfully executed.
      */
@@ -169,7 +173,7 @@ class RegisteredCommand
     /**
      * Adds a sub-command to the command.
      *
-     * @param string|array  $name
+     * @param array|string  $names
      * @param callable|null $callback
      * @param callable|null $autocomplete_callback
      *
@@ -177,13 +181,14 @@ class RegisteredCommand
      *
      * @return static
      */
-    public function addSubCommand($name, ?callable $callback = null, ?callable $autocomplete_callback = null): RegisteredCommand
+    public function addSubCommand($names, ?callable $callback = null, ?callable $autocomplete_callback = null): RegisteredCommand
     {
-        if (is_array($name) && count($name) == 1) {
-            $name = array_shift($name);
+        if (! is_array($names)) {
+            $names = [$names];
         }
 
-        if (! is_array($name) || count($name) == 1) {
+        if (count($names) === 1) {
+            $name = array_shift($names);
             if (isset($this->subCommands[$name])) {
                 throw new \LogicException("The command `{$name}` already exists.");
             }
@@ -191,13 +196,13 @@ class RegisteredCommand
             return $this->subCommands[$name] = new static($this->discord, $name, $callback, $autocomplete_callback);
         }
 
-        $subCommand = array_shift($name);
+        $subCommand = array_shift($names);
 
         if (! isset($this->subCommands[$subCommand])) {
             $this->addSubCommand($subCommand);
         }
 
-        return $this->subCommands[$subCommand]->addSubCommand($name, $callback, $autocomplete_callback);
+        return $this->subCommands[$subCommand]->addSubCommand($names, $callback, $autocomplete_callback);
     }
 
     /**

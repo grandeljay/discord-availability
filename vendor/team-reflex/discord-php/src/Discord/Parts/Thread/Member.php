@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -25,7 +26,7 @@ use React\Promise\PromiseInterface;
  * Represents a member that belongs to a thread. Not the same as a user nor a
  * guild member.
  *
- * @link https://discord.com/developers/docs/resources/channel#thread-member-object
+ * @link https://docs.discord.com/developers/resources/channel#thread-member-object
  *
  * @since 7.0.0
  *
@@ -34,12 +35,15 @@ use React\Promise\PromiseInterface;
  * @property-read User|null        $user           The user that the member object represents.
  * @property      Carbon           $join_timestamp The time that the member joined the thread.
  * @property      int              $flags          Flags relating to the member. Only used for client notifications.
- * @property-read GuildMember|null $member         Additional information about the user.
+ * @property-read GuildMember|null $member         Additional information about the user. The member field is only present when `with_member` is set to `true` when calling List Thread Members or Get Thread Member.
+ *
+ * @property-read string|null $guild_id The ID of the guild that the thread belongs to.
+ * @property-read Guild|null  $guild    The guild that the thread belongs to.
  */
 class Member extends Part
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $fillable = [
         'id',
@@ -47,6 +51,7 @@ class Member extends Part
         'join_timestamp',
         'flags',
         'member',
+
         // @internal and events only
         'guild_id',
     ];
@@ -70,7 +75,7 @@ class Member extends Part
      */
     protected function getJoinTimestampAttribute(): Carbon
     {
-        return new Carbon($this->attributes['join_timestamp']);
+        return $this->attributeCarbonHelper('join_timestamp');
     }
 
     /**
@@ -82,20 +87,15 @@ class Member extends Part
      */
     protected function getMemberAttribute(): ?GuildMember
     {
-        if (! isset($this->attributes['member'])) {
-            if ($guild = $this->getGuildAttribute()) {
-                return $guild->members->get('id', $this->user_id);
-            }
-
-            return null;
+        if ($member = $this->attributePartHelper('member', GuildMember::class, isset($this->guild_id) ? ['guild_id' => $this->guild_id] : [])) {
+            return $member;
         }
 
-        $memberData = (array) $this->attributes['member'];
-        if (isset($this->guild_id)) {
-            $memberData['guild_id'] = $this->guild_id;
+        if ($guild = $this->guild) {
+            return $guild->members->get('id', $this->user_id);
         }
 
-        return $this->factory->part(Member::class, $memberData, true);
+        return null;
     }
 
     /**
@@ -103,7 +103,7 @@ class Member extends Part
      *
      * @return Guild|null The guild attribute.
      */
-    private function getGuildAttribute(): ?Guild
+    protected function getGuildAttribute(): ?Guild
     {
         return $this->discord->guilds->get('id', $this->guild_id);
     }
@@ -111,7 +111,7 @@ class Member extends Part
     /**
      * Attempts to remove the member from the thread.
      *
-     * @link https://discord.com/developers/docs/resources/channel#remove-thread-member
+     * @link https://docs.discord.com/developers/resources/channel#remove-thread-member
      *
      * @return PromiseInterface
      */

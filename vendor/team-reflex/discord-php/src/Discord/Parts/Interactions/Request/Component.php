@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -13,44 +14,41 @@ declare(strict_types=1);
 
 namespace Discord\Parts\Interactions\Request;
 
-use Discord\Builders\Components\Component as ComponentBuilder;
-use Discord\Helpers\Collection;
 use Discord\Helpers\ExCollectionInterface;
+use Discord\Parts\Channel\Message\Component as MessageComponent;
 use Discord\Parts\Guild\Emoji;
 use Discord\Parts\Part;
 
 /**
  * Represents a component received with a message or interaction.
  *
- * @todo split per type
- *
- * @link https://discord.com/developers/docs/interactions/message-components#component-object
+ * @link https://docs.discord.com/developers/components/reference#component-object
  *
  * @since 7.0.0
  * @deprecated 10.11.0 Use \Discord\Parts\Channel\Message\Component` instead.
  * @see \Discord\Parts\Channel\Message\Component
  *
- * @property int                                    $type        Component type.
- * @property string|null                            $custom_id   Developer-defined identifier for the component; max 100 characters. (Buttons, Select Menus)
- * @property bool|null                              $disabled    Whether the component is disabled; defaults to `false`. (Buttons, Select Menus)
- * @property int|null                               $style       A button style. (Buttons)
- * @property string|null                            $label       Text that appears on the button; max 80 characters. (Buttons)
- * @property Emoji|null                             $emoji       Name, id, and animated. (Buttons)
- * @property string|null                            $url         URL for link-style buttons. (Buttons)
- * @property object[]|null                          $options     The choices in the select; max 25. (Select Menus)
- * @property string|null                            $placeholder Custom placeholder text if nothing is selected; max 150 characters. (Select Menus, Text Inputs)
- * @property int|null                               $min_values  The minimum number of items that must be chosen; default 1, min 0, max 25. (Select Menus)
- * @property int|null                               $max_values  The maximum number of items that can be chosen; default 1, max 25. (Select Menus)
- * @property ExCollectionInterface|Component[]|null $components  A list of child components. (Action Rows)
- * @property int|null                               $min_length  Minimum input length for a text input. (Text Inputs)
- * @property int|null                               $max_length  Maximum input length for a text input. (Text Inputs)
- * @property bool|null                              $required    Whether this component is required to be filled; defaults to `true` (Text Inputs)
- * @property string|null                            $value       Value for this component. (Text Inputs)
+ * @property int                                                        $type        Component type.
+ * @property string|null                                                $custom_id   Developer-defined identifier for the component; max 100 characters. (Buttons, Select Menus)
+ * @property bool|null                                                  $disabled    Whether the component is disabled; defaults to `false`. (Buttons, Select Menus)
+ * @property int|null                                                   $style       A button style. (Buttons)
+ * @property string|null                                                $label       Text that appears on the button; max 80 characters. (Buttons)
+ * @property Emoji|null                                                 $emoji       Name, id, and animated. (Buttons)
+ * @property string|null                                                $url         URL for link-style buttons. (Buttons)
+ * @property object[]|null                                              $options     The choices in the select; max 25. (Select Menus)
+ * @property string|null                                                $placeholder Custom placeholder text if nothing is selected; max 150 characters. (Select Menus, Text Inputs)
+ * @property int|null                                                   $min_values  The minimum number of items that must be chosen; default 1, min 0, max 25. (Select Menus)
+ * @property int|null                                                   $max_values  The maximum number of items that can be chosen; default 1, max 25. (Select Menus)
+ * @property ExCollectionInterface<MessageComponent>|MessageComponent[] $components  A list of child components. (Action Rows)
+ * @property int|null                                                   $min_length  Minimum input length for a text input. (Text Inputs)
+ * @property int|null                                                   $max_length  Maximum input length for a text input. (Text Inputs)
+ * @property bool|null                                                  $required    Whether this component is required to be filled; defaults to `true` (Text Inputs)
+ * @property string|null                                                $value       Value for this component. (Text Inputs)
  */
 class Component extends Part
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $fillable = [
         'type',
@@ -74,21 +72,11 @@ class Component extends Part
     /**
      * Gets the sub-components of the component.
      *
-     * @return ExCollectionInterface|Component[]|null $components
+     * @return ExCollectionInterface<MessageComponent>|MessageComponent[] $components
      */
-    protected function getComponentsAttribute(): ?ExCollectionInterface
+    protected function getComponentsAttribute(): ExCollectionInterface
     {
-        if (! isset($this->attributes['components']) && $this->type != ComponentBuilder::TYPE_ACTION_ROW) {
-            return null;
-        }
-
-        $components = Collection::for(Component::class, null);
-
-        foreach ($this->attributes['components'] ?? [] as $component) {
-            $components->pushItem($this->createOf(Component::class, $component));
-        }
-
-        return $components;
+        return $this->attributeTypedCollectionHelper(Component::class, 'components');
     }
 
     /**
@@ -98,15 +86,11 @@ class Component extends Part
      */
     protected function getEmojiAttribute(): ?Emoji
     {
-        if (! isset($this->attributes['emoji'])) {
-            return null;
-        }
-
-        return $this->factory->part(Emoji::class, (array) $this->attributes['emoji'], true);
+        return $this->attributePartHelper('emoji', Emoji::class);
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function getRepositoryAttributes(): array
     {

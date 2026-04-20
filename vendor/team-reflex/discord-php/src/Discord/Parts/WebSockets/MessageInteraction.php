@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -21,7 +22,7 @@ use Discord\Parts\User\User;
  * Sent on the message object when the message is a response to an Interaction
  * without an existing message.
  *
- * @link https://discord.com/developers/docs/interactions/receiving-and-responding#message-interaction-object
+ * @link https://docs.discord.com/developers/interactions/receiving-and-responding#message-interaction-object
  *
  * @since 7.1.0
  *
@@ -36,7 +37,7 @@ use Discord\Parts\User\User;
 class MessageInteraction extends Part
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $fillable = [
         'id',
@@ -50,7 +51,7 @@ class MessageInteraction extends Part
     ];
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected $hidden = ['guild_id'];
 
@@ -65,7 +66,7 @@ class MessageInteraction extends Part
             return $user;
         }
 
-        return $this->factory->part(User::class, (array) $this->attributes['user'], true);
+        return $this->attributePartHelper('user', User::class);
     }
 
     /**
@@ -82,9 +83,7 @@ class MessageInteraction extends Part
                 }
             }
 
-            if (isset($this->attributes['member'])) {
-                return $this->factory->part(Member::class, (array) $this->attributes['member'] + ['guild_id' => $this->guild_id], true);
-            }
+            return $this->attributePartHelper('member', Member::class, ['guild_id' => $this->guild_id]);
         }
 
         return null;

@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -15,7 +16,9 @@ namespace Discord\Helpers;
 
 use Discord\Discord;
 use Discord\Parts\Part;
+use Psr\SimpleCache\CacheInterface as PSRCacheInterface;
 use React\Cache\ArrayCache;
+use React\Cache\CacheInterface as ReactCacheInterface;
 use React\Promise\PromiseInterface;
 use Throwable;
 use WeakReference;
@@ -41,14 +44,14 @@ class CacheWrapper
     protected $discord;
 
     /**
-     * @var \React\Cache\CacheInterface|\Psr\SimpleCache\CacheInterface
+     * @var ReactCacheInterface|PSRCacheInterface
      */
     protected $interface;
 
     /**
      * Repository items array reference.
      *
-     * @var ?Part[]|WeakReference[] Cache Key => Cache Part.
+     * @var Part[]|WeakReference[] Cache Key => Cache Part.
      */
     protected $items;
 
@@ -419,6 +422,8 @@ class CacheWrapper
      * @param Part $part
      *
      * @return object|string
+     *
+     * @todo PHP 8.5 clone($part, ['attributes' => $part->getRawAttributes()])
      */
     public function serializer($part)
     {
@@ -492,7 +497,7 @@ class CacheWrapper
                 $pruning++;
             } elseif ($item instanceof Part) {
                 // Skip ID related to Bot
-                if ($key != $this->discord->id) {
+                if ($key !== $this->discord->id) {
                     // Item is no longer used other than in the repository, weaken so it can be garbage collected
                     $this->items[$key] = WeakReference::create($item);
                 }

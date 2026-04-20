@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * This file is a part of the DiscordPHP project.
  *
- * Copyright (c) 2015-present David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2015-2022 David Cole <david.cole1340@gmail.com>
+ * Copyright (c) 2020-present Valithor Obsidion <valithor@discordphp.org>
  *
  * This file is subject to the MIT license that is bundled
  * with this source code in the LICENSE.md file.
@@ -18,15 +19,26 @@ use function Discord\poly_strlen;
 /**
  * Text inputs are an interactive component that render on modals. They can be used to collect short-form or long-form text.
  *
- * @link https://discord.com/developers/docs/interactions/message-components#text-inputs
+ * @link https://docs.discord.com/developers/components/reference#text-inputs
  *
  * @since 7.0.0
+ *
+ * @property int          $type        4 for a text input.
+ * @property string       $custom_id   Developer-defined identifier for the input; max 100 characters.
+ * @property int          $style       The Text Input Style.
+ * @property ?int|null    $min_length  Minimum input length for a text input; min 0, max 4000.
+ * @property ?int|null    $max_length  Maximum input length for a text input; min 1, max 4000.
+ * @property ?bool|null   $required    Whether this component is required to be filled (defaults to true).
+ * @property ?string|null $value       Pre-filled value for this component; max 4000 characters.
+ * @property ?string|null $placeholder Custom placeholder text if the input is empty; max 100 characters.
  */
 class TextInput extends Interactive
 {
     public const USAGE = ['Message', 'Modal'];
 
+    /** Single-line input. */
     public const STYLE_SHORT = 1;
+    /** Multi-line input. */
     public const STYLE_PARAGRAPH = 2;
 
     /**
@@ -34,65 +46,67 @@ class TextInput extends Interactive
      *
      * @var int
      */
-    protected $type = Component::TYPE_TEXT_INPUT;
+    protected $type = ComponentObject::TYPE_TEXT_INPUT;
 
     /**
      * Style of text input.
      *
      * @var int
      */
-    private $style;
+    protected $style;
 
     /**
      * Label for the text input.
      *
-     * @var string
+     * @deprecated Use a top-level `ComponentObject::Label`
+     *
+     * @var string|null
      */
-    private $label;
+    protected $label;
 
     /**
      * Minimum input length for a text input, min 0, max 4000.
      *
      * @var int|null
      */
-    private $min_length;
+    protected $min_length;
 
     /**
      * Maximum input length for a text input, min 1, max 4000.
      *
      * @var int|null
      */
-    private $max_length;
+    protected $max_length;
 
     /**
      * Whether the text input is required.
      *
-     * @var bool
+     * @var bool|null
      */
-    private $required;
+    protected $required;
 
     /**
      * Pre-filled value for text input. Max 4000 characters.
      *
      * @var string|null
      */
-    private $value;
+    protected $value;
 
     /**
      * Placeholder string to display if text input is empty. Maximum 100 characters.
      *
      * @var string|null
      */
-    private $placeholder;
+    protected $placeholder;
 
     /**
      * Creates a new text input.
      *
-     * @param string      $label     The label of the text input.
+     * @param string|null $label     (Deprecated) The label of the text input.
      * @param int         $style     The style of the text input.
      * @param string|null $custom_id The custom ID of the text input. If not given, a UUID will be used
      */
-    public function __construct(string $label, int $style, ?string $custom_id = null)
+    public function __construct(?string $label = null, int $style = self::STYLE_SHORT, ?string $custom_id = null)
     {
         $this->setLabel($label);
         $this->setStyle($style);
@@ -102,35 +116,15 @@ class TextInput extends Interactive
     /**
      * Creates a new text input.
      *
-     * @param string      $label     The label of the text input.
+     * @param string|null $label     (Deprecated) The label of the text input.
      * @param int         $style     The style of the text input.
      * @param string|null $custom_id The custom ID of the text input.
      *
      * @return self
      */
-    public static function new(string $label, int $style, ?string $custom_id = null): self
+    public static function new(?string $label = null, int $style = self::STYLE_SHORT, ?string $custom_id = null): self
     {
         return new self($label, $style, $custom_id);
-    }
-
-    /**
-     * Sets the custom ID for the text input.
-     *
-     * @param string $custom_id
-     *
-     * @throws \LengthException
-     *
-     * @return $this
-     */
-    public function setCustomId($custom_id): self
-    {
-        if (poly_strlen($custom_id) > 100) {
-            throw new \LengthException('Custom ID must be maximum 100 characters.');
-        }
-
-        $this->custom_id = $custom_id;
-
-        return $this;
     }
 
     /**
@@ -156,15 +150,17 @@ class TextInput extends Interactive
     /**
      * Sets the label of the text input.
      *
-     * @param string $label Label of the text input. Maximum 45 characters.
+     * @deprecated Use a top-level `ComponentObject::Label`
+     *
+     * @param string|null $label Label of the text input. Maximum 45 characters.
      *
      * @throws \LengthException
      *
      * @return $this
      */
-    public function setLabel(string $label): self
+    public function setLabel(?string $label = null): self
     {
-        if (poly_strlen($label) > 45) {
+        if (isset($label) && poly_strlen($label) > 45) {
             throw new \LengthException('Label must be maximum 45 characters.');
         }
 
@@ -234,13 +230,13 @@ class TextInput extends Interactive
     }
 
     /**
-     * Set if this component is required to be filled, default false.
+     * Set if this component is required to be filled (defaults to true).
      *
-     * @param bool $required
+     * @param bool|null $required
      *
      * @return $this
      */
-    public function setRequired(bool $required): self
+    public function setRequired(?bool $required = null): self
     {
         $this->required = $required;
 
@@ -318,7 +314,7 @@ class TextInput extends Interactive
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function jsonSerialize(): array
     {
@@ -326,8 +322,11 @@ class TextInput extends Interactive
             'type' => $this->type,
             'custom_id' => $this->custom_id,
             'style' => $this->style,
-            'label' => $this->label,
         ];
+
+        if (isset($this->label)) {
+            $content['label'] = $this->label;
+        }
 
         if (isset($this->min_length)) {
             $content['min_length'] = $this->min_length;
@@ -351,6 +350,10 @@ class TextInput extends Interactive
 
         if (isset($this->placeholder)) {
             $content['placeholder'] = $this->placeholder;
+        }
+
+        if (isset($this->id)) {
+            $content['id'] = $this->id;
         }
 
         return $content;
