@@ -3,6 +3,7 @@
     "description": "Yet another reason to hate php.",
     "license": "proprietary",
     "require": {
-        "team-reflex/discord-php": "^10.47"
+        "team-reflex/discord-php": "^10.47",
+        "sabre/vobject": "^4.5"
     }
 }
