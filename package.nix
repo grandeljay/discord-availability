@@ -10,7 +10,7 @@ php.buildComposerProject (finalAttrs: {
 
   src = ./.;
 
-  vendorHash = "sha256-2CONl7m+3rNy8SjAYuoLpyS8u2uar3lYrf2bCNdBurw=";
+  vendorHash = "sha256-+OM9BQf0tOEuuO7wPXgK3pNsNEF/fLUDwQYYwhyYzGo=";
 
   postPatch = ''
     rm -rf ./vendor
