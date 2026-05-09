@@ -405,7 +405,12 @@ class Bot
             }
 
             if ($event['timeStart'] <= $timeNow && $event['timeEnd'] > $timeNow) {
-                $jayIsAvailable = false;
+                $eventSummary             = \strtolower($event['summary'] ?? '');
+                $eventSummaryContainsDota = \str_contains($eventSummary, 'dota');
+
+                if (!$eventSummaryContainsDota) {
+                    $jayIsAvailable = false;
+                }
 
                 break;
             }
