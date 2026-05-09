@@ -1,6 +1,8 @@
 {
     "token": "super-secret-thing (alternatively, use the tokenFile key)",
     "tokenFile": "/var/secrets/token.txt",
+    "tokenNextcloud": "super-secret-thing (alternatively, use the tokenFileNextcloud key)",
+    "tokenFileNextcloud": "/var/secrets/token-nextcloud.txt",
     "directoryAvailabilities": "/var/lib/discord-availability",
     "maxAvailabilitiesPerUser": 100,
     "defaultTime": "19:00",

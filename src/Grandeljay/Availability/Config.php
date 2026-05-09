@@ -84,6 +84,7 @@ class Config
 
         $normalisedConfig['directoryAvailabilities'] = $this->extractAvailabilitiesDirFromConfig($rawConfig);
         $normalisedConfig['token']                   = $this->extractTokenFromConfig($rawConfig);
+        $normalisedConfig['tokenNextcloud']          = $this->extractTokenNextcloudFromConfig($rawConfig);
 
         return $normalisedConfig;
     }
@@ -108,6 +109,23 @@ class Config
 
         if (!$fileContents) {
             die('Failed to read token from file: ' . $path . PHP_EOL);
+        }
+
+        return trim($fileContents);
+    }
+
+    private function extractTokenNextcloudFromConfig(array $validatedConfig): string
+    {
+        if (isset($validatedConfig['tokenNextcloud'])) {
+            return $validatedConfig['tokenNextcloud'];
+        }
+
+        $path = $this->normalisePathWithEnvVars($validatedConfig['tokenFileNextcloud']);
+
+        $fileContents = file_get_contents($path);
+
+        if (!$fileContents) {
+            die('Failed to read Nextcloud token from file: ' . $path . PHP_EOL);
         }
 
         return trim($fileContents);
@@ -191,22 +209,37 @@ class Config
             return $msg;
         }
 
-        if (isset($config['token']) and isset($config['tokenFile'])) {
-            return 'One of "token" or "tokenFile" must be set but both are set.';
-        }
+        $tokens = [
+            'token'          => 'tokenFile',
+            'tokenNextcloud' => 'tokenFileNextcloud',
+        ];
 
-        if (!isset($config['token']) and !isset($config['tokenFile'])) {
-            return 'One of "token" or "tokenFile" must be set but neither are set.';
-        }
+        foreach ($tokens as $token => $tokenFile) {
+            if (isset($config[$token]) and isset($config[$tokenFile])) {
+                return \sprintf(
+                    'One of "%1$s" or "%2$s" must be set but both are set.',
+                    $token,
+                    $tokenFile
+                );
+            }
 
-        if (isset($config['tokenFile'])) {
-            $path = $this->normalisePathWithEnvVars($config['tokenFile']);
+            if (!isset($config[$token]) and !isset($config[$tokenFile])) {
+                return \sprintf(
+                    'One of "%1$s" or "%2$s" must be set but neither are set.',
+                    $token,
+                    $tokenFile
+                );
+            }
 
-            if (!file_exists($path)) {
-                $msg = 'The "tokenFile" file does not exist.' . PHP_EOL;
-                $msg = $msg . sprintf('  Specified:   "%s"' . PHP_EOL, $config['tokenFile']);
-                $msg = $msg . sprintf('  Interpreted: "%s"' . PHP_EOL, $path);
-                return $msg;
+            if (isset($config[$tokenFile])) {
+                $path = $this->normalisePathWithEnvVars($config[$tokenFile]);
+
+                if (!file_exists($path)) {
+                    $msg = \sprintf('The "%1$s" file does not exist.' . PHP_EOL, $tokenFile);
+                    $msg = $msg . sprintf('  Specified:   "%s"' . PHP_EOL, $config[$tokenFile]);
+                    $msg = $msg . sprintf('  Interpreted: "%s"' . PHP_EOL, $path);
+                    return $msg;
+                }
             }
         }
 
@@ -239,6 +272,16 @@ class Config
     public function getAPIToken(): string
     {
         return $this->get('token');
+    }
+
+    /**
+     * Returns the Nextcloud API token.
+     *
+     * @return string
+     */
+    public function getAPITokenNextcloud(): string
+    {
+        return $this->get('tokenNextcloud');
     }
 
     /**
@@ -312,11 +355,6 @@ class Config
     public function getNextcloudAppUser(): string
     {
         return $this->get('nextcloudAppUser');
-    }
-
-    public function getNextcloudAppPassword(): string
-    {
-        return $this->get('nextcloudAppPassword');
     }
 
     public function getDiscordDotaRoleId(): string

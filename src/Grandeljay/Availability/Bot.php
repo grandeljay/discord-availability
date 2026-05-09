@@ -225,7 +225,7 @@ class Bot
         XML;
 
         $calDavUser     = $config->getNextcloudAppUser();
-        $calDavPassword = $config->getNextcloudAppPassword();
+        $calDavPassword = $config->getAPITokenNextcloud();
 
         \curl_setopt_array(
             $calDavRequest,
@@ -322,7 +322,7 @@ class Bot
             XML;
 
             $calDavUser     = $config->getNextcloudAppUser();
-            $calDavPassword = $config->getNextcloudAppPassword();
+            $calDavPassword = $config->getAPITokenNextcloud();
 
             \curl_setopt_array(
                 $calDavRequest,
