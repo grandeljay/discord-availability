@@ -202,7 +202,8 @@ class Bot
 
     public function dota2RoleUsed(Message $message, Discord $discord): void
     {
-        $roleId = '1344006848650416192';
+        $config = new Config();
+        $roleId = $config->getDiscordDotaRoleId();
 
         if ($message->mention_roles->has($roleId)) {
             $this->checkJaysAvailability($message, $discord);

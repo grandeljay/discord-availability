@@ -80,6 +80,7 @@ class Config
         $normalisedConfig['timeZone']                 = $rawConfig['timeZone'] ?? \ini_get('date.timezone');
         $normalisedConfig['nextcloudAppUser']         = $rawConfig['nextcloudAppUser'] ?? null;
         $normalisedConfig['nextcloudAppPassword']     = $rawConfig['nextcloudAppPassword'] ?? null;
+        $normalisedConfig['discordDotaMentionId']     = $rawConfig['discordDotaMentionId'] ?? null;
 
         $normalisedConfig['directoryAvailabilities'] = $this->extractAvailabilitiesDirFromConfig($rawConfig);
         $normalisedConfig['token']                   = $this->extractTokenFromConfig($rawConfig);
@@ -316,5 +317,10 @@ class Config
     public function getNextcloudAppPassword(): string
     {
         return $this->get('nextcloudAppPassword');
+    }
+
+    public function getDiscordDotaRoleId(): string
+    {
+        return $this->get('discordDotaMentionId');
     }
 }
