@@ -10,12 +10,12 @@ class UserAvailabilities extends UserAvailabilitiesIterator
         $userAvailabilities = new self();
 
         $directory = $config->getAvailabilitiesDir();
-        $filenames = array_filter(
-            scandir($directory),
+        $filenames = \array_filter(
+            \scandir($directory),
             function ($filename) use ($directory) {
                 $filepath = $directory . '/'  . $filename;
 
-                return is_file($filepath);
+                return \is_file($filepath);
             }
         );
 

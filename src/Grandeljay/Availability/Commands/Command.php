@@ -88,7 +88,7 @@ class Command
         $config = new Config();
 
         $commandBuilder = CommandBuilder::new()
-        ->setName(strtolower($this->name))
+        ->setName(\strtolower($this->name))
         ->setDescription($this->description);
 
         switch ($this->name) {

@@ -12,7 +12,7 @@ class Availability extends Command
 {
     public function run(Discord $discord): void
     {
-        $command  = strtolower(Command::AVAILABILITY);
+        $command  = \strtolower(Command::AVAILABILITY);
         $callback = [$this, 'getUsersAvailabilities'];
 
         $discord->listenCommand($command, $callback);
@@ -40,10 +40,10 @@ class Availability extends Command
         $messageRows = [
             \sprintf(
                 'Showing availabilities for all users on `%s` at `%s` (until `%s` at `%s`).',
-                date('d.m.Y', $requestedDateTimeFrom),
-                date('H:i', $requestedDateTimeFrom),
-                date('d.m.Y', $requestedDateTimeTo),
-                date('H:i', $requestedDateTimeTo)
+                \date('d.m.Y', $requestedDateTimeFrom),
+                \date('H:i', $requestedDateTimeFrom),
+                \date('d.m.Y', $requestedDateTimeTo),
+                \date('H:i', $requestedDateTimeTo)
             ),
         ];
 
@@ -84,10 +84,10 @@ class Availability extends Command
             $userIcon       = $userIsAvailable ? 'Y' : 'N';
             $userName       = $userAvailability->getUserName();
             $userStatus     = $userIsAvailable ? 'Available' : 'Unavailable';
-            $outputTimeFrom = max($requestedDateTimeFrom, $userAvailabilityTime->getUserAvailabilityTimeFrom());
-            $outputTimeTo   = min($requestedDateTimeTo, $userAvailabilityTime->getUserAvailabilityTimeTo());
-            $userStatusFrom = date('H:i', $outputTimeFrom);
-            $userStatusTo   = date('H:i', $outputTimeTo);
+            $outputTimeFrom = \max($requestedDateTimeFrom, $userAvailabilityTime->getUserAvailabilityTimeFrom());
+            $outputTimeTo   = \min($requestedDateTimeTo, $userAvailabilityTime->getUserAvailabilityTimeTo());
+            $userStatusFrom = \date('H:i', $outputTimeFrom);
+            $userStatusTo   = \date('H:i', $outputTimeTo);
 
             if ($userAvailabilityTime->getUserAvailabilityTimeFrom() < $requestedDateTimeFrom) {
                 $requestedTimeIsLess = true;
@@ -145,7 +145,7 @@ class Availability extends Command
         foreach ($messageTable as $messageRow) {
             foreach ($messageRow as $key => $value) {
                 if (isset($pad[$key])) {
-                    $pad[$key] = max($pad[$key], \mb_strlen($value));
+                    $pad[$key] = \max($pad[$key], \mb_strlen($value));
                 } else {
                     $pad[$key] = \mb_strlen($value);
                 }
@@ -171,7 +171,7 @@ class Availability extends Command
             }
         }
 
-        if (2 === count($messageTable)) {
+        if (2 === \count($messageTable)) {
             $interaction->respondWithMessage(
                 MessageBuilder::new()
                 ->setContent(
@@ -209,7 +209,7 @@ class Availability extends Command
 
             $interaction->respondWithMessage(
                 MessageBuilder::new()
-                ->setContent(implode(PHP_EOL, $messageRows)),
+                ->setContent(\implode(PHP_EOL, $messageRows)),
                 true
             );
         }

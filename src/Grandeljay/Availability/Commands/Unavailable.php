@@ -12,7 +12,7 @@ class Unavailable extends Command
 {
     public function run(Discord $discord): void
     {
-        $command  = strtolower(Command::UNAVAILABLE);
+        $command  = \strtolower(Command::UNAVAILABLE);
         $callback = [$this, 'setUserUnavailability'];
 
         $discord->listenCommand($command, $callback);
@@ -41,10 +41,10 @@ class Unavailable extends Command
             ->respondWithMessage(
                 MessageBuilder::new()
                 ->setContent(
-                    sprintf(
+                    \sprintf(
                         'You\'re unavailable on `%s` at `%s`? That doesn\'t sound right. Please specify a time in the future.',
-                        date('d.m.Y', $timeUnavailableFrom),
-                        date('H:i', $timeUnavailableFrom),
+                        \date('d.m.Y', $timeUnavailableFrom),
+                        \date('H:i', $timeUnavailableFrom),
                     )
                 )
                 ->_setFlags(Message::FLAG_EPHEMERAL)
@@ -63,13 +63,13 @@ class Unavailable extends Command
         ->respondWithMessage(
             MessageBuilder::new()
             ->setContent(
-                sprintf(
+                \sprintf(
                     'Gotcha! You are **unavailable** for **%s** on `%s` at `%s` (until `%s` at `%s`).',
                     $config->getEventName(),
-                    date('d.m.Y', $timeUnavailableFrom),
-                    date('H:i', $timeUnavailableFrom),
-                    date('d.m.Y', $timeUnavailableTo),
-                    date('H:i', $timeUnavailableTo)
+                    \date('d.m.Y', $timeUnavailableFrom),
+                    \date('H:i', $timeUnavailableFrom),
+                    \date('d.m.Y', $timeUnavailableTo),
+                    \date('H:i', $timeUnavailableTo)
                 )
             )
             ->_setFlags(Message::FLAG_EPHEMERAL)

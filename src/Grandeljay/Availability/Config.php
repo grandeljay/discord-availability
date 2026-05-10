@@ -37,13 +37,13 @@ class Config
         foreach ($potentialConfigPaths as $potentialConfigPath) {
             $potentialConfigPath = $this->expandEnvVars($potentialConfigPath);
 
-            if (file_exists($potentialConfigPath)) {
-                $rawData    = file_get_contents($potentialConfigPath);
-                $parsedData = json_decode($rawData, true, 2, JSON_THROW_ON_ERROR);
+            if (\file_exists($potentialConfigPath)) {
+                $rawData    = \file_get_contents($potentialConfigPath);
+                $parsedData = \json_decode($rawData, true, 2, JSON_THROW_ON_ERROR);
                 $error      = $this->validateConfig($parsedData);
 
                 if ($error) {
-                    $msg = sprintf('Bad config.json at `%s`:' . PHP_EOL, $potentialConfigPath);
+                    $msg = \sprintf('Bad config.json at `%s`:' . PHP_EOL, $potentialConfigPath);
                     $msg = $msg . "  Error:       " . $error . PHP_EOL;
                     die($msg);
                 }
@@ -105,13 +105,13 @@ class Config
 
         $path = $this->normalisePathWithEnvVars($validatedConfig['tokenFile']);
 
-        $fileContents = file_get_contents($path);
+        $fileContents = \file_get_contents($path);
 
         if (!$fileContents) {
             die('Failed to read token from file: ' . $path . PHP_EOL);
         }
 
-        return trim($fileContents);
+        return \trim($fileContents);
     }
 
     private function extractTokenNextcloudFromConfig(array $validatedConfig): string
@@ -122,13 +122,13 @@ class Config
 
         $path = $this->normalisePathWithEnvVars($validatedConfig['tokenFileNextcloud']);
 
-        $fileContents = file_get_contents($path);
+        $fileContents = \file_get_contents($path);
 
         if (!$fileContents) {
             die('Failed to read Nextcloud token from file: ' . $path . PHP_EOL);
         }
 
-        return trim($fileContents);
+        return \trim($fileContents);
     }
 
     private function normalisePathWithEnvVars(string $path): string
@@ -157,14 +157,14 @@ class Config
             return $path;
         }
 
-        $cwd = getcwd();
+        $cwd = \getcwd();
 
         if (!$cwd) {
             die('Could not determine current working directory.' . PHP_EOL);
         }
 
         $segments     = [$cwd, $path];
-        $absolutePath = implode(DIRECTORY_SEPARATOR, $segments);
+        $absolutePath = \implode(DIRECTORY_SEPARATOR, $segments);
 
         return $absolutePath;
     }
@@ -185,7 +185,7 @@ class Config
     {
         // Note: A single backslash must be denoted as four `\` characters in a
         // `preg_match` regex.
-        if (1 === preg_match('@^(/|[A-Z]:\\\\|\\\\\\\\)@', $path)) {
+        if (1 === \preg_match('@^(/|[A-Z]:\\\\|\\\\\\\\)@', $path)) {
             return true;
         } else {
             return false;
@@ -202,10 +202,10 @@ class Config
     private function validateConfig(array $config): ?string
     {
         $path = $this->extractAvailabilitiesDirFromConfig($config);
-        if (!file_exists($path)) {
+        if (!\file_exists($path)) {
             $msg = 'The "directoryAvailabilities" directory does not exist.' . PHP_EOL;
-            $msg = $msg . sprintf('  Specified:   "%s"' . PHP_EOL, $config['directoryAvailabilities']);
-            $msg = $msg . sprintf('  Interpreted: "%s"' . PHP_EOL, $path);
+            $msg = $msg . \sprintf('  Specified:   "%s"' . PHP_EOL, $config['directoryAvailabilities']);
+            $msg = $msg . \sprintf('  Interpreted: "%s"' . PHP_EOL, $path);
             return $msg;
         }
 
@@ -234,10 +234,10 @@ class Config
             if (isset($config[$tokenFile])) {
                 $path = $this->normalisePathWithEnvVars($config[$tokenFile]);
 
-                if (!file_exists($path)) {
+                if (!\file_exists($path)) {
                     $msg = \sprintf('The "%1$s" file does not exist.' . PHP_EOL, $tokenFile);
-                    $msg = $msg . sprintf('  Specified:   "%s"' . PHP_EOL, $config[$tokenFile]);
-                    $msg = $msg . sprintf('  Interpreted: "%s"' . PHP_EOL, $path);
+                    $msg = $msg . \sprintf('  Specified:   "%s"' . PHP_EOL, $config[$tokenFile]);
+                    $msg = $msg . \sprintf('  Interpreted: "%s"' . PHP_EOL, $path);
                     return $msg;
                 }
             }
@@ -296,19 +296,19 @@ class Config
 
     private function expandEnvVars(string $path): string
     {
-        preg_match_all('/\$([A-Z_]+)/', $path, $environmentMatches, PREG_SET_ORDER);
+        \preg_match_all('/\$([A-Z_]+)/', $path, $environmentMatches, PREG_SET_ORDER);
 
         foreach ($environmentMatches as $match) {
             if (isset($match[0], $match[1])) {
                 $matchFull                = $match[0];
                 $matchEnvironmentVariable = $match[1];
-                $environmentVariable      = getenv($matchEnvironmentVariable);
+                $environmentVariable      = \getenv($matchEnvironmentVariable);
 
                 if (false === $environmentVariable) {
-                    die(sprintf('Could not get value for environment variable "%s".', $matchEnvironmentVariable) . PHP_EOL);
+                    die(\sprintf('Could not get value for environment variable "%s".', $matchEnvironmentVariable) . PHP_EOL);
                 }
 
-                $path = str_replace($matchFull, $environmentVariable, $path);
+                $path = \str_replace($matchFull, $environmentVariable, $path);
             }
         }
 

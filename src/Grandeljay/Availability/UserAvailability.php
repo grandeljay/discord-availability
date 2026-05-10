@@ -31,8 +31,8 @@ class UserAvailability implements \JsonSerializable
 
     public static function fromFile(string $path): self
     {
-        $text = file_get_contents($path);
-        $data = json_decode($text, true, 512, JSON_THROW_ON_ERROR);
+        $text = \file_get_contents($path);
+        $data = \json_decode($text, true, 512, JSON_THROW_ON_ERROR);
         return new self($data['userId'], $data['userName'], $data['availabilities']);
     }
 
@@ -48,7 +48,7 @@ class UserAvailability implements \JsonSerializable
         $config = new Config();
 
         $filepathUserAvailability = $config->getAvailabilitiesDir() . '/' . $user->id . '.json';
-        if (file_exists($filepathUserAvailability)) {
+        if (\file_exists($filepathUserAvailability)) {
             return UserAvailability::fromFile($filepathUserAvailability);
         } else {
             return new self($user->id, $user->username, []);
@@ -85,7 +85,7 @@ class UserAvailability implements \JsonSerializable
         $this->truncate();
 
         $filepathUserAvailability = $this->config->getAvailabilitiesDir() . '/' . $this->userId . '.json';
-        $json                     = json_encode($this->jsonSerialize());
+        $json                     = \json_encode($this->jsonSerialize());
 
         file_put_contents($filepathUserAvailability, $json);
     }
@@ -110,7 +110,7 @@ class UserAvailability implements \JsonSerializable
     {
         $maxValuesAllowed = $this->config->getMaxAvailabilitiesPerUser();
 
-        if (count($this->userAvailabilityTimes) <= $maxValuesAllowed) {
+        if (\count($this->userAvailabilityTimes) <= $maxValuesAllowed) {
             return;
         }
 

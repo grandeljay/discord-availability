@@ -49,7 +49,7 @@ class UserAvailabilityTimesIterator implements Iterator, JsonSerializable, Count
 
     public function count(): int
     {
-        return count($this->elements);
+        return \count($this->elements);
     }
 
     public function add(UserAvailabilityTime $userAvailabilityTime): void
@@ -79,11 +79,11 @@ class UserAvailabilityTimesIterator implements Iterator, JsonSerializable, Count
     {
         switch ($order) {
             case 'ASC':
-                sort($this->elements);
+                \sort($this->elements);
                 break;
 
             case 'DESC':
-                rsort($this->elements);
+                \rsort($this->elements);
                 break;
         }
     }

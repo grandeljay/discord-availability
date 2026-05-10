@@ -11,7 +11,7 @@ class Shutdown extends Command
     public function run(Discord $discord): void
     {
         $discord->listenCommand(
-            strtolower(Command::SHUTDOWN),
+            \strtolower(Command::SHUTDOWN),
             function (Interaction $interaction) use ($discord) {
                 /**
                  * Using

@@ -45,16 +45,16 @@ class UserAvailabilityTime
         $availabilities = [];
 
         $directory = $config->get('directoryAvailabilities');
-        $files     = array_filter(
-            scandir($directory),
+        $files     = \array_filter(
+            \scandir($directory),
             function ($file) use ($directory) {
-                return is_file($directory . '/' . $file);
+                return \is_file($directory . '/' . $file);
             }
         );
 
         foreach ($files as $file) {
-            $contents            = file_get_contents($directory . '/' . $file);
-            $availabilitiesStack = json_decode($contents, true);
+            $contents            = \file_get_contents($directory . '/' . $file);
+            $availabilitiesStack = \json_decode($contents, true);
 
             $availabilities[] = $availabilitiesStack;
         }
@@ -70,7 +70,7 @@ class UserAvailabilityTime
     public function __construct(array $availabilityTimeData = [])
     {
         foreach ($availabilityTimeData as $property => $value) {
-            if (property_exists($this::class, $property)) {
+            if (\property_exists($this::class, $property)) {
                 $this->$property = $value;
             }
         }
@@ -270,7 +270,7 @@ class UserAvailabilityTime
                         $interaction
                         ->respondWithMessage(
                             MessageBuilder::new()->setContent(
-                                sprintf(
+                                \sprintf(
                                     '**%s** is available for **%s** now!',
                                     $userName,
                                     $event
@@ -305,7 +305,7 @@ class UserAvailabilityTime
                         $interaction
                         ->respondWithMessage(
                             MessageBuilder::new()->setContent(
-                                sprintf(
+                                \sprintf(
                                     '**%s** is **not available** for %s now.',
                                     $userName,
                                     $event
@@ -326,7 +326,7 @@ class UserAvailabilityTime
 
         $messageReply = MessageBuilder::new()
         ->setContent(
-            sprintf(
+            \sprintf(
                 '**%s** is available for **%s** now! Are you available too?',
                 $userName,
                 $event

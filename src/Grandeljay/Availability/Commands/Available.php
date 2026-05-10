@@ -16,7 +16,7 @@ class Available extends Command
 {
     public function run(Discord $discord): void
     {
-        $command  = strtolower(Command::AVAILABLE);
+        $command  = \strtolower(Command::AVAILABLE);
         $callback = [$this, 'command'];
 
         $discord->listenCommand($command, $callback);
@@ -76,10 +76,10 @@ class Available extends Command
             ->respondWithMessage(
                 MessageBuilder::new()
                 ->setContent(
-                    sprintf(
+                    \sprintf(
                         'You\'re available on `%s` at `%s`? That doesn\'t sound right. Please specify a time in the future.',
-                        date('d.m.Y', $from),
-                        date('H:i', $from),
+                        \date('d.m.Y', $from),
+                        \date('H:i', $from),
                     )
                 )
                 ->_setFlags(Message::FLAG_EPHEMERAL)
@@ -98,13 +98,13 @@ class Available extends Command
         ->respondWithMessage(
             MessageBuilder::new()
             ->setContent(
-                sprintf(
+                \sprintf(
                     'Gotcha! You are **available** for **%s** on `%s` at `%s` (until `%s` at `%s`).',
                     $config->getEventName(),
-                    date('d.m.Y', $from),
-                    date('H:i', $from),
-                    date('d.m.Y', $to),
-                    date('H:i', $to)
+                    \date('d.m.Y', $from),
+                    \date('H:i', $from),
+                    \date('d.m.Y', $to),
+                    \date('H:i', $to)
                 )
             )
             ->_setFlags(Message::FLAG_EPHEMERAL)

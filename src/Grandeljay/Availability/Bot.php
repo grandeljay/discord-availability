@@ -43,14 +43,14 @@ class Bot
         if (empty($message)) {
             $message = $defaultDateTime;
         } else {
-            $message = str_replace(
+            $message = \str_replace(
                 ['next week', 'next time', 'next ', 'on ', 'at '],
                 [$defaultDateTime, $defaultDateTime, '', '', ''],
                 $message
             );
         }
 
-        $time = strtotime($message);
+        $time = \strtotime($message);
 
         return $time;
     }
@@ -77,7 +77,7 @@ class Bot
         $logger   = new Logger('discord-availability');
         $logger->pushHandler(new StreamHandler('php://stdout', $logLevel));
 
-        date_default_timezone_set($this->config->getTimeZone());
+        \date_default_timezone_set($this->config->getTimeZone());
 
         $this->discord = new Discord(
             [
@@ -264,8 +264,8 @@ class Bot
                 : null;
 
             // extract calendar ID from URL
-            $parts      = explode('/', trim($href, '/'));
-            $calendarId = end($parts);
+            $parts      = \explode('/', \trim($href, '/'));
+            $calendarId = \end($parts);
 
             $calendars[] = [
                 'id'   => $calendarId,
