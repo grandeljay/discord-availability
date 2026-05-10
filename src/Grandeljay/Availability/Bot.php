@@ -217,8 +217,7 @@ class Bot
 
         $events = Nextcloud::getCalendarEventsToday();
 
-        $timeNow        = new \DateTime();
-        $jayIsAvailable = true;
+        $timeNow = new \DateTime();
 
         foreach ($events as $event) {
             $eventIsAllDay = $event['isAllDay'];
@@ -239,15 +238,21 @@ class Bot
                 $eventSummaryContainsDota = \str_contains($eventSummary, 'dota');
 
                 if (!$eventSummaryContainsDota) {
-                    $jayIsAvailable = false;
+                    $timeEndDiff          = $timeNow->diff($event['timeEnd']);
+                    $timeEndDiffFormatted = $timeEndDiff->format('%H:%I hours');
+                    $timeEndFormatted     = $event['timeEnd']->format('H:i');
+
+                    $jayIsUnavailableMessage = \sprintf(
+                        'Jay is not available according to his calendars. He might be available again at %1$s (in %2$s).',
+                        $timeEndFormatted,
+                        $timeEndDiffFormatted
+                    );
+
+                    $message->reply($jayIsUnavailableMessage);
+
+                    return;
                 }
-
-                break;
             }
-        }
-
-        if (!$jayIsAvailable) {
-            $message->reply('According to his calendars, Jay is not available.');
         }
     }
 }
