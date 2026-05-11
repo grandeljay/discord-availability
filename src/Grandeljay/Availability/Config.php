@@ -28,15 +28,14 @@ class Config
         };
 
         foreach ($potentialConfigPaths as $potentialConfigPath) {
-            $potentialConfigPathExpanded   = $this->expandEnvVars($potentialConfigPath);
-            $potentialConfigPathNormalised = $this->normalisePath($potentialConfigPathExpanded);
+            $potentialConfigPathNormalised = $this->normalisePathWithEnvVars($potentialConfigPath);
             $potentialConfigPathExists     = \file_exists($potentialConfigPathNormalised);
 
             if (!$potentialConfigPathExists) {
                 continue;
             }
 
-            $configPath     = $potentialConfigPathExpanded;
+            $configPath     = $potentialConfigPathNormalised;
             $configContents = \file_get_contents($configPath);
             $configDecoded  = \json_decode($configContents, true, 2, \JSON_THROW_ON_ERROR);
             $configError    = $this->validateConfig($configDecoded);
