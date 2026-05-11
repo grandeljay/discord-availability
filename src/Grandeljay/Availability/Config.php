@@ -151,6 +151,8 @@ class Config
      */
     private function normalisePath(string $path): string
     {
+        $path = \str_replace(['/', '\\'], \DIRECTORY_SEPARATOR, $path);
+
         if ($this->isPathAbsolute($path)) {
             return $path;
         }
