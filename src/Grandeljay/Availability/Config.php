@@ -28,9 +28,9 @@ class Config
         };
 
         foreach ($potentialConfigPaths as $potentialConfigPath) {
-            $potentialConfigPathNormalised = $this->normalisePath($potentialConfigPath);
-            $potentialConfigPathExpanded   = $this->expandEnvVars($potentialConfigPathNormalised);
-            $potentialConfigPathExists     = \file_exists($potentialConfigPathExpanded);
+            $potentialConfigPathExpanded   = $this->expandEnvVars($potentialConfigPath);
+            $potentialConfigPathNormalised = $this->normalisePath($potentialConfigPathExpanded);
+            $potentialConfigPathExists     = \file_exists($potentialConfigPathNormalised);
 
             if (!$potentialConfigPathExists) {
                 continue;
