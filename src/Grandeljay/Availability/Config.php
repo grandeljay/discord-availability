@@ -28,27 +28,33 @@ class Config
         };
 
         foreach ($potentialConfigPaths as $potentialConfigPath) {
-            $potentialConfigPath = $this->expandEnvVars($potentialConfigPath);
+            $potentialConfigPathNormalised = $this->normalisePath($potentialConfigPath);
+            $potentialConfigPathExpanded   = $this->expandEnvVars($potentialConfigPathNormalised);
+            $potentialConfigPathExists     = \file_exists($potentialConfigPathExpanded);
 
-            if (\file_exists($potentialConfigPath)) {
-                $rawData    = \file_get_contents($potentialConfigPath);
-                $parsedData = \json_decode($rawData, true, 2, JSON_THROW_ON_ERROR);
-                $error      = $this->validateConfig($parsedData);
-
-                if ($error) {
-                    $msg = \sprintf('Bad config.json at `%s`:' . PHP_EOL, $potentialConfigPath);
-                    $msg = $msg . "  Error:       " . $error . PHP_EOL;
-                    die($msg);
-                }
-
-                $normalisedCfg = $this->normaliseConfig($parsedData);
-                $this->config  = $normalisedCfg;
-
-                return;
+            if (!$potentialConfigPathExists) {
+                continue;
             }
+
+            $configPath     = $potentialConfigPathExpanded;
+            $configContents = \file_get_contents($configPath);
+            $configDecoded  = \json_decode($configContents, true, 2, \JSON_THROW_ON_ERROR);
+            $configError    = $this->validateConfig($configDecoded);
+
+            if ($configError) {
+                $msg = \sprintf('Bad config.json at `%s`:' . \PHP_EOL, $configPath);
+                $msg = $msg . "  Error:       " . $configError . \PHP_EOL;
+                die($msg);
+            }
+
+            $configNormalised = $this->normaliseConfig($configDecoded);
+
+            $this->config = $configNormalised;
+
+            return;
         }
 
-        die('Missing config.json. Please refer to README.md.' . PHP_EOL);
+        die('Missing config.json. Please refer to README.md.' . \PHP_EOL);
     }
 
     /**
