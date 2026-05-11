@@ -220,27 +220,29 @@ class Bot
         $timeNow = new \DateTime();
 
         foreach ($events as $event) {
-            $eventIsAllDay = $event['isAllDay'];
+            $eventIsAllDay  = $event['isAllDay'];
+            $eventTimeStart = $event['timeStart'];
+            $eventTimeEnd   = $event['timeEnd'];
 
             if ($eventIsAllDay) {
                 continue;
             }
 
-            $eventSpansMultipleDays = $event['timeStart']->format('Y-m-d')
-                                  !== $event['timeEnd']->format('Y-m-d');
+            $eventSpansMultipleDays = $eventTimeStart->format('Y-m-d')
+                                  !== $eventTimeEnd->format('Y-m-d');
 
             if ($eventSpansMultipleDays) {
                 continue;
             }
 
-            if ($event['timeStart'] <= $timeNow && $event['timeEnd'] > $timeNow) {
+            if ($eventTimeStart <= $timeNow && $eventTimeEnd > $timeNow) {
                 $eventSummary             = \strtolower($event['summary'] ?? '');
                 $eventSummaryContainsDota = \str_contains($eventSummary, 'dota');
 
                 if (!$eventSummaryContainsDota) {
-                    $timeEndDiff          = $timeNow->diff($event['timeEnd']);
+                    $timeEndDiff          = $timeNow->diff($eventTimeEnd);
                     $timeEndDiffFormatted = $timeEndDiff->format('%H:%I hours');
-                    $timeEndFormatted     = $event['timeEnd']->format('H:i');
+                    $timeEndFormatted     = $eventTimeEnd->format('H:i');
 
                     $jayIsUnavailableMessage = \sprintf(
                         'Jay is not available according to his calendars. He might be available again at %1$s (in %2$s).',
