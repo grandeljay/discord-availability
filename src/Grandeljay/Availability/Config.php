@@ -69,21 +69,21 @@ class Config
      */
     private function normaliseConfig(array $rawConfig): array
     {
-        $normalisedConfig = [];
+        $normalisedConfig = [
+            'maxAvailabilitiesPerUser' => $rawConfig['maxAvailabilitiesPerUser'] ?? 100,
+            'defaultDay'               => $rawConfig['defaultDay'] ?? "monday",
+            'defaultTime'              => $rawConfig['defaultTime'] ?? "19:00",
+            'eventName'                => $rawConfig['eventName'] ?? "Dota 2",
+            'logLevel'                 => $rawConfig['logLevel'] ?? "Info",
+            'timeZone'                 => $rawConfig['timeZone'] ?? \ini_get('date.timezone'),
+            'nextcloudAppUser'         => $rawConfig['nextcloudAppUser'] ?? null,
+            'nextcloudAppPassword'     => $rawConfig['nextcloudAppPassword'] ?? null,
+            'discordDotaMentionId'     => $rawConfig['discordDotaMentionId'] ?? null,
 
-        $normalisedConfig['maxAvailabilitiesPerUser'] = $rawConfig['maxAvailabilitiesPerUser'] ?? 100;
-        $normalisedConfig['defaultDay']               = $rawConfig['defaultDay'] ?? "monday";
-        $normalisedConfig['defaultTime']              = $rawConfig['defaultTime'] ?? "19:00";
-        $normalisedConfig['eventName']                = $rawConfig['eventName'] ?? "Dota 2";
-        $normalisedConfig['logLevel']                 = $rawConfig['logLevel'] ?? "Info";
-        $normalisedConfig['timeZone']                 = $rawConfig['timeZone'] ?? \ini_get('date.timezone');
-        $normalisedConfig['nextcloudAppUser']         = $rawConfig['nextcloudAppUser'] ?? null;
-        $normalisedConfig['nextcloudAppPassword']     = $rawConfig['nextcloudAppPassword'] ?? null;
-        $normalisedConfig['discordDotaMentionId']     = $rawConfig['discordDotaMentionId'] ?? null;
-
-        $normalisedConfig['directoryAvailabilities'] = $this->extractAvailabilitiesDirFromConfig($rawConfig);
-        $normalisedConfig['token']                   = $this->extractTokenFromConfig($rawConfig);
-        $normalisedConfig['tokenNextcloud']          = $this->extractTokenNextcloudFromConfig($rawConfig);
+            'directoryAvailabilities'  => $this->extractAvailabilitiesDirFromConfig($rawConfig),
+            'token'                    => $this->extractTokenFromConfig($rawConfig),
+            'tokenNextcloud'           => $this->extractTokenNextcloudFromConfig($rawConfig),
+        ];
 
         return $normalisedConfig;
     }
