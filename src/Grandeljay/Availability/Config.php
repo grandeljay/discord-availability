@@ -185,11 +185,9 @@ class Config
     {
         // Note: A single backslash must be denoted as four `\` characters in a
         // `preg_match` regex.
-        if (1 === \preg_match('@^(/|[A-Z]:\\\\|\\\\\\\\)@', $path)) {
-            return true;
-        } else {
-            return false;
-        }
+        $isAbsolute = 1 === \preg_match('@^(/|[A-Z]:\\\\|\\\\\\\\)@', $path);
+
+        return $isAbsolute;
     }
 
     /**
