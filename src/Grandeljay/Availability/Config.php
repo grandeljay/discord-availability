@@ -14,25 +14,18 @@ class Config
     private function loadConfig(): void
     {
         $filepathRelative     = 'discord-availability/config.json';
-        $potentialConfigPaths = [];
-
-        switch (PHP_OS) {
-            case 'WINNT':
-                $potentialConfigPaths = [
-                    'config.json',
-                    '$USERPROFILE/.config/' . $filepathRelative,
-                    '$APPDATA/' . $filepathRelative,
-                ];
-                break;
-
-            default:
-                $potentialConfigPaths = [
-                    'config.json',
-                    '$HOME/.config/' . $filepathRelative,
-                    '/etc/' . $filepathRelative,
-                ];
-                break;
-        }
+        $potentialConfigPaths = match (\PHP_OS) {
+            'WINNT' => [
+                'config.json',
+                '$USERPROFILE/.config/' . $filepathRelative,
+                '$APPDATA/' . $filepathRelative,
+            ],
+            default => [
+                'config.json',
+                '$HOME/.config/' . $filepathRelative,
+                '/etc/' . $filepathRelative,
+            ],
+        };
 
         foreach ($potentialConfigPaths as $potentialConfigPath) {
             $potentialConfigPath = $this->expandEnvVars($potentialConfigPath);
