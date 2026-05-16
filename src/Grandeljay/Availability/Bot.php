@@ -220,14 +220,14 @@ class Bot
         $timeNow = new \DateTime();
 
         foreach ($events as $event) {
-            $eventIsAllDay  = $event['isAllDay'];
-            $eventTimeStart = $event['timeStart'];
-            $eventTimeEnd   = $event['timeEnd'];
+            $eventIsAllDay = $event['isAllDay'];
 
             if ($eventIsAllDay) {
                 continue;
             }
 
+            $eventTimeStart         = $event['timeStart'];
+            $eventTimeEnd           = $event['timeEnd'];
             $eventSpansMultipleDays = $eventTimeStart->format('Y-m-d')
                                   !== $eventTimeEnd->format('Y-m-d');
 
