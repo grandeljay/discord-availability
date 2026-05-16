@@ -121,16 +121,16 @@ class Nextcloud
     {
         $config = new Config();
 
-        $dateTimeToday    = new \DateTime();
-        $dateTimeTomorrow = new \DateTime();
-        $dateTimeZone     = new \DateTimeZone('UTC');
-        $dateInterval     = new \DateInterval('P1D');
         $dateTimeFormat   = 'Ymd\THis\Z';
-        $dateTimeToday->setTimezone($dateTimeZone);
-        $dateTimeToday->setTime(0, 0);
-        $dateTimeTomorrow->setTimezone($dateTimeZone);
-        $dateTimeTomorrow->setTime(0, 0);
-        $dateTimeTomorrow->add($dateInterval);
+        $dateTimeZoneUtc  = new \DateTimeZone('UTC');
+        $dateTimeToday    = new \DateTimeImmutable(
+            'today 00:00:00',
+            $dateTimeZoneUtc
+        );
+        $dateTimeTomorrow = new \DateTimeImmutable(
+            'tomorrow 00:00:00',
+            $dateTimeZoneUtc
+        );
 
         $dateStart = $dateTimeToday->format($dateTimeFormat);
         $dateEnd   = $dateTimeTomorrow->format($dateTimeFormat);
