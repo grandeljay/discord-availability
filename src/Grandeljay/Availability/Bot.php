@@ -215,9 +215,12 @@ class Bot
     {
         $message->channel->broadcastTyping();
 
-        $events = Nextcloud::getCalendarEventsToday();
+        $config         = new Config();
+        $configTimeZone = $config->getTimeZone();
+        $events         = Nextcloud::getCalendarEventsToday();
 
-        $timeNow = new \DateTime();
+        $timeNow  = new \DateTime();
+        $timeZone = new \DateTimeZone($configTimeZone);
 
         foreach ($events as $event) {
             $eventIsAllDay = $event['isAllDay'];
@@ -225,6 +228,9 @@ class Bot
             if ($eventIsAllDay) {
                 continue;
             }
+
+            $event['timeStart'] = $event['timeStart']->setTimezone($timeZone);
+            $event['timeEnd']   = $event['timeEnd']->setTimezone($timeZone);
 
             $eventTimeStart         = $event['timeStart'];
             $eventTimeEnd           = $event['timeEnd'];
@@ -235,7 +241,11 @@ class Bot
                 continue;
             }
 
-            if ($eventTimeStart <= $timeNow && $eventTimeEnd > $timeNow) {
+            $eventHasStarted     = $eventTimeStart <= $timeNow;
+            $eventHasNotFinished = $eventTimeEnd > $timeNow;
+            $eventIsInProgress   = $eventHasStarted && $eventHasNotFinished;
+
+            if ($eventIsInProgress) {
                 $eventSummary             = \strtolower($event['summary'] ?? '');
                 $eventSummaryContainsDota = \str_contains($eventSummary, 'dota');
 
