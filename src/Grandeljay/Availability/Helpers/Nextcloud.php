@@ -86,29 +86,32 @@ class Nextcloud
         $calendarEvents    = [];
         $calendarEventsXml = $xml->xpath('//cal:calendar-data');
 
+        $dateTimeZoneUtc  = new \DateTimeZone('UTC');
+        $dateTimeToday    = new \DateTimeImmutable('today 00:00:00', $dateTimeZoneUtc);
+        $dateTimeTomorrow = new \DateTimeImmutable('tomorrow 00:00:00', $dateTimeZoneUtc);
+
         foreach ($calendarEventsXml as $calendarEventXml) {
-            $vEventIcs    = (string) $calendarEventXml;
-            $vEventParsed = Reader::read($vEventIcs);
-            $vEvent       = $vEventParsed->VEVENT;
+            $vEventsIcs      = (string) $calendarEventXml;
+            $vEventsParsed   = Reader::read($vEventsIcs);
+            $vEventsExpanded = $vEventsParsed->expand($dateTimeToday, $dateTimeTomorrow,);
+            $vEvents         = $vEventsExpanded->VEVENT;
 
-            $eventSummary  = $vEvent->SUMMARY->getValue();
-            $eventType     = $vEvent->DTSTART->getValueType();
-            $eventIsAllDay = 'DATE' === $eventType;
-            $eventToAdd    = [
-                'summary'  => $eventSummary,
-                'isAllDay' => $eventIsAllDay,
-            ];
+            foreach ($vEvents as $vEvent) {
+                $eventSummary  = $vEvent->SUMMARY->getValue();
+                $eventType     = $vEvent->DTSTART->getValueType();
+                $eventIsAllDay = 'DATE' === $eventType;
+                $eventToAdd    = [
+                    'summary'  => $eventSummary,
+                    'isAllDay' => $eventIsAllDay,
+                ];
 
-            if ($eventIsAllDay) {
+                if (!$eventIsAllDay) {
+                    $eventToAdd['timeStart'] = $vEvent->DTSTART->getDateTime();
+                    $eventToAdd['timeEnd']   = $vEvent->DTEND->getDateTime();
+                }
+
                 $calendarEvents[] = $eventToAdd;
-
-                continue;
             }
-
-            $eventToAdd['timeStart'] = $vEvent->DTSTART->getDateTime();
-            $eventToAdd['timeEnd']   = $vEvent->DTEND->getDateTime();
-
-            $calendarEvents[] = $eventToAdd;
         }
 
         return $calendarEvents;
