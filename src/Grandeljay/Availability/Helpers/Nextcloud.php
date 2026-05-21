@@ -97,6 +97,14 @@ class Nextcloud
             $vEvents         = $vEventsExpanded->VEVENT;
 
             foreach ($vEvents as $vEvent) {
+                $eventIsConfirmed = isset($vEvent->STATUS)
+                                  ? 'CONFIRMED' === $vEvent->STATUS->getValue()
+                                  : true;
+
+                if (!$eventIsConfirmed) {
+                    continue;
+                }
+
                 $eventSummary  = $vEvent->SUMMARY->getValue();
                 $eventType     = $vEvent->DTSTART->getValueType();
                 $eventIsAllDay = 'DATE' === $eventType;
