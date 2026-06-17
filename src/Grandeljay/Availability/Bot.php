@@ -226,7 +226,10 @@ class Bot
                                  !== $event['timeEtart']->format('Y-m-d');
                 $isToday           = !$isAllDay && !$spansMultipleDays;
 
-                return $isToday;
+                $eventSummary             = \strtolower($event['summary'] ?? '');
+                $eventSummaryContainsDota = \str_contains($eventSummary, 'dota');
+
+                return $isToday && !$eventSummaryContainsDota;
             }
         );
 
@@ -246,26 +249,23 @@ class Bot
             $eventHasNotFinished = $eventTimeEnd > $timeNow;
             $eventIsInProgress   = $eventHasStarted && $eventHasNotFinished;
 
-            if ($eventIsInProgress) {
-                $eventSummary             = \strtolower($event['summary'] ?? '');
-                $eventSummaryContainsDota = \str_contains($eventSummary, 'dota');
-
-                if (!$eventSummaryContainsDota) {
-                    $timeEndDiff          = $timeNow->diff($eventTimeEnd);
-                    $timeEndDiffFormatted = $timeEndDiff->format('%H:%I hours');
-                    $timeEndFormatted     = $eventTimeEnd->format('H:i');
-
-                    $jayIsUnavailableMessage = \sprintf(
-                        'Jay is not available according to his calendars. He might be available again at %1$s (in %2$s).',
-                        $timeEndFormatted,
-                        $timeEndDiffFormatted
-                    );
-
-                    $message->reply($jayIsUnavailableMessage);
-
-                    return;
-                }
+            if (!$eventIsInProgress) {
+                continue;
             }
+
+            $timeEndDiff          = $timeNow->diff($eventTimeEnd);
+            $timeEndDiffFormatted = $timeEndDiff->format('%H:%I hours');
+            $timeEndFormatted     = $eventTimeEnd->format('H:i');
+
+            $jayIsUnavailableMessage = \sprintf(
+                'Jay is not available according to his calendars. He might be available again at %1$s (in %2$s).',
+                $timeEndFormatted,
+                $timeEndDiffFormatted
+            );
+
+            $message->reply($jayIsUnavailableMessage);
+
+            return;
         }
     }
 }
