@@ -222,6 +222,8 @@ class Bot
         $timeNow  = new \DateTime();
         $timeZone = new \DateTimeZone($configTimeZone);
 
+        $dotaMatchDuration = new \DateInterval('PT2H');
+
         foreach ($events as $event) {
             $eventIsAllDay = $event['isAllDay'];
 
@@ -232,7 +234,7 @@ class Bot
             $event['timeStart'] = $event['timeStart']->setTimezone($timeZone);
             $event['timeEnd']   = $event['timeEnd']->setTimezone($timeZone);
 
-            $eventTimeStart         = $event['timeStart'];
+            $eventTimeStart         = $event['timeStart']->sub($dotaMatchDuration);
             $eventTimeEnd           = $event['timeEnd'];
             $eventSpansMultipleDays = $eventTimeStart->format('Y-m-d')
                                   !== $eventTimeEnd->format('Y-m-d');
