@@ -218,30 +218,29 @@ class Bot
         $config         = new Config();
         $configTimeZone = $config->getTimeZone();
         $events         = Nextcloud::getCalendarEventsToday();
+        $eventsToday    = \array_filter(
+            $events,
+            function (array $event): bool {
+                $isAllDay          = $event['isAllDay'];
+                $spansMultipleDays = $event['timeStart']->format('Y-m-d')
+                                 !== $event['timeEtart']->format('Y-m-d');
+                $isToday           = !$isAllDay && !$spansMultipleDays;
+
+                return $isToday;
+            }
+        );
 
         $timeNow  = new \DateTime();
         $timeZone = new \DateTimeZone($configTimeZone);
 
         $dotaMatchDuration = new \DateInterval('PT2H');
 
-        foreach ($events as $event) {
-            $eventIsAllDay = $event['isAllDay'];
-
-            if ($eventIsAllDay) {
-                continue;
-            }
-
+        foreach ($eventsToday as $event) {
             $event['timeStart'] = $event['timeStart']->setTimezone($timeZone);
             $event['timeEnd']   = $event['timeEnd']->setTimezone($timeZone);
 
-            $eventTimeStart         = $event['timeStart']->sub($dotaMatchDuration);
-            $eventTimeEnd           = $event['timeEnd'];
-            $eventSpansMultipleDays = $eventTimeStart->format('Y-m-d')
-                                  !== $eventTimeEnd->format('Y-m-d');
-
-            if ($eventSpansMultipleDays) {
-                continue;
-            }
+            $eventTimeStart = $event['timeStart']->sub($dotaMatchDuration);
+            $eventTimeEnd   = $event['timeEnd'];
 
             $eventHasStarted     = $eventTimeStart <= $timeNow;
             $eventHasNotFinished = $eventTimeEnd > $timeNow;
