@@ -218,18 +218,24 @@ class Bot
         $config         = new Config();
         $configTimeZone = $config->getTimeZone();
         $events         = Nextcloud::getCalendarEventsToday();
-        $eventsToday    = \array_filter(
+        $eventsNotDota  = \array_filter(
             $events,
+            function (array $event): bool {
+                $eventSummary             = \strtolower($event['summary'] ?? '');
+                $eventSummaryContainsDota = \str_contains($eventSummary, 'dota');
+
+                return !$eventSummaryContainsDota;
+            }
+        );
+        $eventsToday    = \array_filter(
+            $eventsNotDota,
             function (array $event): bool {
                 $isAllDay          = $event['isAllDay'];
                 $spansMultipleDays = $event['timeStart']->format('Y-m-d')
                                  !== $event['timeEtart']->format('Y-m-d');
                 $isToday           = !$isAllDay && !$spansMultipleDays;
 
-                $eventSummary             = \strtolower($event['summary'] ?? '');
-                $eventSummaryContainsDota = \str_contains($eventSummary, 'dota');
-
-                return $isToday && !$eventSummaryContainsDota;
+                return $isToday;
             }
         );
 
